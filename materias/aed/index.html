@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AED · Algoritmos e Estruturas de Dados</title>
+<meta name="description" content="Apostila e laboratórios interativos de algoritmos e estruturas de dados, com código em C.">
+<link rel="icon" href="../../assets/icone.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../../assets/engine.css">
+<style>:root{--mat:#3ddc97}</style>
+</head>
+<body>
+<header class="top" id="top"></header>
+<main class="split" id="split">
+  <div class="pane pane-ap" id="ap"><article class="apostila">
+<section class="ap-cap" data-cap="tads" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 1</div><h1>Tipos Abstratos de Dados</h1>
+<div class="goal">Objetivo: separar o que uma estrutura faz do jeito como ela é feita, e revisar as ferramentas de C usadas o curso inteiro: struct, ponteiros, malloc/free e notação O.</div><div class="src">Base: TADs, modularização em C, alocação dinâmica</div></div>
+<h2>1.1 Dados + operações</h2>
+<p>Todo programa manipula <b>dados</b> (números, nomes, filas de clientes) por meio de <b>operações</b> (somar, inserir, buscar). Uma <b>estrutura de dados</b> é uma forma de organizar dados na memória para que certas operações fiquem eficientes. A escolha da estrutura muda o custo das operações: buscar um nome numa lista bagunçada exige olhar um por um; numa árvore de busca balanceada, poucos passos bastam.</p>
+<div class="callout intuit"><div class="ct">Intuição</div><p>Pense num caixa eletrônico. Você conhece as <b>operações</b> (sacar, depositar, ver saldo), mas não sabe nem precisa saber <b>como</b> o banco guarda seu dinheiro. Se o banco trocar o sistema por dentro, você continua usando os mesmos botões. Isso é um TAD.</p></div>
+<h2>1.2 O que é um TAD</h2>
+<p>Um <b>Tipo Abstrato de Dados (TAD)</b> é um tipo definido <b>pelas operações</b> que se pode fazer com ele, e não pela forma como é representado na memória. Ele tem duas faces:</p>
+<ul>
+<li><b>Especificação (interface)</b>: o nome das operações, o que cada uma recebe, devolve e garante. É o “contrato”.</li>
+<li><b>Implementação</b>: a representação concreta (vetor, nós encadeados…) e o código de cada operação. Fica escondida de quem usa.</li>
+</ul>
+<p>Exemplos de TADs deste curso: <b>Pilha</b>, <b>Fila</b>, <b>Deque</b>, <b>Lista</b>, <b>Árvore de busca</b> e <b>Fila de prioridade</b>. Cada um pode ter várias implementações; o usuário escolhe pela eficiência, sem mudar o próprio código.</p>
+  <figure><div class="fig"><img src="figs/tad_camadas.svg" alt="As três camadas: o programa do usuário só conversa com a interface (.h). A implementação (.c) pode ser trocada." loading="lazy"></div><figcaption><b>Figura 1.1.</b> As três camadas: o programa do usuário só conversa com a interface (.h). A implementação (.c) pode ser trocada.</figcaption></figure>
+
+  <h2>1.3 TAD em C: arquivo .h, arquivo .c e struct opaca</h2>
+<p>Em C, a separação é feita com dois arquivos. O <b>.h</b> declara o tipo e as operações; o <b>.c</b> define a struct e o código. O truque que esconde a representação é a <b>struct opaca</b>: o .h só diz que o tipo existe, e o usuário manipula apenas <b>ponteiros</b> para ele.</p>
+<pre><code class="c"><span class="cm">/* ponto.h — interface */</span>
+<span class="pp">#ifndef PONTO_H</span>
+<span class="pp">#define PONTO_H</span>
+<span class="kw">typedef</span> <span class="kw">struct</span> ponto <span class="ty">PONTO</span>;          <span class="cm">/* struct opaca: campos escondidos */</span>
+
+<span class="ty">PONTO</span> *ponto_criar(<span class="ty">float</span> x, <span class="ty">float</span> y);
+<span class="ty">void</span>   ponto_apagar(<span class="ty">PONTO</span> **p);
+<span class="ty">float</span>  ponto_distancia(<span class="kw">const</span> <span class="ty">PONTO</span> *a, <span class="kw">const</span> <span class="ty">PONTO</span> *b);
+<span class="pp">#endif</span></code></pre>
+<pre><code class="c"><span class="cm">/* ponto.c — implementação */</span>
+<span class="pp">#include &lt;stdlib.h&gt;</span>
+<span class="pp">#include &lt;math.h&gt;</span>
+<span class="pp">#include "ponto.h"</span>
+
+<span class="kw">struct</span> ponto { <span class="ty">float</span> x, y; };        <span class="cm">/* só este arquivo conhece os campos */</span>
+
+<span class="ty">PONTO</span> *ponto_criar(<span class="ty">float</span> x, <span class="ty">float</span> y) {
+    <span class="ty">PONTO</span> *p = malloc(<span class="kw">sizeof</span>(<span class="ty">PONTO</span>));
+    <span class="kw">if</span> (p != <span class="nu">NULL</span>) { p-&gt;x = x; p-&gt;y = y; }
+    <span class="kw">return</span> p;
+}
+<span class="ty">void</span> ponto_apagar(<span class="ty">PONTO</span> **p) {
+    <span class="kw">if</span> (p != <span class="nu">NULL</span> &amp;&amp; *p != <span class="nu">NULL</span>) { free(*p); *p = <span class="nu">NULL</span>; }
+}
+<span class="ty">float</span> ponto_distancia(<span class="kw">const</span> <span class="ty">PONTO</span> *a, <span class="kw">const</span> <span class="ty">PONTO</span> *b) {
+    <span class="kw">return</span> sqrtf((a-&gt;x - b-&gt;x) * (a-&gt;x - b-&gt;x) + (a-&gt;y - b-&gt;y) * (a-&gt;y - b-&gt;y));
+}</code></pre>
+<p>No <code>main.c</code>, escrever <code>p-&gt;x</code> dá erro de compilação: o usuário não enxerga os campos. Ele só pode usar as funções. Isso é <b>encapsulamento</b>.</p>
+<div class="callout key"><div class="ct">Ideia-chave</div><p>Por que <code>ponto_apagar</code> recebe <code>PONTO **</code>? Para conseguir colocar <code>NULL</code> no ponteiro do usuário depois do <code>free</code>. Assim ele não fica com um ponteiro “pendurado” (dangling pointer) apontando para memória liberada.</p></div>
+<h2>1.4 Vantagens</h2>
+<ul>
+<li><b>Reuso</b>: a mesma pilha serve para vários programas.</li>
+<li><b>Troca de implementação</b>: dá para trocar a pilha em vetor por uma encadeada sem mexer no programa do usuário.</li>
+<li><b>Correção</b>: só as funções do TAD mexem nos dados, então é mais difícil corromper a estrutura (por exemplo, um <code>topo</code> errado).</li>
+<li><b>Divisão de trabalho</b>: quem usa só precisa conhecer o contrato.</li>
+</ul>
+<h2>1.5 Revisão: ponteiros e alocação dinâmica</h2>
+<p>As estruturas <b>sequenciais (estáticas)</b> usam vetores de tamanho fixo, definidos na compilação. As <b>encadeadas (dinâmicas)</b> pedem memória ao sistema durante a execução, um nó de cada vez, com <code>malloc</code>, e devolvem com <code>free</code>.</p>
+<pre><code class="c"><span class="kw">typedef</span> <span class="kw">struct</span> no {
+    <span class="ty">int</span> info;
+    <span class="kw">struct</span> no *prox;      <span class="cm">/* ponteiro para o próximo nó */</span>
+} <span class="ty">NO</span>;
+
+<span class="ty">NO</span> *n = malloc(<span class="kw">sizeof</span>(<span class="ty">NO</span>));   <span class="cm">/* pede memória para 1 nó */</span>
+<span class="kw">if</span> (n == <span class="nu">NULL</span>) { <span class="cm">/* sem memória: trate o erro */</span> }
+n-&gt;info = <span class="nu">42</span>;               <span class="cm">/* p-&gt;campo é o mesmo que (*p).campo */</span>
+n-&gt;prox = <span class="nu">NULL</span>;
+free(n);                    <span class="cm">/* devolve; n agora aponta para lixo */</span>
+n = <span class="nu">NULL</span>;</code></pre>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><ul>
+<li>Todo <code>malloc</code> pode devolver <code>NULL</code>: confira antes de usar.</li>
+<li>Todo <code>malloc</code> precisa de um <code>free</code> correspondente. Senão, há <b>vazamento de memória</b>.</li>
+<li>Nunca use um ponteiro depois do <code>free</code>, e nunca dê <code>free</code> duas vezes no mesmo endereço.</li>
+<li>Ao remover um nó encadeado, <b>guarde o próximo antes</b> de liberar o atual.</li>
+</ul></div>
+<h2>1.6 Revisão: custo das operações (notação O)</h2>
+<p>Para comparar estruturas, conta-se quantos passos uma operação faz em função do número de elementos <b>n</b>, ignorando constantes. A notação <b>O(·)</b> dá o limite superior do crescimento.</p>
+<table><tr><th>Notação</th><th class="l">Nome</th><th class="l">Exemplo neste curso</th><th>n = 1 000 000</th></tr>
+<tr><td>O(1)</td><td class="l">constante</td><td class="l">empilhar, desempilhar, acessar v[i]</td><td>1</td></tr>
+<tr><td>O(log n)</td><td class="l">logarítmica</td><td class="l">busca em AVL, inserir em heap</td><td>~20</td></tr>
+<tr><td>O(n)</td><td class="l">linear</td><td class="l">busca em lista, inserir ordenado em vetor</td><td>1 000 000</td></tr>
+<tr><td>O(n log n)</td><td class="l">n log n</td><td class="l">heapsort</td><td>~20 000 000</td></tr>
+<tr><td>O(n²)</td><td class="l">quadrática</td><td class="l">inserir n elementos ordenados em vetor</td><td>10¹²</td></tr></table>
+<div class="callout try"><div class="ct">Exercício 1.1</div><p>(a) Qual a diferença entre a especificação e a implementação de um TAD? (b) Por que o .h usa <code>typedef struct ponto PONTO;</code> sem listar os campos? (c) O que acontece se você der <code>free(n)</code> e depois ler <code>n-&gt;prox</code>?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="pilhas" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 2</div><h1>Pilhas</h1>
+<div class="goal">Objetivo: entender a disciplina LIFO, implementar pilhas em vetor e com nós encadeados, e usar pilhas para validar parênteses e avaliar expressões.</div><div class="src">Base: TAD Pilha, implementações sequencial e encadeada, aplicações</div></div>
+<h2>2.1 A ideia: último a entrar, primeiro a sair</h2>
+<p>Uma <b>pilha</b> (<i>stack</i>) só permite mexer em uma ponta, o <b>topo</b>. O último elemento empilhado é o primeiro a sair: disciplina <b>LIFO</b> (<i>Last In, First Out</i>). Exemplos: pilha de pratos, o botão “desfazer” de um editor, o “voltar” do navegador e a <b>pilha de chamadas</b> de funções do próprio C (cada chamada empilha suas variáveis locais; o <code>return</code> desempilha).</p>
+  <figure><div class="fig"><img src="figs/pilha_ops.svg" alt="Uma sequência de operações. Só o topo é acessível." loading="lazy"></div><figcaption><b>Figura 2.1.</b> Uma sequência de operações. Só o topo é acessível.</figcaption></figure>
+
+  <h2>2.2 O TAD Pilha</h2>
+<table class="wide"><tr><th class="l">Operação</th><th class="l">O que faz</th><th>Custo</th></tr>
+<tr><td class="l"><code>pilha_criar()</code></td><td class="l">cria pilha vazia</td><td>O(1)</td></tr>
+<tr><td class="l"><code>pilha_empilhar(p, x)</code> (push)</td><td class="l">coloca x no topo; falha se cheia</td><td>O(1)</td></tr>
+<tr><td class="l"><code>pilha_desempilhar(p)</code> (pop)</td><td class="l">remove e devolve o topo; falha se vazia</td><td>O(1)</td></tr>
+<tr><td class="l"><code>pilha_topo(p)</code> (peek/top)</td><td class="l">devolve o topo sem remover</td><td>O(1)</td></tr>
+<tr><td class="l"><code>pilha_vazia(p)</code>, <code>pilha_cheia(p)</code>, <code>pilha_tamanho(p)</code></td><td class="l">consultas</td><td>O(1)</td></tr>
+<tr><td class="l"><code>pilha_apagar(&amp;p)</code></td><td class="l">libera tudo</td><td>O(1) ou O(n)</td></tr></table>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><p>Desempilhar de pilha vazia é <b>underflow</b>; empilhar em pilha cheia é <b>overflow</b>. Toda implementação precisa testar esses casos antes de agir.</p></div>
+<h2>2.3 Implementação sequencial (vetor)</h2>
+  <figure><div class="fig"><img src="figs/pilha_seq.svg" alt="Pilha em vetor: os elementos ficam de itens[0] até itens[topo]." loading="lazy"></div><figcaption><b>Figura 2.2.</b> Pilha em vetor: os elementos ficam de itens[0] até itens[topo].</figcaption></figure>
+  <pre><code class="c"><span class="pp">#define MAX 100</span>
+<span class="kw">struct</span> pilha {
+    <span class="ty">int</span> itens[MAX];
+    <span class="ty">int</span> topo;                      <span class="cm">/* índice do último elemento; -1 = vazia */</span>
+};
+
+<span class="ty">PILHA</span> *pilha_criar(<span class="ty">void</span>) {
+    <span class="ty">PILHA</span> *p = malloc(<span class="kw">sizeof</span>(<span class="ty">PILHA</span>));
+    <span class="kw">if</span> (p != <span class="nu">NULL</span>) p-&gt;topo = -<span class="nu">1</span>;
+    <span class="kw">return</span> p;
+}
+<span class="ty">bool</span> pilha_vazia(<span class="kw">const</span> <span class="ty">PILHA</span> *p) { <span class="kw">return</span> p-&gt;topo == -<span class="nu">1</span>; }
+<span class="ty">bool</span> pilha_cheia(<span class="kw">const</span> <span class="ty">PILHA</span> *p) { <span class="kw">return</span> p-&gt;topo == MAX - <span class="nu">1</span>; }
+
+<span class="ty">bool</span> pilha_empilhar(<span class="ty">PILHA</span> *p, <span class="ty">int</span> x) {
+    <span class="kw">if</span> (pilha_cheia(p)) <span class="kw">return</span> <span class="nu">false</span>;      <span class="cm">/* overflow */</span>
+    p-&gt;itens[++p-&gt;topo] = x;               <span class="cm">/* sobe o topo e grava */</span>
+    <span class="kw">return</span> <span class="nu">true</span>;
+}
+<span class="ty">bool</span> pilha_desempilhar(<span class="ty">PILHA</span> *p, <span class="ty">int</span> *x) {
+    <span class="kw">if</span> (pilha_vazia(p)) <span class="kw">return</span> <span class="nu">false</span>;      <span class="cm">/* underflow */</span>
+    *x = p-&gt;itens[p-&gt;topo--];              <span class="cm">/* lê e desce o topo */</span>
+    <span class="kw">return</span> <span class="nu">true</span>;
+}</code></pre>
+<p>Repare que desempilhar <b>não apaga</b> o valor do vetor: só move o topo. O valor antigo vira lixo e será sobrescrito no próximo push.</p>
+<h2>2.4 Implementação encadeada</h2>
+<p>Cada elemento é um nó alocado na hora. O topo é o <b>primeiro nó</b>: empilhar insere no início, desempilhar remove do início. Nenhuma das duas precisa percorrer a lista, então ambas são O(1). Não existe “cheia” (só se a memória acabar).</p>
+  <figure><div class="fig"><img src="figs/pilha_enc.svg" alt="Pilha encadeada: o ponteiro topo aponta para o último elemento empilhado." loading="lazy"></div><figcaption><b>Figura 2.3.</b> Pilha encadeada: o ponteiro topo aponta para o último elemento empilhado.</figcaption></figure>
+  <pre><code class="c"><span class="kw">typedef</span> <span class="kw">struct</span> no { <span class="ty">int</span> info; <span class="kw">struct</span> no *prox; } <span class="ty">NO</span>;
+<span class="kw">struct</span> pilha { <span class="ty">NO</span> *topo; <span class="ty">int</span> tamanho; };
+
+<span class="ty">bool</span> pilha_empilhar(<span class="ty">PILHA</span> *p, <span class="ty">int</span> x) {
+    <span class="ty">NO</span> *n = malloc(<span class="kw">sizeof</span>(<span class="ty">NO</span>));
+    <span class="kw">if</span> (n == <span class="nu">NULL</span>) <span class="kw">return</span> <span class="nu">false</span>;
+    n-&gt;info = x;
+    n-&gt;prox = p-&gt;topo;         <span class="cm">/* novo nó aponta para o antigo topo */</span>
+    p-&gt;topo = n;               <span class="cm">/* e vira o topo */</span>
+    p-&gt;tamanho++;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}
+<span class="ty">bool</span> pilha_desempilhar(<span class="ty">PILHA</span> *p, <span class="ty">int</span> *x) {
+    <span class="kw">if</span> (p-&gt;topo == <span class="nu">NULL</span>) <span class="kw">return</span> <span class="nu">false</span>;
+    <span class="ty">NO</span> *velho = p-&gt;topo;
+    *x = velho-&gt;info;
+    p-&gt;topo = velho-&gt;prox;     <span class="cm">/* guarda o próximo ANTES do free */</span>
+    free(velho);
+    p-&gt;tamanho--;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}</code></pre>
+<table class="wide"><tr><th class="l"></th><th class="l">Sequencial</th><th class="l">Encadeada</th></tr>
+<tr><td class="l">Tamanho máximo</td><td class="l">fixo (MAX)</td><td class="l">limitado pela memória</td></tr>
+<tr><td class="l">Memória por elemento</td><td class="l">só o dado</td><td class="l">dado + ponteiro</td></tr>
+<tr><td class="l">Desperdício</td><td class="l">posições não usadas do vetor</td><td class="l">nenhum (mas cada malloc tem custo)</td></tr>
+<tr><td class="l">push / pop</td><td class="l">O(1)</td><td class="l">O(1)</td></tr></table>
+<h2>2.5 Aplicação: parênteses balanceados</h2>
+<p>Uma expressão como <code>{[()()]}</code> está balanceada se cada símbolo de abertura tem um fechamento <b>do mesmo tipo</b>, na ordem certa. Algoritmo:</p>
+<ol class="steps">
+<li>Percorra os caracteres da esquerda para a direita.</li>
+<li>Abertura <code>( [ {</code>: empilhe.</li>
+<li>Fechamento: se a pilha estiver vazia, ou se o topo não for a abertura correspondente, <b>não está balanceada</b>. Senão, desempilhe.</li>
+<li>No fim, a expressão está balanceada se, e somente se, a pilha estiver <b>vazia</b>.</li>
+</ol>
+<div class="callout ex"><div class="ct">Exemplo resolvido: <code>( [ ) ]</code></div>
+<table class="tt"><tr><th>Lido</th><th class="l">Ação</th><th class="l">Pilha (topo à direita)</th></tr>
+<tr><td>(</td><td class="l">empilha</td><td class="l">(</td></tr><tr><td>[</td><td class="l">empilha</td><td class="l">( [</td></tr>
+<tr class="bad"><td>)</td><td class="l">topo é [, não combina com )</td><td class="l">erro: não balanceada</td></tr></table>
+<p>Contar quantos “(” e “)” existem não basta: aqui as quantidades batem, mas a ordem está errada. A pilha verifica a ordem.</p></div>
+<h2>2.6 Aplicação: notação pós-fixa (polonesa reversa)</h2>
+<p>Na notação <b>infixa</b>, o operador fica entre os operandos (<code>5 + 3 * 2</code>) e precisamos de precedência e parênteses. Na <b>pós-fixa</b>, o operador vem depois dos operandos (<code>5 3 2 * +</code>) e a expressão nunca precisa de parênteses. Avaliar pós-fixa com pilha é direto:</p>
+<ul><li><b>Número</b>: empilhe.</li><li><b>Operador</b>: desempilhe <b>b</b> (topo) e depois <b>a</b>; empilhe <b>a op b</b>.</li><li>No fim, o resultado é o único elemento da pilha.</li></ul>
+<div class="callout ex"><div class="ct">Exemplo resolvido: <code>5 3 2 * +</code></div>
+<table class="tt"><tr><th>Lido</th><th class="l">Ação</th><th class="l">Pilha</th></tr>
+<tr><td>5</td><td class="l">empilha</td><td class="l">5</td></tr><tr><td>3</td><td class="l">empilha</td><td class="l">5 3</td></tr><tr><td>2</td><td class="l">empilha</td><td class="l">5 3 2</td></tr>
+<tr><td>*</td><td class="l">b=2, a=3 → 6</td><td class="l">5 6</td></tr><tr><td>+</td><td class="l">b=6, a=5 → 11</td><td class="l">11</td></tr></table></div>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><p>A ordem importa em <code>−</code> e <code>/</code>: o <b>primeiro</b> desempilhado é o operando da <b>direita</b>. <code>8 2 /</code> é 8 / 2 = 4, não 2 / 8.</p></div>
+<h3>Conversão infixa → pós-fixa</h3>
+<p>Operandos vão direto para a saída. Operadores esperam numa pilha: antes de empilhar um operador, desempilhe para a saída os que estão no topo com precedência <b>maior ou igual</b> (para operadores associativos à esquerda). “(” é empilhado; “)” desempilha até o “(”. No fim, esvazie a pilha na saída.</p>
+<div class="callout ex"><div class="ct">Exemplo resolvido: <code>A + B * C</code> e <code>(A + B) * C</code></div>
+<p><code>A + B * C</code> → <b>A B C * +</b> (o * tem precedência e sai antes). <code>(A + B) * C</code> → <b>A B + C *</b> (os parênteses forçam o + a sair antes).</p></div>
+<div class="callout try"><div class="ct">Exercício 2.1</div><p>(a) Pilha vazia: push(1), push(2), pop, push(3), push(4), pop, pop, push(5). Qual o conteúdo final (base → topo)? (b) <code>{[()]}()</code> e <code>([)]</code> estão balanceadas? (c) Avalie <code>6 2 / 3 4 * +</code>. (d) Converta <code>A * (B + C) - D</code> para pós-fixa.</p></div>
+
+</section>
+<section class="ap-cap" data-cap="filas" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 3</div><h1>Filas e Deques</h1>
+<div class="goal">Objetivo: entender a disciplina FIFO, resolver o problema da fila em vetor com a fila circular, implementar a fila encadeada e generalizar para o deque.</div><div class="src">Base: TAD Fila, fila circular, fila encadeada, deque</div></div>
+<h2>3.1 Primeiro a entrar, primeiro a sair</h2>
+<p>Numa <b>fila</b> (<i>queue</i>), os elementos entram por uma ponta (o <b>fim</b>) e saem pela outra (o <b>início</b>): disciplina <b>FIFO</b> (<i>First In, First Out</i>). Exemplos: fila de banco, fila de impressão, buffer de teclado, processos esperando a CPU, busca em largura em árvores e grafos.</p>
+<table class="wide"><tr><th class="l">Operação</th><th class="l">O que faz</th></tr>
+<tr><td class="l"><code>fila_inserir(f, x)</code> (enqueue)</td><td class="l">coloca x no fim</td></tr>
+<tr><td class="l"><code>fila_remover(f)</code> (dequeue)</td><td class="l">tira e devolve o elemento do início</td></tr>
+<tr><td class="l"><code>fila_frente(f)</code></td><td class="l">consulta o início sem remover</td></tr>
+<tr><td class="l"><code>fila_vazia</code>, <code>fila_cheia</code>, <code>fila_tamanho</code></td><td class="l">consultas</td></tr></table>
+<h2>3.2 O problema da fila em vetor</h2>
+<p>Primeira ideia: guardar no vetor e remover do índice 0, deslocando todos os outros. Funciona, mas cada remoção custa <b>O(n)</b>. Segunda ideia: manter índices <code>inicio</code> e <code>fim</code> que só andam para a direita. As operações viram O(1), mas a fila “anda” pelo vetor e logo parece cheia, mesmo com espaço livre à esquerda.</p>
+  <figure><div class="fig"><img src="figs/fila_problema.svg" alt="Com índices que só avançam, o espaço liberado no começo nunca é reaproveitado." loading="lazy"></div><figcaption><b>Figura 3.1.</b> Com índices que só avançam, o espaço liberado no começo nunca é reaproveitado.</figcaption></figure>
+
+  <h2>3.3 Fila circular</h2>
+<p>A solução é tratar o vetor como um <b>anel</b>: depois da última posição vem a primeira. Os índices avançam com o resto da divisão:</p>
+<div class="formula">i = (i + 1) % MAX</div>
+  <figure><div class="fig"><img src="figs/fila_circular.svg" alt="Fila circular com MAX = 8. O contador qtd distingue vazia de cheia." loading="lazy"></div><figcaption><b>Figura 3.2.</b> Fila circular com MAX = 8. O contador qtd distingue vazia de cheia.</figcaption></figure>
+  <pre><code class="c"><span class="pp">#define MAX 8</span>
+<span class="kw">struct</span> fila {
+    <span class="ty">int</span> itens[MAX];
+    <span class="ty">int</span> inicio;      <span class="cm">/* índice do primeiro (próximo a sair) */</span>
+    <span class="ty">int</span> fim;         <span class="cm">/* índice da próxima posição livre */</span>
+    <span class="ty">int</span> qtd;
+};
+
+<span class="ty">FILA</span> *fila_criar(<span class="ty">void</span>) {
+    <span class="ty">FILA</span> *f = malloc(<span class="kw">sizeof</span>(<span class="ty">FILA</span>));
+    <span class="kw">if</span> (f != <span class="nu">NULL</span>) { f-&gt;inicio = <span class="nu">0</span>; f-&gt;fim = <span class="nu">0</span>; f-&gt;qtd = <span class="nu">0</span>; }
+    <span class="kw">return</span> f;
+}
+<span class="ty">bool</span> fila_inserir(<span class="ty">FILA</span> *f, <span class="ty">int</span> x) {
+    <span class="kw">if</span> (f-&gt;qtd == MAX) <span class="kw">return</span> <span class="nu">false</span>;
+    f-&gt;itens[f-&gt;fim] = x;
+    f-&gt;fim = (f-&gt;fim + <span class="nu">1</span>) % MAX;     <span class="cm">/* dá a volta */</span>
+    f-&gt;qtd++;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}
+<span class="ty">bool</span> fila_remover(<span class="ty">FILA</span> *f, <span class="ty">int</span> *x) {
+    <span class="kw">if</span> (f-&gt;qtd == <span class="nu">0</span>) <span class="kw">return</span> <span class="nu">false</span>;
+    *x = f-&gt;itens[f-&gt;inicio];
+    f-&gt;inicio = (f-&gt;inicio + <span class="nu">1</span>) % MAX;
+    f-&gt;qtd--;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}</code></pre>
+<div class="callout key"><div class="ct">Ideia-chave: vazia ou cheia?</div><p>Se usarmos só <code>inicio</code> e <code>fim</code>, a situação <code>inicio == fim</code> acontece tanto com a fila vazia quanto com a fila cheia. Há três soluções clássicas: (1) guardar um contador <code>qtd</code> (usada acima); (2) deixar sempre uma posição vazia, de modo que cheia ⇔ <code>(fim + 1) % MAX == inicio</code>; (3) guardar um booleano. Leia com atenção qual convenção o enunciado usa: “fim” pode ser o último ocupado ou a próxima posição livre.</p></div>
+<div class="callout ex"><div class="ct">Exemplo resolvido: MAX = 5, inicio = fim = qtd = 0</div>
+<table class="tt"><tr><th>Operação</th><th>vetor [0..4]</th><th>inicio</th><th>fim</th><th>qtd</th></tr>
+<tr><td>ins 10, 20, 30</td><td>10 20 30 _ _</td><td>0</td><td>3</td><td>3</td></tr>
+<tr><td>rem → 10</td><td>_ 20 30 _ _</td><td>1</td><td>3</td><td>2</td></tr>
+<tr><td>ins 40, 50</td><td>_ 20 30 40 50</td><td>1</td><td>0</td><td>4</td></tr>
+<tr class="hl"><td>ins 60</td><td>60 20 30 40 50</td><td>1</td><td>1</td><td>5 (cheia)</td></tr>
+<tr><td>rem → 20</td><td>60 _ 30 40 50</td><td>2</td><td>1</td><td>4</td></tr></table>
+<p>O 60 foi para o índice 0, que tinha sido liberado: é a “volta” do anel.</p></div>
+<h2>3.4 Fila encadeada</h2>
+<p>Com nós, guardam-se <b>dois</b> ponteiros: <code>inicio</code> (para remover) e <code>fim</code> (para inserir). Sem o ponteiro de fim, inserir exigiria percorrer a lista toda: O(n).</p>
+  <figure><div class="fig"><img src="figs/fila_enc.svg" alt="Fila encadeada: insere depois do nó apontado por fim; remove o nó apontado por início." loading="lazy"></div><figcaption><b>Figura 3.3.</b> Fila encadeada: insere depois do nó apontado por fim; remove o nó apontado por início.</figcaption></figure>
+  <pre><code class="c"><span class="kw">struct</span> fila { <span class="ty">NO</span> *inicio, *fim; <span class="ty">int</span> qtd; };
+
+<span class="ty">bool</span> fila_inserir(<span class="ty">FILA</span> *f, <span class="ty">int</span> x) {
+    <span class="ty">NO</span> *n = malloc(<span class="kw">sizeof</span>(<span class="ty">NO</span>));
+    <span class="kw">if</span> (n == <span class="nu">NULL</span>) <span class="kw">return</span> <span class="nu">false</span>;
+    n-&gt;info = x; n-&gt;prox = <span class="nu">NULL</span>;
+    <span class="kw">if</span> (f-&gt;fim == <span class="nu">NULL</span>) f-&gt;inicio = n;   <span class="cm">/* fila estava vazia */</span>
+    <span class="kw">else</span> f-&gt;fim-&gt;prox = n;
+    f-&gt;fim = n;
+    f-&gt;qtd++;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}
+<span class="ty">bool</span> fila_remover(<span class="ty">FILA</span> *f, <span class="ty">int</span> *x) {
+    <span class="kw">if</span> (f-&gt;inicio == <span class="nu">NULL</span>) <span class="kw">return</span> <span class="nu">false</span>;
+    <span class="ty">NO</span> *velho = f-&gt;inicio;
+    *x = velho-&gt;info;
+    f-&gt;inicio = velho-&gt;prox;
+    <span class="kw">if</span> (f-&gt;inicio == <span class="nu">NULL</span>) f-&gt;fim = <span class="nu">NULL</span>;  <span class="cm">/* ficou vazia: arruma o fim! */</span>
+    free(velho);
+    f-&gt;qtd--;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}</code></pre>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><p>O erro mais comum na fila encadeada: ao remover o <b>último</b> elemento, esquecer de fazer <code>fim = NULL</code>. O ponteiro <code>fim</code> fica apontando para um nó liberado, e a próxima inserção escreve em memória inválida.</p></div>
+<h2>3.5 Deque (fila de duas pontas)</h2>
+<p>O <b>deque</b> (<i>double-ended queue</i>, pronuncia-se “déque”) permite inserir e remover nas <b>duas</b> pontas. Ele generaliza os dois TADs anteriores: usando só uma ponta, vira pilha; inserindo numa ponta e removendo na outra, vira fila.</p>
+  <figure><div class="fig"><img src="figs/deque.svg" alt="As quatro operações do deque: inserir/remover no início e no fim." loading="lazy" style="max-width:500px"></div><figcaption><b>Figura 3.4.</b> As quatro operações do deque: inserir/remover no início e no fim.</figcaption></figure>
+  <ul>
+<li><b>Em vetor circular</b>: inserir no fim e remover no início funcionam como na fila. Para inserir no início, recue: <code>inicio = (inicio - 1 + MAX) % MAX</code> (o <code>+ MAX</code> evita índice negativo). Para remover do fim, recue o <code>fim</code> da mesma forma.</li>
+<li><b>Encadeado</b>: use lista <b>duplamente encadeada</b> (Cap. 4). Com encadeamento simples, remover do fim é O(n), porque não dá para voltar ao penúltimo nó.</li>
+<li><b>Variações</b>: deque de <b>entrada restrita</b> (insere só numa ponta, remove nas duas) e de <b>saída restrita</b> (insere nas duas, remove só numa).</li>
+</ul>
+<div class="callout deep"><div class="ct">Aprofundando</div><p>Uma <b>fila de prioridade</b> não é uma fila FIFO: sai primeiro quem tem maior prioridade, não quem chegou antes. Ela tem implementação própria (o heap) e é o assunto do Cap. 9.</p></div>
+<div class="callout try"><div class="ct">Exercício 3.1</div><p>Fila circular com MAX = 4 (convenção do exemplo: <code>fim</code> = próxima livre, com <code>qtd</code>), começando vazia em inicio = fim = 0. Faça: ins A, ins B, ins C, rem, ins D, ins E, rem, ins F. (a) Qual o conteúdo do vetor? (b) Quanto valem inicio, fim e qtd? (c) A última inserção teve sucesso?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="listas" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 4</div><h1>Listas</h1>
+<div class="goal">Objetivo: dominar o TAD Lista nas versões sequencial e encadeada, todas as variações de encadeamento (com cabeça, circular, dupla), e as listas generalizadas e cruzadas.</div><div class="src">Base: listas sequenciais, encadeadas, generalizadas e cruzadas</div></div>
+<h2>4.1 O TAD Lista</h2>
+<p>Pilhas e filas restringem <b>onde</b> se insere e remove. A <b>lista linear</b> não restringe: dá para inserir, remover e buscar em <b>qualquer posição</b>. Cada elemento tem um antecessor e um sucessor (exceto o primeiro e o último). Operações típicas:</p>
+<ul>
+<li><code>lista_inserir(L, x)</code>: no fim, no início, numa posição, ou <b>ordenado</b> (mantendo a lista em ordem);</li>
+<li><code>lista_remover(L, chave)</code>, <code>lista_buscar(L, chave)</code>;</li>
+<li><code>lista_tamanho</code>, <code>lista_vazia</code>, <code>lista_cheia</code>, <code>lista_imprimir</code>, <code>lista_apagar</code>.</li>
+</ul>
+<h2>4.2 Lista sequencial (estática)</h2>
+<p>Os elementos ficam em posições <b>consecutivas</b> de um vetor, mais um contador. A posição física é a posição lógica: o i-ésimo elemento está em <code>itens[i]</code>, com acesso <b>O(1)</b>. O preço aparece na inserção e na remoção no meio: é preciso <b>deslocar</b> os elementos.</p>
+  <figure><div class="fig"><img src="figs/lista_seq_ins.svg" alt="Inserção ordenada em lista sequencial: abrir espaço custa O(n)." loading="lazy"></div><figcaption><b>Figura 4.1.</b> Inserção ordenada em lista sequencial: abrir espaço custa O(n).</figcaption></figure>
+  <pre><code class="c"><span class="pp">#define MAX 100</span>
+<span class="kw">struct</span> lista { <span class="ty">int</span> itens[MAX]; <span class="ty">int</span> qtd; };
+
+<span class="cm">/* insere mantendo a ordem crescente */</span>
+<span class="ty">bool</span> lista_inserir_ordenado(<span class="ty">LISTA</span> *l, <span class="ty">int</span> x) {
+    <span class="kw">if</span> (l-&gt;qtd == MAX) <span class="kw">return</span> <span class="nu">false</span>;
+    <span class="ty">int</span> i = l-&gt;qtd - <span class="nu">1</span>;
+    <span class="kw">while</span> (i &gt;= <span class="nu">0</span> &amp;&amp; l-&gt;itens[i] &gt; x) {   <span class="cm">/* desloca os maiores para a direita */</span>
+        l-&gt;itens[i + <span class="nu">1</span>] = l-&gt;itens[i];
+        i--;
+    }
+    l-&gt;itens[i + <span class="nu">1</span>] = x;
+    l-&gt;qtd++;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}
+
+<span class="cm">/* remove a chave x, fechando o buraco */</span>
+<span class="ty">bool</span> lista_remover(<span class="ty">LISTA</span> *l, <span class="ty">int</span> x) {
+    <span class="ty">int</span> i = <span class="nu">0</span>;
+    <span class="kw">while</span> (i &lt; l-&gt;qtd &amp;&amp; l-&gt;itens[i] != x) i++;
+    <span class="kw">if</span> (i == l-&gt;qtd) <span class="kw">return</span> <span class="nu">false</span>;            <span class="cm">/* não achou */</span>
+    <span class="kw">for</span> (; i &lt; l-&gt;qtd - <span class="nu">1</span>; i++) l-&gt;itens[i] = l-&gt;itens[i + <span class="nu">1</span>];
+    l-&gt;qtd--;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}</code></pre>
+<h3>Busca: sequencial e binária</h3>
+<p>Numa lista qualquer, a busca é <b>sequencial</b>: O(n). Se a lista sequencial estiver <b>ordenada</b>, dá para usar a <b>busca binária</b>: olhe o meio; se a chave for menor, descarte a metade direita; senão, a esquerda. Cada passo corta o problema pela metade: <b>O(log n)</b>.</p>
+<pre><code class="c"><span class="ty">int</span> busca_binaria(<span class="kw">const</span> <span class="ty">LISTA</span> *l, <span class="ty">int</span> x) {
+    <span class="ty">int</span> ini = <span class="nu">0</span>, fim = l-&gt;qtd - <span class="nu">1</span>;
+    <span class="kw">while</span> (ini &lt;= fim) {
+        <span class="ty">int</span> meio = (ini + fim) / <span class="nu">2</span>;
+        <span class="kw">if</span> (l-&gt;itens[meio] == x) <span class="kw">return</span> meio;
+        <span class="kw">if</span> (x &lt; l-&gt;itens[meio]) fim = meio - <span class="nu">1</span>;
+        <span class="kw">else</span> ini = meio + <span class="nu">1</span>;
+    }
+    <span class="kw">return</span> -<span class="nu">1</span>;                                <span class="cm">/* não está na lista */</span>
+}</code></pre>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><p>Busca binária só funciona em estrutura <b>ordenada</b> e com <b>acesso direto</b> ao meio. Numa lista encadeada, mesmo ordenada, chegar ao meio custa O(n), então a vantagem desaparece.</p></div>
+<h2>4.3 Lista simplesmente encadeada (dinâmica)</h2>
+<p>Cada nó guarda o dado e um ponteiro para o próximo. Os nós ficam espalhados pela memória; a ordem lógica é dada pelos ponteiros. O último aponta para <code>NULL</code>.</p>
+  <figure><div class="fig"><img src="figs/lista_simples.svg" alt="Lista encadeada com 4 nós. L aponta para o primeiro." loading="lazy"></div><figcaption><b>Figura 4.2.</b> Lista encadeada com 4 nós. L aponta para o primeiro.</figcaption></figure>
+  <h3>Inserção: a ordem das ligações importa</h3>
+  <figure><div class="fig"><img src="figs/lista_ins.svg" alt="Para inserir depois de p: primeiro o novo aponta para o sucessor de p, depois p aponta para o novo." loading="lazy"></div><figcaption><b>Figura 4.3.</b> Para inserir depois de p: primeiro o novo aponta para o sucessor de p, depois p aponta para o novo.</figcaption></figure>
+  <p>Se você fizer <code>p-&gt;prox = novo</code> primeiro, perde o único caminho até o resto da lista (o nó 12 em diante). Regra de ouro: <b>ligue o novo nó antes de desligar o antigo</b>.</p>
+<pre><code class="c"><span class="kw">struct</span> lista { <span class="ty">NO</span> *inicio; <span class="ty">int</span> qtd; };
+
+<span class="ty">bool</span> lista_inserir_ordenado(<span class="ty">LISTA</span> *l, <span class="ty">int</span> x) {
+    <span class="ty">NO</span> *novo = malloc(<span class="kw">sizeof</span>(<span class="ty">NO</span>));
+    <span class="kw">if</span> (novo == <span class="nu">NULL</span>) <span class="kw">return</span> <span class="nu">false</span>;
+    novo-&gt;info = x;
+    <span class="ty">NO</span> *ant = <span class="nu">NULL</span>, *p = l-&gt;inicio;
+    <span class="kw">while</span> (p != <span class="nu">NULL</span> &amp;&amp; p-&gt;info &lt; x) { ant = p; p = p-&gt;prox; }
+    novo-&gt;prox = p;                    <span class="cm">/* 1º: novo aponta para o sucessor */</span>
+    <span class="kw">if</span> (ant == <span class="nu">NULL</span>) l-&gt;inicio = novo; <span class="cm">/* caso especial: virou o primeiro */</span>
+    <span class="kw">else</span> ant-&gt;prox = novo;             <span class="cm">/* 2º: antecessor aponta para o novo */</span>
+    l-&gt;qtd++;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}
+
+<span class="ty">bool</span> lista_remover(<span class="ty">LISTA</span> *l, <span class="ty">int</span> x) {
+    <span class="ty">NO</span> *ant = <span class="nu">NULL</span>, *p = l-&gt;inicio;
+    <span class="kw">while</span> (p != <span class="nu">NULL</span> &amp;&amp; p-&gt;info != x) { ant = p; p = p-&gt;prox; }
+    <span class="kw">if</span> (p == <span class="nu">NULL</span>) <span class="kw">return</span> <span class="nu">false</span>;
+    <span class="kw">if</span> (ant == <span class="nu">NULL</span>) l-&gt;inicio = p-&gt;prox;   <span class="cm">/* removendo o primeiro */</span>
+    <span class="kw">else</span> ant-&gt;prox = p-&gt;prox;               <span class="cm">/* "pula" o nó */</span>
+    free(p);
+    l-&gt;qtd--;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}</code></pre>
+<p>Repare no padrão dos dois ponteiros <code>ant</code> e <code>p</code> andando juntos: numa lista simples, só dá para alterar o ponteiro de um nó se você estiver <b>parado no anterior</b>.</p>
+<h2>4.4 Variações do encadeamento</h2>
+<h3>Com nó-cabeça (sentinela)</h3>
+  <figure><div class="fig"><img src="figs/lista_cabeca.svg" alt="O nó-cabeça é um nó fixo no começo que não guarda dado útil." loading="lazy"></div><figcaption><b>Figura 4.4.</b> O nó-cabeça é um nó fixo no começo que não guarda dado útil.</figcaption></figure>
+  <p>Como sempre existe um nó antes do primeiro elemento, <code>ant</code> nunca é <code>NULL</code> e os casos especiais “inserir/remover no início” somem: o mesmo código serve para qualquer posição. O nó-cabeça também pode guardar informações da lista (tamanho, por exemplo).</p>
+<h3>Circular</h3>
+  <figure><div class="fig"><img src="figs/lista_circ.svg" alt="Lista circular: o último nó aponta para o primeiro." loading="lazy"></div><figcaption><b>Figura 4.5.</b> Lista circular: o último nó aponta para o primeiro.</figcaption></figure>
+  <p>Não existe <code>NULL</code> no fim. Útil para rodízios (escalonamento round-robin, jogos de turnos). Cuidado com o laço de percurso: a condição de parada passa a ser “voltei ao início” (<code>do { … } while (p != L)</code>), senão o laço é infinito. Truque comum: guardar o ponteiro para o <b>último</b> nó; o primeiro é <code>ultimo-&gt;prox</code>, e inserir no início ou no fim fica O(1).</p>
+<h3>Duplamente encadeada</h3>
+  <figure><div class="fig"><img src="figs/lista_dupla.svg" alt="Cada nó tem ponteiros para o anterior e para o próximo." loading="lazy"></div><figcaption><b>Figura 4.6.</b> Cada nó tem ponteiros para o anterior e para o próximo.</figcaption></figure>
+  <p>Com o ponteiro <code>ant</code> em cada nó, dá para andar nos dois sentidos e remover um nó conhecendo só ele mesmo, sem procurar o anterior:</p>
+<pre><code class="c"><span class="kw">typedef</span> <span class="kw">struct</span> no2 { <span class="ty">int</span> info; <span class="kw">struct</span> no2 *ant, *prox; } <span class="ty">NO2</span>;
+
+<span class="cm">/* remove o nó p de uma lista dupla com início em *L */</span>
+<span class="ty">void</span> remover_no(<span class="ty">NO2</span> **L, <span class="ty">NO2</span> *p) {
+    <span class="kw">if</span> (p-&gt;ant != <span class="nu">NULL</span>) p-&gt;ant-&gt;prox = p-&gt;prox;
+    <span class="kw">else</span> *L = p-&gt;prox;                     <span class="cm">/* p era o primeiro */</span>
+    <span class="kw">if</span> (p-&gt;prox != <span class="nu">NULL</span>) p-&gt;prox-&gt;ant = p-&gt;ant;
+    free(p);
+}
+
+<span class="cm">/* insere novo depois de p: quatro ponteiros mudam */</span>
+<span class="ty">void</span> inserir_depois(<span class="ty">NO2</span> *p, <span class="ty">NO2</span> *novo) {
+    novo-&gt;ant = p;
+    novo-&gt;prox = p-&gt;prox;
+    <span class="kw">if</span> (p-&gt;prox != <span class="nu">NULL</span>) p-&gt;prox-&gt;ant = novo;
+    p-&gt;prox = novo;
+}</code></pre>
+<p>A variação mais “completa” é a <b>duplamente encadeada circular com nó-cabeça</b>: sem casos especiais e com acesso O(1) às duas pontas. É a base de um bom deque.</p>
+<table class="wide"><tr><th class="l">Variação</th><th class="l">Ganha</th><th class="l">Paga</th></tr>
+<tr><td class="l">Simples</td><td class="l">menos memória por nó</td><td class="l">só anda para frente; precisa do anterior para remover</td></tr>
+<tr><td class="l">Com nó-cabeça</td><td class="l">código sem casos especiais</td><td class="l">um nó a mais</td></tr>
+<tr><td class="l">Circular</td><td class="l">percorre a partir de qualquer nó; início e fim em O(1) com ponteiro para o último</td><td class="l">cuidado com laços infinitos</td></tr>
+<tr><td class="l">Dupla</td><td class="l">anda nos dois sentidos; remove dado o nó em O(1)</td><td class="l">um ponteiro a mais por nó; mais ligações para manter</td></tr></table>
+<h2>4.5 Sequencial × encadeada</h2>
+<table class="wide"><tr><th class="l">Operação</th><th>Sequencial</th><th>Encadeada</th></tr>
+<tr><td class="l">Acessar o i-ésimo</td><td>O(1)</td><td>O(n)</td></tr>
+<tr><td class="l">Buscar (ordenada)</td><td>O(log n), busca binária</td><td>O(n)</td></tr>
+<tr><td class="l">Inserir/remover dado o local</td><td>O(n), desloca</td><td>O(1), religa ponteiros</td></tr>
+<tr><td class="l">Tamanho</td><td>fixo</td><td>cresce conforme a memória</td></tr>
+<tr><td class="l">Memória extra</td><td>vetor ocioso</td><td>1 ou 2 ponteiros por nó</td></tr></table>
+<h2>4.6 Listas generalizadas</h2>
+<p>Numa <b>lista generalizada</b>, cada elemento pode ser um <b>átomo</b> (um dado simples) ou <b>outra lista</b>. A definição é recursiva, como em LISP: <code>L = (a, (b, c), d)</code> tem três elementos, e o segundo é a lista <code>(b, c)</code>. Também existe a lista vazia <code>( )</code>.</p>
+  <figure><div class="fig"><img src="figs/lista_gen.svg" alt="Cada nó tem um campo tipo: A (átomo, guarda o valor) ou S (sublista, guarda um ponteiro para o primeiro nó da sublista)." loading="lazy"></div><figcaption><b>Figura 4.7.</b> Cada nó tem um campo tipo: A (átomo, guarda o valor) ou S (sublista, guarda um ponteiro para o primeiro nó da sublista).</figcaption></figure>
+  <pre><code class="c"><span class="kw">typedef</span> <span class="kw">struct</span> ng {
+    <span class="ty">int</span> tipo;                 <span class="cm">/* 0 = átomo, 1 = sublista */</span>
+    <span class="kw">union</span> {
+        <span class="ty">char</span> atomo;
+        <span class="kw">struct</span> ng *sub;       <span class="cm">/* primeiro nó da sublista */</span>
+    } info;
+    <span class="kw">struct</span> ng *prox;
+} <span class="ty">NOG</span>;</code></pre>
+<p>Operações clássicas: <b>cabeça</b> (<i>head</i>) devolve o primeiro elemento; <b>cauda</b> (<i>tail</i>) devolve a lista sem o primeiro. Para <code>L = (a, (b, c), d)</code>: cabeça(L) = <code>a</code>; cauda(L) = <code>((b, c), d)</code>; cabeça(cauda(L)) = <code>(b, c)</code>. A <b>profundidade</b> é o maior número de parênteses aninhados: aqui, 2.</p>
+<p>Algoritmos sobre listas generalizadas são naturalmente <b>recursivos</b>: para um átomo, trate o valor; para uma sublista, chame a função de novo. Elas representam estruturas aninhadas: expressões, polinômios em várias variáveis, árvores gerais e o próprio código LISP.</p>
+<pre><code class="c"><span class="cm">/* conta todos os átomos, em qualquer nível */</span>
+<span class="ty">int</span> contar_atomos(<span class="ty">NOG</span> *L) {
+    <span class="ty">int</span> c = <span class="nu">0</span>;
+    <span class="kw">for</span> (<span class="ty">NOG</span> *p = L; p != <span class="nu">NULL</span>; p = p-&gt;prox)
+        c += (p-&gt;tipo == <span class="nu">0</span>) ? <span class="nu">1</span> : contar_atomos(p-&gt;info.sub);
+    <span class="kw">return</span> c;
+}</code></pre>
+<h2>4.7 Listas cruzadas (multilistas) e matrizes esparsas</h2>
+<p>Numa <b>lista cruzada</b> (ou ortogonal), cada nó pertence a <b>duas listas ao mesmo tempo</b>. O exemplo clássico é a <b>matriz esparsa</b>: uma matriz em que quase todos os valores são zero. Guardar só os não nulos economiza muita memória.</p>
+  <figure><div class="fig"><img src="figs/matriz_esparsa.svg" alt="Cada nó não nulo está na lista da sua linha (setas pretas) e na lista da sua coluna (setas azuis)." loading="lazy"></div><figcaption><b>Figura 4.8.</b> Cada nó não nulo está na lista da sua linha (setas pretas) e na lista da sua coluna (setas azuis).</figcaption></figure>
+  <pre><code class="c"><span class="kw">typedef</span> <span class="kw">struct</span> ne {
+    <span class="ty">int</span> lin, col;
+    <span class="ty">double</span> valor;
+    <span class="kw">struct</span> ne *direita;   <span class="cm">/* próximo não nulo na mesma linha */</span>
+    <span class="kw">struct</span> ne *abaixo;    <span class="cm">/* próximo não nulo na mesma coluna */</span>
+} <span class="ty">NOE</span>;
+
+<span class="kw">typedef</span> <span class="kw">struct</span> {
+    <span class="ty">int</span> m, n;
+    <span class="ty">NOE</span> **linhas;         <span class="cm">/* vetor de m cabeças de linha */</span>
+    <span class="ty">NOE</span> **colunas;        <span class="cm">/* vetor de n cabeças de coluna */</span>
+} <span class="ty">MATRIZ_ESPARSA</span>;</code></pre>
+<ul>
+<li><b>Acessar (i, j)</b>: percorra a lista da linha i até achar a coluna j (ou passar dela). Custo proporcional aos não nulos da linha.</li>
+<li><b>Somar linhas, multiplicar</b>: percorre só os não nulos, com ganho enorme quando a matriz é grande e vazia.</li>
+<li><b>Quando compensa?</b> Cada nó guarda 5 campos em vez de 1 número. Para uma matriz m × n com k não nulos, a versão cruzada usa algo como 5k + m + n posições, contra m·n da matriz comum. Compensa quando k é bem menor que m·n.</li>
+</ul>
+<div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Matriz 1000 × 1000 com 3000 não nulos. Comum: 1 000 000 posições. Cruzada: 5 · 3000 + 1000 + 1000 = <b>17 000</b>, cerca de 1,7% do espaço.</p></div>
+<div class="callout try"><div class="ct">Exercício 4.1</div><p>(a) Numa lista simples, por que inserir no fim custa O(n) e como deixar O(1)? (b) Escreva a ordem correta das ligações para remover o nó <code>p</code> de uma lista dupla. (c) Para <code>L = ((a, b), c, (d, (e)))</code>, dê cabeça(L), cauda(L), o número de átomos e a profundidade. (d) Uma matriz 500 × 400 tem 1000 não nulos. Quantas posições ocupa a versão comum e (aproximadamente) a cruzada?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="arvores" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 5</div><h1>Árvores e Árvores Binárias</h1>
+<div class="goal">Objetivo: dominar a terminologia de árvores, as propriedades das árvores binárias, as duas representações (encadeada e vetor) e os quatro percursos.</div><div class="src">Base: árvores gerais, árvores binárias, percursos</div></div>
+<h2>5.1 Por que árvores</h2>
+<p>Listas são lineares: cada elemento tem um sucessor. Muitas coisas são <b>hierárquicas</b>: pastas e arquivos, o organograma de uma empresa, a estrutura de um livro, uma expressão matemática. A <b>árvore</b> representa isso. E, organizada do jeito certo (Caps. 6 a 9), permite buscar, inserir e remover em <b>O(log n)</b>.</p>
+<h2>5.2 Terminologia</h2>
+  <figure><div class="fig"><img src="figs/arvore_termos.svg" alt="Uma árvore com 8 nós e 4 níveis." loading="lazy"></div><figcaption><b>Figura 5.1.</b> Uma árvore com 8 nós e 4 níveis.</figcaption></figure>
+  <table class="wide"><tr><th class="l">Termo</th><th class="l">Significado</th><th class="l">Na figura</th></tr>
+<tr><td class="l"><b>Raiz</b></td><td class="l">nó sem pai, no topo</td><td class="l">A</td></tr>
+<tr><td class="l"><b>Pai / filho / irmãos</b></td><td class="l">ligação direta; irmãos têm o mesmo pai</td><td class="l">B é pai de D e E (irmãos)</td></tr>
+<tr><td class="l"><b>Folha</b> (nó externo)</td><td class="l">nó sem filhos</td><td class="l">D, H, G</td></tr>
+<tr><td class="l"><b>Nó interno</b></td><td class="l">tem pelo menos um filho</td><td class="l">A, B, C, E, F</td></tr>
+<tr><td class="l"><b>Grau de um nó</b></td><td class="l">número de filhos</td><td class="l">grau(B) = 2, grau(C) = 1</td></tr>
+<tr><td class="l"><b>Nível (profundidade)</b></td><td class="l">distância (em arestas) até a raiz</td><td class="l">nível(H) = 3</td></tr>
+<tr><td class="l"><b>Altura</b></td><td class="l">maior distância de um nó até uma folha abaixo dele</td><td class="l">altura(A) = 3</td></tr>
+<tr><td class="l"><b>Subárvore</b></td><td class="l">um nó e todos os seus descendentes</td><td class="l">C, F, G</td></tr>
+<tr><td class="l"><b>Ancestral / descendente</b></td><td class="l">qualquer nó no caminho até a raiz / abaixo</td><td class="l">A e B são ancestrais de H</td></tr>
+<tr><td class="l"><b>Floresta</b></td><td class="l">conjunto de árvores disjuntas</td><td class="l">tirando A, sobram 2 árvores</td></tr></table>
+<div class="callout warn"><div class="ct">Cuidado na prova: convenção de altura</div><p>Há duas convenções. Contando <b>arestas</b>: folha tem altura 0 e árvore vazia, −1. Contando <b>níveis (nós)</b>: folha tem altura 1 e árvore vazia, 0. Esta apostila usa <b>arestas</b> no texto e, nos códigos de AVL, a altura em nós (vazia = 0), porque simplifica o código. A diferença entre alturas, usada no balanceamento, é a mesma nas duas. Use a convenção do seu professor.</p></div>
+<h2>5.3 Árvores binárias</h2>
+<p>Uma <b>árvore binária</b> é vazia ou é formada por uma raiz e duas subárvores binárias, a <b>esquerda</b> e a <b>direita</b>. Cada nó tem no máximo 2 filhos, e a posição importa: um filho à esquerda é diferente de um filho à direita.</p>
+  <figure><div class="fig"><img src="figs/bin_tipos.svg" alt="Cheia: todos os níveis completos. Completa: todos os níveis cheios, exceto o último, preenchido da esquerda para a direita. Degenerada: cada nó tem um filho só, e a árvore vira uma lista." loading="lazy"></div><figcaption><b>Figura 5.2.</b> Cheia: todos os níveis completos. Completa: todos os níveis cheios, exceto o último, preenchido da esquerda para a direita. Degenerada: cada nó tem um filho só, e a árvore vira uma lista.</figcaption></figure>
+  <p>Também se usa <b>estritamente binária</b>: todo nó tem 0 ou 2 filhos (nunca só 1).</p>
+<h3>Propriedades (altura h em arestas)</h3>
+<ul>
+<li>O nível i tem no máximo <b>2<sup>i</sup></b> nós.</li>
+<li>Uma árvore de altura h tem no máximo <b>2<sup>h+1</sup> − 1</b> nós (cheia).</li>
+<li>Com n nós, a altura mínima é <b>⌊log₂ n⌋</b> (árvore completa) e a máxima é <b>n − 1</b> (degenerada).</li>
+<li>Uma árvore binária com n nós tem <b>n + 1</b> ponteiros nulos.</li>
+</ul>
+<div class="callout key"><div class="ct">Ideia-chave</div><p>A altura decide o custo das operações em árvores de busca. Entre a completa (altura ≈ log₂ n) e a degenerada (altura n − 1), a diferença para n = 1 000 000 é de 20 contra 999 999 passos. Os Caps. 7 e 8 servem para garantir que a altura fique perto de log₂ n.</p></div>
+<h2>5.4 Representações</h2>
+<h3>Encadeada</h3>
+<pre><code class="c"><span class="kw">typedef</span> <span class="kw">struct</span> no_arv {
+    <span class="ty">int</span> info;
+    <span class="kw">struct</span> no_arv *esq, *dir;
+} <span class="ty">NO_ARV</span>;</code></pre>
+<h3>Em vetor (só para árvores completas)</h3>
+<p>Guarde os nós nível por nível, da esquerda para a direita, começando no índice 0. Então, para o nó do índice <b>i</b>: filho esquerdo em <b>2i + 1</b>, filho direito em <b>2i + 2</b> e pai em <b>(i − 1) / 2</b> (divisão inteira). Não é preciso guardar ponteiros. É a representação do heap (Cap. 9). Para árvores não completas, sobram buracos no vetor e há desperdício.</p>
+<h3>Árvores gerais como binárias</h3>
+<p>Um nó de árvore geral pode ter muitos filhos. A representação <b>filho-esquerdo / irmão-direito</b> transforma qualquer árvore em binária: o ponteiro esquerdo aponta para o <b>primeiro filho</b> e o direito para o <b>próximo irmão</b>.</p>
+<h2>5.5 Percursos</h2>
+<p>Percorrer é visitar cada nó exatamente uma vez. Os três percursos em profundidade diferem só em <b>quando</b> a raiz é visitada:</p>
+  <figure><div class="fig"><img src="figs/percursos.svg" alt="Os quatro percursos na mesma árvore." loading="lazy"></div><figcaption><b>Figura 5.3.</b> Os quatro percursos na mesma árvore.</figcaption></figure>
+  <pre><code class="c"><span class="ty">void</span> pre_ordem(<span class="ty">NO_ARV</span> *r) {          <span class="cm">/* Raiz, Esquerda, Direita */</span>
+    <span class="kw">if</span> (r == <span class="nu">NULL</span>) <span class="kw">return</span>;
+    visitar(r);
+    pre_ordem(r-&gt;esq);
+    pre_ordem(r-&gt;dir);
+}
+<span class="ty">void</span> em_ordem(<span class="ty">NO_ARV</span> *r) {           <span class="cm">/* Esquerda, Raiz, Direita */</span>
+    <span class="kw">if</span> (r == <span class="nu">NULL</span>) <span class="kw">return</span>;
+    em_ordem(r-&gt;esq);
+    visitar(r);
+    em_ordem(r-&gt;dir);
+}
+<span class="ty">void</span> pos_ordem(<span class="ty">NO_ARV</span> *r) {          <span class="cm">/* Esquerda, Direita, Raiz */</span>
+    <span class="kw">if</span> (r == <span class="nu">NULL</span>) <span class="kw">return</span>;
+    pos_ordem(r-&gt;esq);
+    pos_ordem(r-&gt;dir);
+    visitar(r);
+}</code></pre>
+<p>O percurso <b>em nível</b> (em largura) usa uma <b>fila</b>: enfileire a raiz; enquanto a fila não estiver vazia, remova um nó, visite-o e enfileire seus filhos (esquerdo, depois direito).</p>
+<div class="callout intuit"><div class="ct">Truque para a prova</div><p>Contorne a árvore por fora, começando à esquerda da raiz, como se fosse uma cerca. Pré-ordem: anote o nó quando passar pela <b>esquerda</b> dele. Em-ordem: quando passar por <b>baixo</b>. Pós-ordem: quando passar pela <b>direita</b>.</p></div>
+<h3>Aplicações que caem em prova</h3>
+<ul>
+<li><b>Liberar a árvore</b>: tem que ser em <b>pós-ordem</b> (filhos antes do pai), senão você perde os ponteiros para os filhos.</li>
+<li><b>Árvore de expressão</b> (<code>(a + b) * c</code>: raiz *, com + à esquerda): pré-ordem dá a prefixa <code>* + a b c</code>, em-ordem dá a infixa (sem parênteses) e pós-ordem dá a pós-fixa <code>a b + c *</code>.</li>
+<li><b>Reconstrução</b>: pré-ordem + em-ordem (ou pós + em) determinam a árvore. A pré-ordem diz quem é a raiz; a em-ordem diz quem fica à esquerda e quem fica à direita dela.</li>
+</ul>
+<pre><code class="c"><span class="ty">int</span> altura(<span class="ty">NO_ARV</span> *r) {               <span class="cm">/* em arestas; vazia = -1 */</span>
+    <span class="kw">if</span> (r == <span class="nu">NULL</span>) <span class="kw">return</span> -<span class="nu">1</span>;
+    <span class="ty">int</span> he = altura(r-&gt;esq), hd = altura(r-&gt;dir);
+    <span class="kw">return</span> <span class="nu">1</span> + (he &gt; hd ? he : hd);
+}
+<span class="ty">int</span> contar(<span class="ty">NO_ARV</span> *r) { <span class="kw">return</span> r == <span class="nu">NULL</span> ? <span class="nu">0</span> : <span class="nu">1</span> + contar(r-&gt;esq) + contar(r-&gt;dir); }
+<span class="ty">void</span> apagar(<span class="ty">NO_ARV</span> *r) {              <span class="cm">/* pós-ordem! */</span>
+    <span class="kw">if</span> (r == <span class="nu">NULL</span>) <span class="kw">return</span>;
+    apagar(r-&gt;esq); apagar(r-&gt;dir); free(r);
+}</code></pre>
+<div class="callout ex"><div class="ct">Exemplo resolvido: reconstrução</div><p>Pré-ordem: <code>A B D E C F</code>; em-ordem: <code>D B E A C F</code>. A pré começa com A, então A é a raiz. Na em-ordem, à esquerda de A estão <code>D B E</code> e à direita, <code>C F</code>. Na subárvore esquerda, a pré (B D E) diz que B é a raiz, com D à esquerda e E à direita. Na direita, C é a raiz e F está à sua direita (F vem depois de C na em-ordem). O resultado é a árvore da Figura 5.3.</p></div>
+<div class="callout try"><div class="ct">Exercício 5.1</div><p>(a) Na árvore da Figura 5.1, qual a altura de B e o nível de G? Quantas folhas há? (b) Uma árvore binária tem altura 4 (em arestas). Qual o número máximo de nós? E o mínimo? (c) Dê a pré, a em e a pós-ordem da árvore de expressão de <code>a * (b - c) + d</code>. (d) Reconstrua a árvore com pós-ordem <code>D E B F C A</code> e em-ordem <code>D B E A C F</code>.</p></div>
+
+</section>
+<section class="ap-cap" data-cap="abb" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 6</div><h1>Árvore Binária de Busca (ABB)</h1>
+<div class="goal">Objetivo: entender a propriedade de busca, implementar busca, inserção e os três casos de remoção, e ver por que a ABB pode degenerar.</div><div class="src">Base: ABB (BST): busca, inserção, remoção, custo</div></div>
+<h2>6.1 A propriedade de busca</h2>
+<p>Uma <b>ABB</b> (<i>Binary Search Tree</i>) é uma árvore binária em que, para <b>todo</b> nó com chave k:</p>
+<ul><li>todas as chaves da subárvore <b>esquerda</b> são <b>menores</b> que k;</li><li>todas as chaves da subárvore <b>direita</b> são <b>maiores</b> que k.</li></ul>
+  <figure><div class="fig"><img src="figs/abb_ex.svg" alt="Uma ABB. Repare que 35 está à direita de 30, mas à esquerda de 40 e de 50: a regra vale em todos os níveis." loading="lazy"></div><figcaption><b>Figura 6.1.</b> Uma ABB. Repare que 35 está à direita de 30, mas à esquerda de 40 e de 50: a regra vale em todos os níveis.</figcaption></figure>
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>O percurso <b>em-ordem</b> de uma ABB lista as chaves em <b>ordem crescente</b>. Na figura: 10 20 30 35 40 50 60 70 80 90. É a forma mais rápida de conferir se uma árvore é ABB.</p></div>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><p>Não basta comparar cada nó com seus filhos diretos. Uma árvore com raiz 50, filho esquerdo 30 e, à direita do 30, um 60, passa nesse teste local, mas <b>não</b> é ABB: o 60 está à esquerda do 50. A regra vale para a subárvore inteira.</p></div>
+<h2>6.2 Busca</h2>
+<p>Compare a chave com a raiz: igual, achou; menor, desça à esquerda; maior, desça à direita. Se chegar em <code>NULL</code>, a chave não está na árvore. Cada passo desce um nível, então o custo é <b>O(h)</b>, onde h é a altura.</p>
+  <figure><div class="fig"><img src="figs/abb_busca.svg" alt="Buscando 35: 50 → 30 → 40 → 35. Só um caminho da raiz é visitado." loading="lazy"></div><figcaption><b>Figura 6.2.</b> Buscando 35: 50 → 30 → 40 → 35. Só um caminho da raiz é visitado.</figcaption></figure>
+  <pre><code class="c"><span class="ty">NO_ARV</span> *abb_buscar(<span class="ty">NO_ARV</span> *r, <span class="ty">int</span> x) {
+    <span class="kw">while</span> (r != <span class="nu">NULL</span> &amp;&amp; r-&gt;info != x)
+        r = (x &lt; r-&gt;info) ? r-&gt;esq : r-&gt;dir;
+    <span class="kw">return</span> r;                         <span class="cm">/* NULL se não achou */</span>
+}</code></pre>
+<p>Mínimo: desça sempre à <b>esquerda</b> até não dar mais. Máximo: sempre à <b>direita</b>.</p>
+<h2>6.3 Inserção</h2>
+<p>Faça a busca pela chave nova. Ela termina num ponteiro <code>NULL</code>: é exatamente ali que o novo nó entra, <b>sempre como folha</b>.</p>
+<pre><code class="c"><span class="ty">NO_ARV</span> *abb_inserir(<span class="ty">NO_ARV</span> *r, <span class="ty">int</span> x) {      <span class="cm">/* devolve a nova raiz da subárvore */</span>
+    <span class="kw">if</span> (r == <span class="nu">NULL</span>) {
+        <span class="ty">NO_ARV</span> *n = malloc(<span class="kw">sizeof</span>(<span class="ty">NO_ARV</span>));
+        n-&gt;info = x; n-&gt;esq = n-&gt;dir = <span class="nu">NULL</span>;
+        <span class="kw">return</span> n;
+    }
+    <span class="kw">if</span> (x &lt; r-&gt;info) r-&gt;esq = abb_inserir(r-&gt;esq, x);
+    <span class="kw">else</span> <span class="kw">if</span> (x &gt; r-&gt;info) r-&gt;dir = abb_inserir(r-&gt;dir, x);
+    <span class="cm">/* x == r-&gt;info: chave repetida, não insere */</span>
+    <span class="kw">return</span> r;
+}
+<span class="cm">/* uso: raiz = abb_inserir(raiz, 42); */</span></code></pre>
+<div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Inserir 50, 30, 70, 20, 40, 60, 80, 10, 35, 90 numa ABB vazia gera a árvore da Figura 6.1. O 35, por exemplo: 35 &lt; 50 (esquerda), 35 &gt; 30 (direita), 35 &lt; 40 (esquerda) → vira filho esquerdo do 40.</p></div>
+<h2>6.4 Remoção: três casos</h2>
+<p>Primeiro, encontre o nó. Depois, depende de quantos filhos ele tem:</p>
+  <figure><div class="fig"><img src="figs/abb_rem1.svg" alt="Caso 1: folha. Basta remover e fazer o pai apontar para NULL." loading="lazy"></div><figcaption><b>Figura 6.3.</b> Caso 1: folha. Basta remover e fazer o pai apontar para NULL.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/abb_rem2.svg" alt="Caso 2: um filho. O filho “sobe” e ocupa o lugar do removido." loading="lazy"></div><figcaption><b>Figura 6.4.</b> Caso 2: um filho. O filho “sobe” e ocupa o lugar do removido.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/abb_rem3.svg" alt="Caso 3: dois filhos. Copie o sucessor (menor da subárvore direita) para o nó e remova o sucessor, que cai no caso 1 ou 2." loading="lazy"></div><figcaption><b>Figura 6.5.</b> Caso 3: dois filhos. Copie o sucessor (menor da subárvore direita) para o nó e remova o sucessor, que cai no caso 1 ou 2.</figcaption></figure>
+  <ol class="steps">
+<li><b>Folha</b>: libere o nó; o ponteiro do pai vira <code>NULL</code>.</li>
+<li><b>Um filho</b>: o ponteiro do pai passa a apontar para o único filho; libere o nó.</li>
+<li><b>Dois filhos</b>: troque a chave pela do <b>sucessor em-ordem</b> (o menor da subárvore direita: um passo à direita, depois tudo à esquerda) ou do <b>predecessor</b> (o maior da subárvore esquerda). Depois remova esse sucessor/predecessor, que tem no máximo um filho.</li>
+</ol>
+<pre><code class="c"><span class="ty">NO_ARV</span> *abb_remover(<span class="ty">NO_ARV</span> *r, <span class="ty">int</span> x) {
+    <span class="kw">if</span> (r == <span class="nu">NULL</span>) <span class="kw">return</span> <span class="nu">NULL</span>;                         <span class="cm">/* não achou */</span>
+    <span class="kw">if</span> (x &lt; r-&gt;info) r-&gt;esq = abb_remover(r-&gt;esq, x);
+    <span class="kw">else</span> <span class="kw">if</span> (x &gt; r-&gt;info) r-&gt;dir = abb_remover(r-&gt;dir, x);
+    <span class="kw">else</span> {                                              <span class="cm">/* achou */</span>
+        <span class="kw">if</span> (r-&gt;esq == <span class="nu">NULL</span> || r-&gt;dir == <span class="nu">NULL</span>) {         <span class="cm">/* casos 1 e 2 */</span>
+            <span class="ty">NO_ARV</span> *filho = (r-&gt;esq != <span class="nu">NULL</span>) ? r-&gt;esq : r-&gt;dir;
+            free(r);
+            <span class="kw">return</span> filho;                               <span class="cm">/* pode ser NULL */</span>
+        }
+        <span class="ty">NO_ARV</span> *s = r-&gt;dir;                             <span class="cm">/* caso 3: sucessor */</span>
+        <span class="kw">while</span> (s-&gt;esq != <span class="nu">NULL</span>) s = s-&gt;esq;
+        r-&gt;info = s-&gt;info;
+        r-&gt;dir = abb_remover(r-&gt;dir, s-&gt;info);
+    }
+    <span class="kw">return</span> r;
+}</code></pre>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><p>O sucessor <b>nunca tem filho esquerdo</b> (senão ele não seria o menor). Por isso removê-lo é sempre o caso 1 ou 2. Se a questão não disser, pergunte-se qual convenção o professor usa: sucessor ou predecessor. As árvores resultantes são diferentes.</p></div>
+<h2>6.5 Custo e degeneração</h2>
+<p>Busca, inserção e remoção custam <b>O(h)</b>. Se a árvore estiver equilibrada, h ≈ log₂ n. Mas a forma depende da <b>ordem de inserção</b>: inserir chaves já ordenadas produz uma árvore degenerada, com h = n − 1, e tudo vira O(n), como numa lista.</p>
+  <figure><div class="fig"><img src="figs/abb_degen.svg" alt="As mesmas 5 chaves, em ordens diferentes, geram alturas diferentes." loading="lazy"></div><figcaption><b>Figura 6.6.</b> As mesmas 5 chaves, em ordens diferentes, geram alturas diferentes.</figcaption></figure>
+  <table><tr><th>Caso</th><th>Altura</th><th>Busca/inserção/remoção</th></tr>
+<tr><td class="l">melhor / médio (chaves aleatórias)</td><td>O(log n)</td><td>O(log n)</td></tr>
+<tr><td class="l">pior (chaves ordenadas)</td><td>n − 1</td><td>O(n)</td></tr></table>
+<p>Para garantir O(log n) <b>sempre</b>, a árvore precisa se rebalancear sozinha: é o que fazem a AVL (Cap. 7) e a rubro-negra (Cap. 8).</p>
+<div class="callout try"><div class="ct">Exercício 6.1</div><p>(a) Insira, nesta ordem, 45, 20, 70, 10, 30, 50, 90, 35, 60 numa ABB vazia e desenhe o resultado. (b) Na árvore obtida, remova o 20 usando o sucessor. (c) Depois, remova o 45 (raiz) usando o sucessor. (d) Qual a sequência em-ordem final?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="avl" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 7</div><h1>Árvores AVL</h1>
+<div class="goal">Objetivo: entender o fator de balanceamento, reconhecer os quatro casos de desbalanceamento e aplicar as rotações simples e duplas na inserção e na remoção.</div><div class="src">Base: AVL (Adelson-Velsky e Landis, 1962): fator de balanceamento, rotações</div></div>
+<h2>7.1 A regra da AVL</h2>
+<p>Uma <b>AVL</b> é uma ABB em que, para <b>todo</b> nó, as alturas das duas subárvores diferem de no máximo 1. Essa diferença é o <b>fator de balanceamento (FB)</b>:</p>
+<div class="formula">FB(nó) = altura(esquerda) − altura(direita)  ∈  {−1, 0, +1}</div>
+  <figure><div class="fig"><img src="figs/avl_fb.svg" alt="Uma AVL com o FB de cada nó (etiqueta amarela). FB = +1 pende para a esquerda; −1, para a direita." loading="lazy"></div><figcaption><b>Figura 7.1.</b> Uma AVL com o FB de cada nó (etiqueta amarela). FB = +1 pende para a esquerda; −1, para a direita.</figcaption></figure>
+  <p>Com essa regra, a altura de uma AVL com n nós é no máximo cerca de <b>1,44 log₂ n</b>. Busca, inserção e remoção ficam <b>O(log n) no pior caso</b>.</p>
+<div class="callout warn"><div class="ct">Cuidado na prova: sinal do FB</div><p>Alguns livros e professores definem FB = altura(direita) − altura(esquerda), que inverte todos os sinais. Confira a definição antes de aplicar a tabela de rotações. Aqui, <b>positivo = pesado à esquerda</b>.</p></div>
+<h2>7.2 Inserção: onde a árvore desequilibra</h2>
+<ol class="steps">
+<li>Insira como numa ABB comum (o novo nó entra como folha, FB = 0).</li>
+<li>Volte pelo caminho até a raiz atualizando as alturas e os FBs.</li>
+<li>O primeiro nó (de baixo para cima) com FB = <b>+2 ou −2</b> é o <b>nó desbalanceado</b>. Uma rotação nele resolve, e na inserção a árvore inteira volta a ficar AVL.</li>
+</ol>
+<h2>7.3 As rotações</h2>
+<p>Rotações rearranjam três nós e suas subárvores <b>preservando a ordem da ABB</b> (a em-ordem não muda) e reduzem a altura do lado pesado.</p>
+  <figure><div class="fig"><img src="figs/rot_dir.svg" alt="Rotação simples à direita: o filho esquerdo B sobe; C desce para a direita; a subárvore T3 troca de pai." loading="lazy"></div><figcaption><b>Figura 7.2.</b> Rotação simples à direita: o filho esquerdo B sobe; C desce para a direita; a subárvore T3 troca de pai.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/rot_esq.svg" alt="Rotação simples à esquerda: espelho da anterior." loading="lazy"></div><figcaption><b>Figura 7.3.</b> Rotação simples à esquerda: espelho da anterior.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/rot_dupla.svg" alt="Rotação dupla (esquerda-direita): o neto B, que estava “no meio”, vira a nova raiz." loading="lazy"></div><figcaption><b>Figura 7.4.</b> Rotação dupla (esquerda-direita): o neto B, que estava “no meio”, vira a nova raiz.</figcaption></figure>
+  <table class="wide"><tr><th>FB do nó</th><th>FB do filho do lado pesado</th><th class="l">Caso</th><th class="l">Rotação</th></tr>
+<tr><td>+2</td><td>filho esq. com +1 (ou 0)</td><td class="l">LL (esquerda-esquerda)</td><td class="l">simples à <b>direita</b> no nó</td></tr>
+<tr><td>−2</td><td>filho dir. com −1 (ou 0)</td><td class="l">RR (direita-direita)</td><td class="l">simples à <b>esquerda</b> no nó</td></tr>
+<tr><td>+2</td><td>filho esq. com −1</td><td class="l">LR (esquerda-direita)</td><td class="l">dupla: esquerda no filho, direita no nó</td></tr>
+<tr><td>−2</td><td>filho dir. com +1</td><td class="l">RL (direita-esquerda)</td><td class="l">dupla: direita no filho, esquerda no nó</td></tr></table>
+<div class="callout intuit"><div class="ct">Regra de bolso</div><p>Se os sinais do nó e do filho são <b>iguais</b> (linha reta: “/” ou “\”), rotação <b>simples</b> para o lado contrário do peso. Se são <b>opostos</b> (zigue-zague: “&lt;” ou “&gt;”), rotação <b>dupla</b>: primeiro endireite o zigue-zague no filho, depois faça a simples no nó.</p></div>
+<pre><code class="c"><span class="kw">typedef</span> <span class="kw">struct</span> no_avl {
+    <span class="ty">int</span> info, altura;               <span class="cm">/* altura em nós: folha = 1, NULL = 0 */</span>
+    <span class="kw">struct</span> no_avl *esq, *dir;
+} <span class="ty">NO_AVL</span>;
+
+<span class="ty">int</span> alt(<span class="ty">NO_AVL</span> *n) { <span class="kw">return</span> n ? n-&gt;altura : <span class="nu">0</span>; }
+<span class="ty">int</span> max(<span class="ty">int</span> a, <span class="ty">int</span> b) { <span class="kw">return</span> a &gt; b ? a : b; }
+<span class="ty">void</span> atualiza(<span class="ty">NO_AVL</span> *n) { n-&gt;altura = <span class="nu">1</span> + max(alt(n-&gt;esq), alt(n-&gt;dir)); }
+<span class="ty">int</span> fb(<span class="ty">NO_AVL</span> *n) { <span class="kw">return</span> alt(n-&gt;esq) - alt(n-&gt;dir); }
+
+<span class="ty">NO_AVL</span> *rot_direita(<span class="ty">NO_AVL</span> *c) {     <span class="cm">/* caso LL */</span>
+    <span class="ty">NO_AVL</span> *b = c-&gt;esq;
+    c-&gt;esq = b-&gt;dir;                 <span class="cm">/* T3 passa para C */</span>
+    b-&gt;dir = c;
+    atualiza(c); atualiza(b);        <span class="cm">/* C primeiro: agora ele está embaixo */</span>
+    <span class="kw">return</span> b;                        <span class="cm">/* nova raiz da subárvore */</span>
+}
+<span class="ty">NO_AVL</span> *rot_esquerda(<span class="ty">NO_AVL</span> *a) {    <span class="cm">/* caso RR */</span>
+    <span class="ty">NO_AVL</span> *b = a-&gt;dir;
+    a-&gt;dir = b-&gt;esq;
+    b-&gt;esq = a;
+    atualiza(a); atualiza(b);
+    <span class="kw">return</span> b;
+}
+
+<span class="ty">NO_AVL</span> *avl_inserir(<span class="ty">NO_AVL</span> *r, <span class="ty">int</span> x) {
+    <span class="kw">if</span> (r == <span class="nu">NULL</span>) {
+        <span class="ty">NO_AVL</span> *n = malloc(<span class="kw">sizeof</span>(<span class="ty">NO_AVL</span>));
+        n-&gt;info = x; n-&gt;altura = <span class="nu">1</span>; n-&gt;esq = n-&gt;dir = <span class="nu">NULL</span>;
+        <span class="kw">return</span> n;
+    }
+    <span class="kw">if</span> (x &lt; r-&gt;info) r-&gt;esq = avl_inserir(r-&gt;esq, x);
+    <span class="kw">else</span> <span class="kw">if</span> (x &gt; r-&gt;info) r-&gt;dir = avl_inserir(r-&gt;dir, x);
+    <span class="kw">else</span> <span class="kw">return</span> r;                               <span class="cm">/* repetido */</span>
+    atualiza(r);
+    <span class="ty">int</span> f = fb(r);
+    <span class="kw">if</span> (f &gt; <span class="nu">1</span>) {                                 <span class="cm">/* pesado à esquerda */</span>
+        <span class="kw">if</span> (fb(r-&gt;esq) &lt; <span class="nu">0</span>) r-&gt;esq = rot_esquerda(r-&gt;esq);   <span class="cm">/* LR */</span>
+        <span class="kw">return</span> rot_direita(r);                   <span class="cm">/* LL */</span>
+    }
+    <span class="kw">if</span> (f &lt; -<span class="nu">1</span>) {                                <span class="cm">/* pesado à direita */</span>
+        <span class="kw">if</span> (fb(r-&gt;dir) &gt; <span class="nu">0</span>) r-&gt;dir = rot_direita(r-&gt;dir);    <span class="cm">/* RL */</span>
+        <span class="kw">return</span> rot_esquerda(r);                  <span class="cm">/* RR */</span>
+    }
+    <span class="kw">return</span> r;
+}</code></pre>
+<h2>7.4 Exemplo: inserindo 10, 20, 30, 40, 50</h2>
+  <figure><div class="fig"><img src="figs/avl_seq.svg" alt="Numa ABB comum, essas inserções formariam uma lista. Na AVL, duas rotações mantêm a altura baixa." loading="lazy"></div><figcaption><b>Figura 7.5.</b> Numa ABB comum, essas inserções formariam uma lista. Na AVL, duas rotações mantêm a altura baixa.</figcaption></figure>
+  <div class="callout ex"><div class="ct">Passo a passo</div><ol style="margin:0">
+<li>10, 20, 30: o 10 fica com FB = −2 e o filho 20 com −1 (sinais iguais): <b>RR</b>, rotação à esquerda em 10. Raiz: 20.</li>
+<li>40 entra à direita do 30 (FBs: 30 → −1, 20 → −1). Tudo ok.</li>
+<li>50 entra à direita do 40. Subindo: 40 → −1, <b>30 → −2</b>. O primeiro desbalanceado de baixo para cima é o 30, com filho 40 em −1: <b>RR</b>, rotação à esquerda em 30. (O 20 também estaria com −2, mas a rotação em 30 já reduz a altura e conserta o 20.)</li>
+</ol></div>
+<h2>7.5 Remoção</h2>
+<p>Remova como numa ABB (casos 1, 2 e 3, Cap. 6) e volte até a raiz atualizando alturas e FBs, aplicando a mesma tabela de rotações onde FB = ±2. Duas diferenças em relação à inserção:</p>
+<ul>
+<li>O filho do lado pesado pode ter <b>FB = 0</b>. Nesse caso use a rotação <b>simples</b> (é o “ou 0” da tabela).</li>
+<li>Uma rotação pode diminuir a altura da subárvore e desbalancear um ancestral: na remoção, podem ser necessárias <b>várias rotações</b>, até O(log n), uma por nível.</li>
+</ul>
+<table><tr><th>Operação</th><th>Custo</th><th>Rotações</th></tr>
+<tr><td class="l">Busca</td><td>O(log n)</td><td>0</td></tr>
+<tr><td class="l">Inserção</td><td>O(log n)</td><td>no máximo 1 (simples ou dupla)</td></tr>
+<tr><td class="l">Remoção</td><td>O(log n)</td><td>até O(log n)</td></tr></table>
+<div class="callout try"><div class="ct">Exercício 7.1</div><p>(a) Insira 30, 20, 10, 25, 40, 50 numa AVL vazia. Indique cada rotação (tipo e nó) e desenhe a árvore final com os FBs. (b) Insira 50, 20, 30 numa AVL vazia: qual o caso e qual a rotação? (c) Por que a altura de uma AVL é O(log n)?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="rubronegra" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 8</div><h1>Árvores Rubro-Negras</h1>
+<div class="goal">Objetivo: conhecer as cinco propriedades, entender por que garantem altura logarítmica e aplicar os casos de correção na inserção.</div><div class="src">Base: árvores rubro-negras (red-black): propriedades, inserção, comparação com AVL</div></div>
+<h2>8.1 Balanceamento com cores</h2>
+<p>A AVL é rígida: mantém as alturas quase iguais e, para isso, pode fazer muitas rotações nas remoções. A <b>árvore rubro-negra</b> (RN) aceita um balanceamento mais folgado. Cada nó ganha um bit de <b>cor</b>, vermelho ou preto, e algumas regras sobre as cores garantem que nenhum caminho seja mais que o dobro de outro.</p>
+<h2>8.2 As cinco propriedades</h2>
+  <figure><div class="fig"><img src="figs/rn_ex.svg" alt="Uma árvore rubro-negra. Os NIL (folhas nulas) contam como nós pretos." loading="lazy"></div><figcaption><b>Figura 8.1.</b> Uma árvore rubro-negra. Os NIL (folhas nulas) contam como nós pretos.</figcaption></figure>
+  <ol class="steps">
+<li>Todo nó é <b>vermelho ou preto</b>.</li>
+<li>A <b>raiz é preta</b>.</li>
+<li>Toda folha nula (<b>NIL</b>) é preta.</li>
+<li>Se um nó é <b>vermelho</b>, seus dois filhos são <b>pretos</b> (não existem dois vermelhos seguidos).</li>
+<li>Para cada nó, todos os caminhos dele até as folhas NIL têm o <b>mesmo número de nós pretos</b>. Esse número é a <b>altura negra</b>.</li>
+</ol>
+<div class="callout key"><div class="ct">Ideia-chave: por que a altura fica O(log n)</div><p>Pela propriedade 5, todo caminho tem a mesma quantidade de pretos. Pela 4, entre dois pretos cabe no máximo um vermelho. Então o caminho mais longo (alternando preto e vermelho) tem no máximo o <b>dobro</b> do mais curto (só pretos). Daí sai que a altura é no máximo <b>2 log₂(n + 1)</b>.</p></div>
+<div class="callout ex"><div class="ct">Conferindo a Figura 8.1</div><p>Do 13 até qualquer NIL há exatamente 2 nós pretos internos (ex.: 13 → 8 → 1, ou 13 → 17 → 25), sem contar o próprio NIL. Nenhum vermelho (8, 17, 6, 22, 27) tem filho vermelho. A raiz 13 é preta. É uma RN válida.</p></div>
+<h2>8.3 Inserção</h2>
+<p>Insira como numa ABB e pinte o novo nó de <b>vermelho</b>. Pintar de vermelho nunca quebra a propriedade 5 (não muda a contagem de pretos); o único risco é quebrar a 4, se o <b>pai</b> também for vermelho. Nesse caso, olhe o <b>tio</b> (irmão do pai). Notação: N = novo, P = pai, G = avô, U = tio.</p>
+  <figure><div class="fig"><img src="figs/rn_caso1.svg" alt="Caso 1: tio vermelho. Recolore: P e U ficam pretos, G fica vermelho. O problema pode subir: repita o teste com G no papel de N." loading="lazy"></div><figcaption><b>Figura 8.2.</b> Caso 1: tio vermelho. Recolore: P e U ficam pretos, G fica vermelho. O problema pode subir: repita o teste com G no papel de N.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/rn_caso2.svg" alt="Caso 2: tio preto e N em zigue-zague (N é filho direito de P, que é filho esquerdo). Rotação em P transforma no caso 3." loading="lazy"></div><figcaption><b>Figura 8.3.</b> Caso 2: tio preto e N em zigue-zague (N é filho direito de P, que é filho esquerdo). Rotação em P transforma no caso 3.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/rn_caso3.svg" alt="Caso 3: tio preto e N em linha reta. Rotação no avô G e troca das cores de P e G. Resolve de vez." loading="lazy"></div><figcaption><b>Figura 8.4.</b> Caso 3: tio preto e N em linha reta. Rotação no avô G e troca das cores de P e G. Resolve de vez.</figcaption></figure>
+  <ol class="steps">
+<li>Se N é a raiz: pinte de preto. Fim.</li>
+<li>Se P é preto: nada a fazer. Fim.</li>
+<li>P vermelho e <b>tio vermelho</b> (caso 1): recolore P e U de preto e G de vermelho; continue a partir de G.</li>
+<li>P vermelho e <b>tio preto</b> (ou NIL), N em zigue-zague (caso 2): rotação no <b>pai</b> para endireitar; agora o antigo P faz o papel de N, em linha reta.</li>
+<li>Tio preto e N em linha reta (caso 3): rotação no <b>avô</b> (no sentido contrário ao lado de P) e troque as cores de P e G. Fim.</li>
+<li>Ao final, garanta que a raiz é preta.</li>
+</ol>
+<p>Quando P é filho <b>direito</b> de G, os casos são os mesmos, espelhados.</p>
+<div class="callout ex"><div class="ct">Exemplo resolvido: inserir 10, 20, 30, 15, 25</div><ol style="margin:0">
+<li><b>10</b>: raiz, pintada de preto.</li>
+<li><b>20</b>: vermelho, filho direito do 10 (pai preto). Ok.</li>
+<li><b>30</b>: vermelho, filho do 20 (vermelho). Tio = NIL (preto), linha reta à direita → caso 3: rotação à esquerda em 10 e troca de cores. Raiz <b>20 preto</b>, filhos 10 e 30 vermelhos.</li>
+<li><b>15</b>: vai para a direita do 10 (vermelho). Tio 30 é vermelho → caso 1: 10 e 30 ficam pretos e 20 fica vermelho; 20 é a raiz, então volta a preto. Resultado: 20 (P), 10 (P), 30 (P), 15 (V).</li>
+<li><b>25</b>: esquerda do 30 (preto). Pai preto: nada a fazer.</li>
+</ol></div>
+<pre><code class="c"><span class="kw">typedef</span> <span class="kw">enum</span> { <span class="ty">VERMELHO</span>, <span class="ty">PRETO</span> } <span class="ty">COR</span>;
+<span class="kw">typedef</span> <span class="kw">struct</span> no_rn {
+    <span class="ty">int</span> info; <span class="ty">COR</span> cor;
+    <span class="kw">struct</span> no_rn *esq, *dir, *pai;
+} <span class="ty">NO_RN</span>;
+
+<span class="cm">/* corrige depois de inserir n (vermelho) como numa ABB */</span>
+<span class="ty">void</span> rn_corrigir(<span class="ty">NO_RN</span> **raiz, <span class="ty">NO_RN</span> *n) {
+    <span class="kw">while</span> (n != *raiz &amp;&amp; n-&gt;pai-&gt;cor == <span class="ty">VERMELHO</span>) {
+        <span class="ty">NO_RN</span> *p = n-&gt;pai, *g = p-&gt;pai;
+        <span class="kw">if</span> (p == g-&gt;esq) {
+            <span class="ty">NO_RN</span> *u = g-&gt;dir;
+            <span class="kw">if</span> (u != <span class="nu">NULL</span> &amp;&amp; u-&gt;cor == <span class="ty">VERMELHO</span>) {        <span class="cm">/* caso 1 */</span>
+                p-&gt;cor = <span class="ty">PRETO</span>; u-&gt;cor = <span class="ty">PRETO</span>; g-&gt;cor = <span class="ty">VERMELHO</span>;
+                n = g;
+            } <span class="kw">else</span> {
+                <span class="kw">if</span> (n == p-&gt;dir) {                          <span class="cm">/* caso 2 */</span>
+                    rot_esquerda(raiz, p);
+                    n = p; p = n-&gt;pai;
+                }
+                p-&gt;cor = <span class="ty">PRETO</span>; g-&gt;cor = <span class="ty">VERMELHO</span>;          <span class="cm">/* caso 3 */</span>
+                rot_direita(raiz, g);
+            }
+        } <span class="kw">else</span> { <span class="cm">/* espelho: troque esq &lt;-&gt; dir */</span> }
+    }
+    (*raiz)-&gt;cor = <span class="ty">PRETO</span>;
+}</code></pre>
+<p class="small">Aqui as rotações recebem <code>&amp;raiz</code> e atualizam também os ponteiros <code>pai</code>. NULL faz o papel de NIL preto.</p>
+<h2>8.4 Remoção (visão geral)</h2>
+<p>Remove-se como numa ABB. Se o nó que sai fisicamente é <b>vermelho</b>, nada muda. Se é <b>preto</b>, um caminho perde um preto (propriedade 5). O nó que ocupa seu lugar recebe um “preto extra” (fica <b>duplo preto</b>), e esse excesso é empurrado para cima ou absorvido conforme a cor do <b>irmão</b> e dos filhos dele, em quatro casos com recolorações e até 3 rotações. Os detalhes costumam ser cobrados só no nível conceitual.</p>
+<h2>8.5 AVL × rubro-negra</h2>
+<table class="wide"><tr><th class="l"></th><th class="l">AVL</th><th class="l">Rubro-negra</th></tr>
+<tr><td class="l">Regra</td><td class="l">|FB| ≤ 1 em todo nó</td><td class="l">5 propriedades de cor</td></tr>
+<tr><td class="l">Altura máxima</td><td class="l">≈ 1,44 log₂ n</td><td class="l">2 log₂(n + 1)</td></tr>
+<tr><td class="l">Busca</td><td class="l">um pouco mais rápida (mais baixa)</td><td class="l">O(log n)</td></tr>
+<tr><td class="l">Rotações por inserção</td><td class="l">até 1 (simples ou dupla)</td><td class="l">até 2</td></tr>
+<tr><td class="l">Rotações por remoção</td><td class="l">até O(log n)</td><td class="l">até 3</td></tr>
+<tr><td class="l">Informação extra por nó</td><td class="l">altura ou FB</td><td class="l">1 bit de cor</td></tr>
+<tr><td class="l">Onde aparece</td><td class="l">bancos de dados com muitas buscas</td><td class="l">C++ <code>std::map</code>, Java <code>TreeMap</code>, kernel do Linux</td></tr></table>
+<div class="callout deep"><div class="ct">Aprofundando: RN e árvores 2-3-4</div><p>Toda rubro-negra corresponde a uma <b>árvore 2-3-4</b> (árvore B de ordem 4): junte cada nó preto com seus filhos vermelhos num único “supernó” de 2, 3 ou 4 filhos. A recoloração do caso 1 corresponde a dividir um supernó cheio, e as rotações são só formas de redesenhar esse supernó como árvore binária.</p></div>
+<div class="callout try"><div class="ct">Exercício 8.1</div><p>(a) Uma árvore com raiz vermelha pode ser RN? E com dois vermelhos seguidos? (b) Insira 5, 10, 15, 20 numa RN vazia, indicando cada caso. (c) Uma RN tem 7 nós, todos pretos. Que forma ela precisa ter? Qual a sua altura negra (contando a raiz, sem contar os NIL)?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="heap" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 9</div><h1>Fila de Prioridade e Heap</h1>
+<div class="goal">Objetivo: conhecer o TAD fila de prioridade, entender o heap binário em vetor, implementar subida e descida, construir um heap em O(n) e ordenar com heapsort.</div><div class="src">Base: filas de prioridade, heap binário, heapsort</div></div>
+<h2>9.1 O TAD fila de prioridade</h2>
+<p>Numa <b>fila de prioridade</b>, cada elemento tem uma <b>prioridade</b> e sai primeiro quem tem a <b>maior</b> (ou a menor, na versão de mínimo), não quem chegou antes. Exemplos: pronto-socorro (casos graves primeiro), escalonador de processos do sistema operacional, eventos ordenados por tempo numa simulação, e algoritmos como Dijkstra e Huffman.</p>
+<table class="wide"><tr><th class="l">Operação</th><th class="l">O que faz</th></tr>
+<tr><td class="l"><code>fp_inserir(f, x)</code></td><td class="l">insere com sua prioridade</td></tr>
+<tr><td class="l"><code>fp_remover_max(f)</code></td><td class="l">remove e devolve o de maior prioridade</td></tr>
+<tr><td class="l"><code>fp_max(f)</code></td><td class="l">consulta o de maior prioridade sem remover</td></tr>
+<tr><td class="l"><code>fp_alterar(f, x, nova)</code></td><td class="l">muda a prioridade de um elemento</td></tr></table>
+<h3>Implementações possíveis</h3>
+<table class="wide"><tr><th class="l">Estrutura</th><th>Inserir</th><th>Remover máximo</th></tr>
+<tr><td class="l">Lista/vetor não ordenado</td><td>O(1)</td><td>O(n), procura o maior</td></tr>
+<tr><td class="l">Lista/vetor ordenado</td><td>O(n), acha o lugar</td><td>O(1)</td></tr>
+<tr><td class="l">Árvore balanceada (AVL/RN)</td><td>O(log n)</td><td>O(log n)</td></tr>
+<tr class="hl"><td class="l"><b>Heap binário</b></td><td><b>O(log n)</b></td><td><b>O(log n)</b>; consultar o máximo: O(1)</td></tr></table>
+<p>O heap empata com as árvores balanceadas em custo, mas é muito mais simples: cabe num vetor, sem ponteiros e sem rotações.</p>
+<h2>9.2 O heap binário</h2>
+<p>Um <b>heap máximo</b> é uma árvore binária que obedece a duas regras:</p>
+<ul>
+<li><b>Forma</b>: é <b>completa</b>, com todos os níveis cheios, exceto o último, preenchido da esquerda para a direita.</li>
+<li><b>Ordem</b>: todo pai é <b>maior ou igual</b> aos seus filhos. (No <b>heap mínimo</b>, menor ou igual.)</li>
+</ul>
+<p>Consequência: o maior elemento está sempre na <b>raiz</b>. Repare que o heap <b>não</b> é uma ABB: não há ordem entre irmãos, e a em-ordem não sai ordenada.</p>
+  <figure><div class="fig"><img src="figs/heap_basico.svg" alt="Um heap máximo e o vetor que o representa. A posição no vetor dá pai e filhos por conta." loading="lazy"></div><figcaption><b>Figura 9.1.</b> Um heap máximo e o vetor que o representa. A posição no vetor dá pai e filhos por conta.</figcaption></figure>
+  <div class="formula">esq(i) = 2i + 1     dir(i) = 2i + 2     pai(i) = (i − 1) / 2</div>
+<p class="small" style="text-align:center">(índices a partir de 0; com índices a partir de 1, fica esq = 2i, dir = 2i + 1, pai = i / 2)</p>
+<h2>9.3 Inserção: sobe (sift-up)</h2>
+<p>Coloque o novo elemento na primeira posição livre (fim do vetor), que mantém a árvore completa. Depois, enquanto ele for maior que o pai, <b>troque com o pai</b>. Ele sobe no máximo a altura da árvore: <b>O(log n)</b>.</p>
+  <figure><div class="fig"><img src="figs/heap_sobe.svg" alt="Inserindo 85: ele sobe duas vezes e para abaixo do 90." loading="lazy"></div><figcaption><b>Figura 9.2.</b> Inserindo 85: ele sobe duas vezes e para abaixo do 90.</figcaption></figure>
+  <pre><code class="c"><span class="kw">typedef</span> <span class="kw">struct</span> { <span class="ty">int</span> v[MAX]; <span class="ty">int</span> n; } <span class="ty">HEAP</span>;
+
+<span class="ty">void</span> trocar(<span class="ty">int</span> *a, <span class="ty">int</span> *b) { <span class="ty">int</span> t = *a; *a = *b; *b = t; }
+
+<span class="ty">void</span> subir(<span class="ty">HEAP</span> *h, <span class="ty">int</span> i) {
+    <span class="kw">while</span> (i &gt; <span class="nu">0</span> &amp;&amp; h-&gt;v[(i - <span class="nu">1</span>) / <span class="nu">2</span>] &lt; h-&gt;v[i]) {
+        trocar(&amp;h-&gt;v[i], &amp;h-&gt;v[(i - <span class="nu">1</span>) / <span class="nu">2</span>]);
+        i = (i - <span class="nu">1</span>) / <span class="nu">2</span>;
+    }
+}
+<span class="ty">bool</span> heap_inserir(<span class="ty">HEAP</span> *h, <span class="ty">int</span> x) {
+    <span class="kw">if</span> (h-&gt;n == MAX) <span class="kw">return</span> <span class="nu">false</span>;
+    h-&gt;v[h-&gt;n] = x;
+    subir(h, h-&gt;n);
+    h-&gt;n++;
+    <span class="kw">return</span> <span class="nu">true</span>;
+}</code></pre>
+<h2>9.4 Remoção do máximo: desce (sift-down)</h2>
+<p>O máximo é <code>v[0]</code>. Para tirá-lo sem deixar buraco, mova o <b>último</b> elemento para a raiz e diminua <code>n</code>. Agora a raiz provavelmente é pequena demais: enquanto ela for menor que algum filho, <b>troque com o MAIOR filho</b>. Também é <b>O(log n)</b>.</p>
+  <figure><div class="fig"><img src="figs/heap_desce.svg" alt="Removendo o 90: o 20 vai para a raiz e desce trocando com o maior filho até virar folha." loading="lazy"></div><figcaption><b>Figura 9.3.</b> Removendo o 90: o 20 vai para a raiz e desce trocando com o maior filho até virar folha.</figcaption></figure>
+  <pre><code class="c"><span class="ty">void</span> descer(<span class="ty">HEAP</span> *h, <span class="ty">int</span> i) {
+    <span class="kw">while</span> (<span class="nu">1</span>) {
+        <span class="ty">int</span> e = <span class="nu">2</span> * i + <span class="nu">1</span>, d = <span class="nu">2</span> * i + <span class="nu">2</span>, maior = i;
+        <span class="kw">if</span> (e &lt; h-&gt;n &amp;&amp; h-&gt;v[e] &gt; h-&gt;v[maior]) maior = e;
+        <span class="kw">if</span> (d &lt; h-&gt;n &amp;&amp; h-&gt;v[d] &gt; h-&gt;v[maior]) maior = d;
+        <span class="kw">if</span> (maior == i) <span class="kw">return</span>;               <span class="cm">/* já está no lugar */</span>
+        trocar(&amp;h-&gt;v[i], &amp;h-&gt;v[maior]);
+        i = maior;
+    }
+}
+<span class="ty">bool</span> heap_remover_max(<span class="ty">HEAP</span> *h, <span class="ty">int</span> *x) {
+    <span class="kw">if</span> (h-&gt;n == <span class="nu">0</span>) <span class="kw">return</span> <span class="nu">false</span>;
+    *x = h-&gt;v[<span class="nu">0</span>];
+    h-&gt;v[<span class="nu">0</span>] = h-&gt;v[--h-&gt;n];                <span class="cm">/* último vai para a raiz */</span>
+    descer(h, <span class="nu">0</span>);
+    <span class="kw">return</span> <span class="nu">true</span>;
+}</code></pre>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><p>Na descida, troque com o <b>maior</b> dos filhos (no heap mínimo, com o <b>menor</b>). Trocar com o filho errado coloca um elemento menor acima de um maior e quebra o heap.</p></div>
+<h2>9.5 Construir um heap em O(n)</h2>
+<p>Inserir n elementos um por um custa O(n log n). Dá para fazer melhor com o vetor inteiro de uma vez: as folhas (metade final do vetor) já são heaps de um elemento. Basta chamar <code>descer</code> em cada nó interno, <b>do último para o primeiro</b>: de <code>n/2 − 1</code> até <code>0</code>.</p>
+<pre><code class="c"><span class="ty">void</span> heap_construir(<span class="ty">HEAP</span> *h) {
+    <span class="kw">for</span> (<span class="ty">int</span> i = h-&gt;n / <span class="nu">2</span> - <span class="nu">1</span>; i &gt;= <span class="nu">0</span>; i--)
+        descer(h, i);
+}</code></pre>
+<div class="callout deep"><div class="ct">Aprofundando: por que O(n)?</div><p>Metade dos nós são folhas e não descem nada; um quarto desce no máximo 1 nível; um oitavo, 2 níveis… A soma n/4·1 + n/8·2 + n/16·3 + … converge para cerca de n. Quase todo o trabalho é feito em nós baixos, que descem pouco.</p></div>
+<div class="callout ex"><div class="ct">Exemplo resolvido: construir a partir de [30, 60, 90, 40, 50, 80, 95]</div>
+<p>n = 7, então os nós internos vão de 2 até 0.</p>
+<table class="tt"><tr><th>i</th><th class="l">Ação</th><th class="l">Vetor</th></tr>
+<tr><td>2</td><td class="l">90 vs filhos 80, 95 → troca com 95</td><td class="l">30 60 95 40 50 80 90</td></tr>
+<tr><td>1</td><td class="l">60 vs filhos 40, 50 → já é maior</td><td class="l">30 60 95 40 50 80 90</td></tr>
+<tr><td>0</td><td class="l">30 → troca com 95; depois 30 vs 80, 90 → troca com 90</td><td class="l">95 60 90 40 50 80 30</td></tr></table></div>
+<h2>9.6 Heapsort</h2>
+<p>Ordenação em duas fases: (1) construa um heap máximo com o vetor; (2) repita n − 1 vezes: troque a raiz (maior) com o último elemento do heap, diminua o tamanho do heap e desça a nova raiz. O maior vai para o fim, depois o segundo maior para a penúltima posição, e assim por diante.</p>
+<pre><code class="c"><span class="ty">void</span> heapsort(<span class="ty">int</span> v[], <span class="ty">int</span> n) {
+    <span class="ty">HEAP</span> h; h.n = n;
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i &lt; n; i++) h.v[i] = v[i];
+    heap_construir(&amp;h);
+    <span class="kw">for</span> (<span class="ty">int</span> fim = n - <span class="nu">1</span>; fim &gt; <span class="nu">0</span>; fim--) {
+        trocar(&amp;h.v[<span class="nu">0</span>], &amp;h.v[fim]);      <span class="cm">/* maior vai para o fim */</span>
+        h.n = fim;                        <span class="cm">/* encolhe o heap */</span>
+        descer(&amp;h, <span class="nu">0</span>);
+    }
+    <span class="kw">for</span> (<span class="ty">int</span> i = <span class="nu">0</span>; i &lt; n; i++) v[i] = h.v[i];
+}</code></pre>
+<table><tr><th>Propriedade</th><th>Heapsort</th></tr>
+<tr><td class="l">Tempo (pior, médio, melhor)</td><td>O(n log n)</td></tr>
+<tr><td class="l">Memória extra</td><td>O(1) (no próprio vetor; a cópia acima é só didática)</td></tr>
+<tr><td class="l">Estável?</td><td>não</td></tr></table>
+<h2>9.7 Alterar prioridade</h2>
+<p>Se a prioridade de um elemento <b>aumentar</b> (heap máximo), ele pode estar abaixo de um pai menor: chame <code>subir</code>. Se <b>diminuir</b>, chame <code>descer</code>. Ambos O(log n), desde que você saiba o índice do elemento (normalmente guardado num vetor auxiliar de posições).</p>
+<div class="callout try"><div class="ct">Exercício 9.1</div><p>(a) Insira 30, 60, 90, 40, 50, 80, 95, nessa ordem, num heap máximo vazio. Qual o vetor final? Compare com o do exemplo da seção 9.5. (b) No heap da Figura 9.1, remova o máximo duas vezes e dê o vetor. (c) O vetor [50, 30, 40, 10, 35, 20] é um heap máximo? (d) Por que o heap é guardado em vetor e a ABB não?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="revisao" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 10</div><h1>Revisão, armadilhas e gabarito</h1>
+<div class="goal">Resumo de tudo para a véspera, os erros que mais aparecem e as respostas dos exercícios.</div></div>
+<h2>10.1 Resumo para a véspera</h2>
+<div class="cheat">
+<div class="blk"><h4>TAD e C</h4><ul><li>TAD = operações (interface .h) + representação escondida (.c, struct opaca).</li><li><code>malloc</code> pode dar NULL; todo malloc tem um free; guarde o próximo antes do free.</li><li>Apagar com <code>T **</code> para zerar o ponteiro do usuário.</li></ul></div>
+<div class="blk"><h4>Pilha (LIFO)</h4><ul><li>Vetor: <code>topo</code> = índice do último; vazia −1; cheia MAX−1.</li><li>Encadeada: insere e remove no início.</li><li>Usos: parênteses, pós-fixa (1º desempilhado é o operando da direita), recursão, desfazer.</li></ul></div>
+<div class="blk"><h4>Fila (FIFO) e deque</h4><ul><li>Circular: <code>i = (i+1) % MAX</code>; recuar: <code>(i−1+MAX) % MAX</code>.</li><li>Vazia × cheia: contador, ou uma posição sempre livre.</li><li>Encadeada: ponteiros início e fim; ao esvaziar, fim = NULL.</li><li>Deque encadeado: lista dupla.</li></ul></div>
+<div class="blk"><h4>Listas</h4><ul><li>Sequencial: acesso O(1), inserir/remover O(n), busca binária se ordenada.</li><li>Encadeada: inserir/remover O(1) dado o local; liga o novo antes de desligar o antigo.</li><li>Cabeça: sem casos especiais. Circular: cuidado com laço infinito. Dupla: remove dado o nó.</li><li>Generalizada: átomo ou sublista (cabeça, cauda, profundidade).</li><li>Cruzada: nó em 2 listas (linha e coluna), para matriz esparsa.</li></ul></div>
+<div class="blk"><h4>Árvores binárias</h4><ul><li>Nível i: até 2<sup>i</sup> nós. Altura h: até 2<sup>h+1</sup>−1 nós.</li><li>Vetor: filhos 2i+1, 2i+2; pai (i−1)/2.</li><li>Pré RED, em ERD, pós EDR, nível usa fila.</li><li>Liberar em pós-ordem. Pré + em reconstroem.</li></ul></div>
+<div class="blk"><h4>ABB</h4><ul><li>esq &lt; nó &lt; dir em toda a subárvore; em-ordem ordenada.</li><li>Inserção sempre como folha.</li><li>Remoção: folha / 1 filho sobe / 2 filhos → sucessor (menor da direita).</li><li>O(h): log n a n.</li></ul></div>
+<div class="blk"><h4>AVL</h4><ul><li>FB = h(esq) − h(dir) ∈ {−1, 0, +1}.</li><li>+2 &amp; filho +1 → direita · −2 &amp; filho −1 → esquerda.</li><li>+2 &amp; filho −1 → dupla esq-dir · −2 &amp; filho +1 → dupla dir-esq.</li><li>Inserção: ≤ 1 rotação. Remoção: até O(log n).</li></ul></div>
+<div class="blk"><h4>Rubro-negra</h4><ul><li>Raiz preta, NIL preto, sem vermelho-vermelho, mesma altura negra.</li><li>Insere vermelho. Tio vermelho → recolore e sobe. Tio preto → zigue-zague: rotação no pai; reta: rotação no avô + troca cores.</li><li>Altura ≤ 2 log₂(n+1).</li></ul></div>
+<div class="blk"><h4>Heap</h4><ul><li>Completa + pai ≥ filhos (máx). Máximo na raiz.</li><li>Inserir: fim + sobe. Remover: último na raiz + desce pelo maior filho.</li><li>Construir: desce de n/2−1 até 0, O(n).</li><li>Heapsort O(n log n), in-place, não estável.</li></ul></div>
+</div>
+<h3>Tabela de custos</h3>
+<table class="wide"><tr><th class="l">Estrutura</th><th>Buscar</th><th>Inserir</th><th>Remover</th><th class="l">Obs.</th></tr>
+<tr><td class="l">Pilha / fila</td><td>—</td><td>O(1)</td><td>O(1)</td><td class="l">só nas pontas</td></tr>
+<tr><td class="l">Lista sequencial ordenada</td><td>O(log n)</td><td>O(n)</td><td>O(n)</td><td class="l">desloca</td></tr>
+<tr><td class="l">Lista encadeada</td><td>O(n)</td><td>O(1)*</td><td>O(1)*</td><td class="l">*dado o local</td></tr>
+<tr><td class="l">ABB</td><td>O(h)</td><td>O(h)</td><td>O(h)</td><td class="l">h entre log n e n</td></tr>
+<tr><td class="l">AVL / rubro-negra</td><td>O(log n)</td><td>O(log n)</td><td>O(log n)</td><td class="l">pior caso garantido</td></tr>
+<tr><td class="l">Heap</td><td>máx: O(1)</td><td>O(log n)</td><td>máx: O(log n)</td><td class="l">buscar outro: O(n)</td></tr></table>
+<h2>10.2 Armadilhas clássicas</h2>
+<ol>
+<li>Na fila encadeada, esquecer <code>fim = NULL</code> ao remover o último.</li>
+<li>Na inserção encadeada, fazer <code>p-&gt;prox = novo</code> antes de <code>novo-&gt;prox = p-&gt;prox</code>.</li>
+<li>Dar <code>free</code> num nó e depois ler <code>-&gt;prox</code> dele.</li>
+<li>Em pós-fixa, inverter os operandos de − e /.</li>
+<li>Verificar ABB só entre pai e filho, e não na subárvore inteira.</li>
+<li>Na remoção com dois filhos, usar o maior da subárvore <b>direita</b> (o certo é o menor da direita, ou o maior da esquerda).</li>
+<li>Trocar o sinal do FB, ou escolher rotação simples quando o filho tem sinal oposto.</li>
+<li>Na RN, inserir o novo nó preto (quebra a altura negra), ou esquecer de pintar a raiz de preto no fim.</li>
+<li>No heap, descer trocando com o filho errado; ou achar que o heap está ordenado.</li>
+</ol>
+<h2>10.3 Gabarito</h2>
+<p><b>1.1</b> (a) Especificação: quais operações existem e o que fazem (o contrato, no .h). Implementação: representação concreta e código (no .c). (b) Para esconder os campos: o usuário só pode usar ponteiros e as funções do TAD (encapsulamento). (c) Comportamento indefinido: a memória já foi devolvida e pode conter lixo, ser reutilizada ou derrubar o programa.</p>
+<p><b>2.1</b> (a) Base → topo: <b>1 5</b>. (b) <code>{[()]}()</code> sim; <code>([)]</code> não. (c) 6 / 2 = 3; 3 · 4 = 12; 3 + 12 = <b>15</b>. (d) <b>A B C + * D −</b>.</p>
+<p><b>3.1</b> (a) Vetor <b>[E, F, C, D]</b>. (b) inicio = 2, fim = 2, qtd = 4. (c) Sim: antes dela havia qtd = 3. Passo a passo: A, B, C nos índices 0–2; rem tira A (inicio 1); D no 3; E no 0 (fila cheia, qtd 4); rem tira B (inicio 2); F no 1.</p>
+<p><b>4.1</b> (a) É preciso percorrer até o último nó. Fica O(1) guardando um ponteiro para o último (ou usando lista circular com ponteiro para o último). (b) <code>p-&gt;ant-&gt;prox = p-&gt;prox</code> (ou, se p é o primeiro, <code>L = p-&gt;prox</code>); se <code>p-&gt;prox != NULL</code>, <code>p-&gt;prox-&gt;ant = p-&gt;ant</code>; depois <code>free(p)</code>. (c) cabeça = <code>(a, b)</code>; cauda = <code>(c, (d, (e)))</code>; 5 átomos; profundidade 3. (d) Comum: 200 000 posições. Cruzada: cerca de 5 · 1000 + 500 + 400 = <b>5 900</b>.</p>
+<p><b>5.1</b> (a) altura(B) = 2 (B → E → H); nível(G) = 3; 3 folhas (D, H, G). (b) Máximo 2<sup>5</sup> − 1 = <b>31</b>; mínimo <b>5</b> (degenerada). (c) Raiz +, com * à esquerda (a e −(b, c)) e d à direita. Pré: <code>+ * a − b c d</code>; em: <code>a * b − c + d</code>; pós: <code>a b c − * d +</code>. (d) É a árvore da Figura 5.3: A com B (filhos D, E) à esquerda e C (filho direito F) à direita.</p>
+<p><b>6.1</b> (a)</p>
+  <figure><div class="fig"><img src="figs/gab_abb.svg" alt="Gabarito 6.1(a)." loading="lazy" style="max-width:420px"></div><figcaption><b>Figura 10.1.</b> Gabarito 6.1(a).</figcaption></figure>
+  <p>(b) O 20 tem dois filhos; o sucessor é o 30 (menor da direita). O 30 sobe e seu filho 35 ocupa o lugar dele: 45 → (30 → 10, 35), (70 → 50 → 60, 90). (c) O sucessor do 45 é o 50; o 60 sobe no lugar do 50: raiz 50, esquerda 30 (10, 35), direita 70 (60, 90). (d) <code>10 30 35 50 60 70 90</code>.</p>
+<p><b>7.1</b> (a) Inserindo 10: o 30 fica com +2 e o 20 com +1 → LL, rotação à direita em 30 (raiz 20). 25 e 40 entram sem problema. Inserindo 50: o 20 fica com −2 e o filho 30 com −1 → RR, rotação à esquerda em 20.</p>
+  <figure><div class="fig"><img src="figs/gab_avl.svg" alt="Gabarito 7.1(a): árvore final com FBs." loading="lazy" style="max-width:380px"></div><figcaption><b>Figura 10.2.</b> Gabarito 7.1(a): árvore final com FBs.</figcaption></figure>
+  <p>(b) FB(50) = +2 e FB(20) = −1: caso <b>LR</b>. Rotação à esquerda em 20, depois à direita em 50: raiz 30 com filhos 20 e 50. (c) Com |FB| ≤ 1, o número mínimo de nós de uma AVL de altura h cresce como Fibonacci (N(h) = N(h−1) + N(h−2) + 1), ou seja, exponencialmente em h. Logo h = O(log n).</p>
+<p><b>8.1</b> (a) Raiz vermelha viola a propriedade 2 (mas pintá-la de preto sempre corrige, sem quebrar as outras). Dois vermelhos seguidos violam a propriedade 4. (b) 5 vira raiz preta; 10 entra vermelho; 15: pai 10 vermelho, tio NIL, linha reta → caso 3, rotação à esquerda em 5 e troca de cores (10 preto, 5 e 15 vermelhos); 20: tio 5 vermelho → caso 1, 5 e 15 ficam pretos e 10 vermelho; como 10 é raiz, volta a preto. Final: 10 (P) com 5 (P) e 15 (P), e 20 (V) à direita do 15. (c) Precisa ser a árvore <b>cheia</b> de 3 níveis: com todos pretos, todo caminho até um NIL precisa ter o mesmo comprimento. Altura negra 3.</p>
+<p><b>9.1</b> (a) <b>[95, 50, 90, 30, 40, 60, 80]</b>. É diferente do construído em O(n) ([95, 60, 90, 40, 50, 80, 30]): os dois são heaps válidos. Um mesmo conjunto admite vários heaps.</p>
+  <figure><div class="fig"><img src="figs/gab_heap.svg" alt="Heap obtido pela construção em O(n) da seção 9.5, para comparar." loading="lazy" style="max-width:380px"></div><figcaption><b>Figura 10.3.</b> Heap obtido pela construção em O(n) da seção 9.5, para comparar.</figcaption></figure>
+  <p>(b) 1ª remoção: [80, 70, 60, 40, 50, 20, 30, 10] (Figura 9.3). 2ª: o 10 vai para a raiz e desce pelo 70 e pelo 50: <b>[70, 50, 60, 40, 10, 20, 30]</b>. (c) <b>Não.</b> A raiz 50 é maior que 30 e 40, mas o 30 (índice 1) tem como filhos o 10 e o 35 (índices 3 e 4), e 35 &gt; 30. (d) O heap é sempre uma árvore completa, então o vetor não tem buracos e os índices dão pais e filhos. Uma ABB pode ter qualquer forma, e no vetor sobrariam muitos espaços vazios.</p>
+<div class="callout key"><div class="ct">Última dica</div><p>Refaça à mão, sem olhar: (1) uma fila circular com várias voltas; (2) inserir e remover numa lista dupla, desenhando os ponteiros; (3) os quatro percursos de uma árvore; (4) inserções e as três remoções numa ABB; (5) uma sequência de inserções AVL com todas as rotações; (6) inserções numa rubro-negra; (7) inserir, remover e construir um heap. Isso cobre quase tudo que costuma cair.</p></div>
+
+</section>
+  </article></div>
+  <div class="divider" id="divider" role="separator" aria-orientation="vertical" aria-label="Arraste para redimensionar" tabindex="0"></div>
+  <div class="pane pane-pr" id="pr"><div class="pr-inner">
+<section class="pr-cap" id="v-tads" data-cap="tads" hidden>
+<div class="lab" data-ref="1.2"><div class="lab-h"><h2><span class="tag">Lab</span>Mesma interface, duas implementações</h2></div>
+ <div class="lab-b">
+  <p>Os dois botões chamam as mesmas operações do TAD Pilha. Por dentro, uma pilha usa vetor e a outra usa nós encadeados. Quem usa só vê o resultado, que é idêntico.</p>
+  <div class="row"><label class="ctl" for="tad-x">Valor</label><input type="number" id="tad-x" value="7" style="width:80px"><button class="btn primary" id="tad-push">pilha_empilhar(p, x)</button><button class="btn" id="tad-pop">pilha_desempilhar(p)</button></div>
+  <div class="status" id="tad-st">Empilhe alguns valores.</div>
+  <div class="cols"><div><h3>pilha.c versão vetor</h3><div class="diagram" id="tad-seq"></div></div><div><h3>pilha.c versão encadeada</h3><div class="diagram" id="tad-enc"></div></div></div>
+ </div></div>
+<div class="lab" data-ref="1.6"><div class="lab-h"><h2><span class="tag">Lab</span>Quanto cresce cada O(·)?</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="big-n">n =</label><input type="range" id="big-n" min="1" max="60" value="16"><span class="mono" id="big-nv"></span></div>
+  <div class="diagram" id="big-svg"></div>
+  <p class="hint">Barras em escala logarítmica. Repare como O(n²) dispara enquanto O(log n) mal se mexe.</p>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-pilhas" data-cap="pilhas" hidden>
+<div class="lab" data-ref="2.3"><div class="lab-h"><h2><span class="tag">Lab</span>Pilha em vetor (MAX = 8)</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="pl-x">Valor</label><input type="number" id="pl-x" value="5" style="width:80px"><button class="btn primary" id="pl-push">push</button><button class="btn" id="pl-pop">pop</button><button class="btn" id="pl-top">topo</button><button class="btn small" id="pl-clr">esvaziar</button></div>
+  <div class="diagram" id="pl-svg"></div>
+  <div class="status" id="pl-st"></div>
+ </div></div>
+<div class="lab" data-ref="2.5"><div class="lab-h"><h2><span class="tag">Lab</span>Parênteses balanceados, passo a passo</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="pb-in">Expressão</label><input type="text" id="pb-in" value="{[()()]}(" style="flex:1;min-width:180px"><button class="btn primary" id="pb-go">Começar</button><button class="btn" id="pb-step">Próximo caractere</button><button class="btn small" id="pb-all">Até o fim</button></div>
+  <div class="row" id="pb-chars" style="font-family:var(--f-mono);font-size:22px;gap:4px"></div>
+  <div class="cols"><div class="diagram" id="pb-stack"></div><div class="status" id="pb-st">Digite uma expressão e comece.</div></div>
+ </div></div>
+<div class="lab" data-ref="2.6"><div class="lab-h"><h2><span class="tag">Lab</span>Calculadora pós-fixa e conversor</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="pf-in">Infixa</label><input type="text" id="pf-in" value="(5 + 3) * 2 - 8 / 4" style="flex:1;min-width:200px"><button class="btn primary" id="pf-go">Converter e avaliar</button></div>
+  <p class="hint">Use números, + − * / e parênteses, separados ou não por espaço.</p>
+  <div class="cols"><div><h3>1. Infixa → pós-fixa</h3><div class="tscroll" id="pf-conv"></div></div><div><h3>2. Avaliar a pós-fixa</h3><div class="tscroll" id="pf-eval"></div></div></div>
+  <div class="status" id="pf-st"></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-filas" data-cap="filas" hidden>
+<div class="lab" data-ref="3.3"><div class="lab-h"><h2><span class="tag">Lab</span>Fila circular (MAX = 8)</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="fc-x">Valor</label><input type="number" id="fc-x" value="10" style="width:80px"><button class="btn primary" id="fc-ins">inserir (fim)</button><button class="btn" id="fc-rem">remover (início)</button><button class="btn small" id="fc-clr">reiniciar</button></div>
+  <div class="cols"><div class="diagram" id="fc-svg"></div><div style="display:flex;flex-direction:column;gap:10px"><div class="status" id="fc-st"></div><div class="tscroll" id="fc-vars"></div><div class="log" id="fc-log"></div></div></div>
+ </div></div>
+<div class="lab" data-ref="3.5"><div class="lab-h"><h2><span class="tag">Lab</span>Deque</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="dq-x">Valor</label><input type="number" id="dq-x" value="1" style="width:70px"><button class="btn" id="dq-ii">insere início</button><button class="btn" id="dq-if">insere fim</button><button class="btn" id="dq-ri">remove início</button><button class="btn" id="dq-rf">remove fim</button></div>
+  <div class="diagram" id="dq-svg"></div>
+  <div class="status" id="dq-st">Use só as operações de uma ponta e veja o deque virar pilha; insira numa ponta e remova na outra para virar fila.</div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-listas" data-cap="listas" hidden>
+<div class="lab" data-ref="4.4"><div class="lab-h"><h2><span class="tag">Lab</span>Lista encadeada: todos os tipos</h2>
+  <div class="row"><label class="ctl" for="le-kind">Tipo</label><select id="le-kind"><option value="simples">simples</option><option value="cabeca">com nó-cabeça</option><option value="circular">circular</option><option value="dupla">dupla</option><option value="duplacirc">dupla circular</option></select></div></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="le-x">Valor</label><input type="number" id="le-x" value="15" style="width:80px"><button class="btn" id="le-ini">inserir início</button><button class="btn" id="le-fim">inserir fim</button><button class="btn primary" id="le-ord">inserir ordenado</button><button class="btn" id="le-rem">remover</button><button class="btn" id="le-bus">buscar</button></div>
+  <div class="diagram" id="le-svg"></div>
+  <div class="cols"><div class="status" id="le-st"></div><div class="code-mini" id="le-code"></div></div>
+ </div></div>
+<div class="lab" data-ref="4.5"><div class="lab-h"><h2><span class="tag">Lab</span>Sequencial × encadeada: quem trabalha mais?</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="sv-x">Inserir ordenado</label><input type="number" id="sv-x" value="12" style="width:80px"><button class="btn primary" id="sv-go">Inserir nas duas</button><button class="btn small" id="sv-rnd">10 aleatórios</button><button class="btn small" id="sv-clr">limpar</button></div>
+  <div class="diagram" id="sv-svg"></div>
+  <div class="status" id="sv-st"></div>
+ </div></div>
+<div class="lab" data-ref="4.6"><div class="lab-h"><h2><span class="tag">Lab</span>Lista generalizada</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="lg-in">Lista</label><input type="text" id="lg-in" value="(a, (b, c), d, ((e)))" style="flex:1;min-width:200px"><button class="btn primary" id="lg-go">Montar</button></div>
+  <div class="diagram" id="lg-svg"></div>
+  <div class="status" id="lg-st"></div>
+ </div></div>
+<div class="lab" data-ref="4.7"><div class="lab-h"><h2><span class="tag">Lab</span>Matriz esparsa em listas cruzadas</h2></div>
+ <div class="lab-b">
+  <p class="hint">Clique nas células para colocar ou tirar valores. À direita, a representação com listas cruzadas.</p>
+  <div class="cols"><div class="diagram" id="me-grid"></div><div class="diagram" id="me-svg"></div></div>
+  <div class="status" id="me-st"></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-arvores" data-cap="arvores" hidden>
+<div class="lab" data-ref="5.5"><div class="lab-h"><h2><span class="tag">Lab</span>Percursos animados</h2>
+  <div class="row"><button class="btn small" id="pc-new">Outra árvore</button></div></div>
+ <div class="lab-b">
+  <div class="row"><button class="btn" data-pc="pre">pré-ordem</button><button class="btn" data-pc="em">em-ordem</button><button class="btn" data-pc="pos">pós-ordem</button><button class="btn" data-pc="nivel">em nível</button></div>
+  <div class="diagram" id="pc-svg"></div>
+  <div class="status" id="pc-st">Escolha um percurso. Os nós acendem na ordem da visita.</div>
+ </div></div>
+<div class="lab" data-ref="5.3"><div class="lab-h"><h2><span class="tag">Lab</span>Medidas da árvore</h2></div>
+ <div class="lab-b">
+  <p class="hint">Clique num nó da árvore acima (em “Percursos animados”) para ver suas medidas.</p>
+  <div class="status" id="pc-info">Nenhum nó selecionado.</div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-abb" data-cap="abb" hidden>
+<div class="lab" data-ref="6.3"><div class="lab-h"><h2><span class="tag">Lab</span>ABB interativa</h2>
+  <div class="row"><label class="ctl" for="abb-mode">Remoção usa</label><select id="abb-mode"><option value="suc">sucessor</option><option value="pred">predecessor</option></select></div></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="abb-x">Chave</label><input type="number" id="abb-x" value="35" style="width:80px"><button class="btn primary" id="abb-ins">inserir</button><button class="btn" id="abb-rem">remover</button><button class="btn" id="abb-bus">buscar</button><button class="btn small" id="abb-rnd">exemplo</button><button class="btn small" id="abb-ord">inserir 1..7 em ordem</button><button class="btn small" id="abb-clr">limpar</button></div>
+  <div class="diagram" id="abb-svg"></div>
+  <div class="status" id="abb-st"></div>
+  <div class="row"><span class="chip" id="abb-in"></span><span class="chip" id="abb-h"></span></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-avl" data-cap="avl" hidden>
+<div class="lab" data-ref="7.3"><div class="lab-h"><h2><span class="tag">Lab</span>AVL com rotações passo a passo</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="avl-x">Chave</label><input type="number" id="avl-x" value="25" style="width:80px"><button class="btn primary" id="avl-ins">inserir</button><button class="btn" id="avl-rem">remover</button><button class="btn small" id="avl-seq">inserir 10..50</button><button class="btn small" id="avl-clr">limpar</button></div>
+  <div class="diagram" id="avl-svg"></div>
+  <div class="row"><button class="btn small" id="avl-prev">◀ passo</button><span class="score" id="avl-pos"></span><button class="btn small" id="avl-next">passo ▶</button></div>
+  <div class="status" id="avl-st"></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-rubronegra" data-cap="rubronegra" hidden>
+<div class="lab" data-ref="8.3"><div class="lab-h"><h2><span class="tag">Lab</span>Inserção rubro-negra passo a passo</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="rn-x">Chave</label><input type="number" id="rn-x" value="15" style="width:80px"><button class="btn primary" id="rn-ins">inserir</button><button class="btn small" id="rn-seq">10, 20, 30, 15, 25</button><button class="btn small" id="rn-asc">1..10 em ordem</button><button class="btn small" id="rn-clr">limpar</button></div>
+  <div class="diagram" id="rn-svg"></div>
+  <div class="row"><button class="btn small" id="rn-prev">◀ passo</button><span class="score" id="rn-pos"></span><button class="btn small" id="rn-next">passo ▶</button></div>
+  <div class="status" id="rn-st"></div>
+  <div class="row"><span class="chip" id="rn-check"></span><span class="chip" id="rn-h"></span></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-heap" data-cap="heap" hidden>
+<div class="lab" data-ref="9.3"><div class="lab-h"><h2><span class="tag">Lab</span>Heap: árvore e vetor ao mesmo tempo</h2>
+  <div class="row"><label class="ctl" for="hp-kind">Tipo</label><select id="hp-kind"><option value="max">heap máximo</option><option value="min">heap mínimo</option></select></div></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="hp-x">Valor</label><input type="number" id="hp-x" value="85" style="width:80px"><button class="btn primary" id="hp-ins">inserir</button><button class="btn" id="hp-rem">remover raiz</button><button class="btn small" id="hp-clr">limpar</button></div>
+  <div class="row"><label class="ctl" for="hp-arr">Vetor</label><input type="text" id="hp-arr" value="30, 60, 90, 40, 50, 80, 95" style="flex:1;min-width:180px"><button class="btn" id="hp-build">construir heap (O(n))</button><button class="btn" id="hp-sort">heapsort</button></div>
+  <div class="diagram" id="hp-svg"></div>
+  <div class="row"><button class="btn small" id="hp-prev">◀ passo</button><span class="score" id="hp-pos"></span><button class="btn small" id="hp-next">passo ▶</button></div>
+  <div class="status" id="hp-st"></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-revisao" data-cap="revisao" hidden>
+<div class="lab" data-ref="5.5"><div class="lab-h"><h2><span class="tag">Exercício</span>Escreva o percurso</h2><button class="btn small" id="tp-new">Outro</button></div>
+ <div class="lab-b">
+  <p id="tp-q"></p>
+  <div class="diagram" id="tp-svg"></div>
+  <div class="row"><input type="text" id="tp-in" placeholder="ex.: 50 30 20 40 70" style="flex:1;min-width:200px" aria-label="Sua resposta"><button class="btn primary" id="tp-ok">Conferir</button></div>
+  <div class="status" id="tp-st">Digite as chaves separadas por espaço.</div>
+ </div></div>
+<div class="lab" data-ref="7.3"><div class="lab-h"><h2><span class="tag">Exercício</span>Qual rotação a AVL faz?</h2><button class="btn small" id="tr-new">Outro</button></div>
+ <div class="lab-b">
+  <p id="tr-q"></p>
+  <div class="row" id="tr-opts"></div>
+  <div class="diagram" id="tr-svg"></div>
+  <div class="status" id="tr-st">Escolha uma opção.</div>
+ </div></div>
+<div class="lab" data-ref="9.3"><div class="lab-h"><h2><span class="tag">Exercício</span>Heap depois da operação</h2><button class="btn small" id="th-new">Outro</button></div>
+ <div class="lab-b">
+  <p id="th-q"></p>
+  <div class="row"><input type="text" id="th-in" placeholder="ex.: 90 70 80 40" style="flex:1;min-width:200px" aria-label="Sua resposta"><button class="btn primary" id="th-ok">Conferir</button></div>
+  <div class="status" id="th-st">Digite o vetor resultante, separado por espaços.</div>
+ </div></div>
+</section>
+
+  </div></div>
+</main>
+<script src="../../assets/engine.js"></script>
+<script src="curso.js"></script>
+<script src="labs.js"></script>
+<script>Estudos.iniciarMateria(CURSO);</script>
+</body>
+</html>

@@ -1,0 +1,264 @@
+<!-- ===================================================== CAP 4 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 4</div><h1>Listas</h1>
+  <div class="goal">Objetivo: dominar o TAD Lista nas versões sequencial e encadeada, todas as variações de encadeamento (com cabeça, circular, dupla), e as listas generalizadas e cruzadas.</div><div class="src">Base: listas sequenciais, encadeadas, generalizadas e cruzadas</div></div>
+
+  <h2>4.1 O TAD Lista</h2>
+  <p>Pilhas e filas restringem <b>onde</b> se insere e remove. A <b>lista linear</b> não restringe: dá para inserir, remover e buscar em <b>qualquer posição</b>. Cada elemento tem um antecessor e um sucessor (exceto o primeiro e o último). Operações típicas:</p>
+  <ul>
+    <li><code>lista_inserir(L, x)</code>: no fim, no início, numa posição, ou <b>ordenado</b> (mantendo a lista em ordem);</li>
+    <li><code>lista_remover(L, chave)</code>, <code>lista_buscar(L, chave)</code>;</li>
+    <li><code>lista_tamanho</code>, <code>lista_vazia</code>, <code>lista_cheia</code>, <code>lista_imprimir</code>, <code>lista_apagar</code>.</li>
+  </ul>
+
+  <h2>4.2 Lista sequencial (estática)</h2>
+  <p>Os elementos ficam em posições <b>consecutivas</b> de um vetor, mais um contador. A posição física é a posição lógica: o i-ésimo elemento está em <code>itens[i]</code>, com acesso <b>O(1)</b>. O preço aparece na inserção e na remoção no meio: é preciso <b>deslocar</b> os elementos.</p>
+  {{fig:lista_seq_ins|Inserção ordenada em lista sequencial: abrir espaço custa O(n).}}
+  <pre><code class="c">#define MAX 100
+struct lista { int itens[MAX]; int qtd; };
+
+/* insere mantendo a ordem crescente */
+bool lista_inserir_ordenado(LISTA *l, int x) {
+    if (l-&gt;qtd == MAX) return false;
+    int i = l-&gt;qtd - 1;
+    while (i &gt;= 0 &amp;&amp; l-&gt;itens[i] &gt; x) {   /* desloca os maiores para a direita */
+        l-&gt;itens[i + 1] = l-&gt;itens[i];
+        i--;
+    }
+    l-&gt;itens[i + 1] = x;
+    l-&gt;qtd++;
+    return true;
+}
+
+/* remove a chave x, fechando o buraco */
+bool lista_remover(LISTA *l, int x) {
+    int i = 0;
+    while (i &lt; l-&gt;qtd &amp;&amp; l-&gt;itens[i] != x) i++;
+    if (i == l-&gt;qtd) return false;            /* não achou */
+    for (; i &lt; l-&gt;qtd - 1; i++) l-&gt;itens[i] = l-&gt;itens[i + 1];
+    l-&gt;qtd--;
+    return true;
+}</code></pre>
+  <h3>Busca: sequencial e binária</h3>
+  <p>Numa lista qualquer, a busca é <b>sequencial</b>: O(n). Se a lista sequencial estiver <b>ordenada</b>, dá para usar a <b>busca binária</b>: olhe o meio; se a chave for menor, descarte a metade direita; senão, a esquerda. Cada passo corta o problema pela metade: <b>O(log n)</b>.</p>
+  <pre><code class="c">int busca_binaria(const LISTA *l, int x) {
+    int ini = 0, fim = l-&gt;qtd - 1;
+    while (ini &lt;= fim) {
+        int meio = (ini + fim) / 2;
+        if (l-&gt;itens[meio] == x) return meio;
+        if (x &lt; l-&gt;itens[meio]) fim = meio - 1;
+        else ini = meio + 1;
+    }
+    return -1;                                /* não está na lista */
+}</code></pre>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><p>Busca binária só funciona em estrutura <b>ordenada</b> e com <b>acesso direto</b> ao meio. Numa lista encadeada, mesmo ordenada, chegar ao meio custa O(n), então a vantagem desaparece.</p></div>
+
+  <h2>4.3 Lista simplesmente encadeada (dinâmica)</h2>
+  <p>Cada nó guarda o dado e um ponteiro para o próximo. Os nós ficam espalhados pela memória; a ordem lógica é dada pelos ponteiros. O último aponta para <code>NULL</code>.</p>
+  {{fig:lista_simples|Lista encadeada com 4 nós. L aponta para o primeiro.}}
+  <h3>Inserção: a ordem das ligações importa</h3>
+  {{fig:lista_ins|Para inserir depois de p: primeiro o novo aponta para o sucessor de p, depois p aponta para o novo.}}
+  <p>Se você fizer <code>p-&gt;prox = novo</code> primeiro, perde o único caminho até o resto da lista (o nó 12 em diante). Regra de ouro: <b>ligue o novo nó antes de desligar o antigo</b>.</p>
+  <pre><code class="c">struct lista { NO *inicio; int qtd; };
+
+bool lista_inserir_ordenado(LISTA *l, int x) {
+    NO *novo = malloc(sizeof(NO));
+    if (novo == NULL) return false;
+    novo-&gt;info = x;
+    NO *ant = NULL, *p = l-&gt;inicio;
+    while (p != NULL &amp;&amp; p-&gt;info &lt; x) { ant = p; p = p-&gt;prox; }
+    novo-&gt;prox = p;                    /* 1º: novo aponta para o sucessor */
+    if (ant == NULL) l-&gt;inicio = novo; /* caso especial: virou o primeiro */
+    else ant-&gt;prox = novo;             /* 2º: antecessor aponta para o novo */
+    l-&gt;qtd++;
+    return true;
+}
+
+bool lista_remover(LISTA *l, int x) {
+    NO *ant = NULL, *p = l-&gt;inicio;
+    while (p != NULL &amp;&amp; p-&gt;info != x) { ant = p; p = p-&gt;prox; }
+    if (p == NULL) return false;
+    if (ant == NULL) l-&gt;inicio = p-&gt;prox;   /* removendo o primeiro */
+    else ant-&gt;prox = p-&gt;prox;               /* "pula" o nó */
+    free(p);
+    l-&gt;qtd--;
+    return true;
+}</code></pre>
+  <p>Repare no padrão dos dois ponteiros <code>ant</code> e <code>p</code> andando juntos: numa lista simples, só dá para alterar o ponteiro de um nó se você estiver <b>parado no anterior</b>.</p>
+
+  <h2>4.4 Variações do encadeamento</h2>
+  <h3>Com nó-cabeça (sentinela)</h3>
+  {{fig:lista_cabeca|O nó-cabeça é um nó fixo no começo que não guarda dado útil.}}
+  <p>Como sempre existe um nó antes do primeiro elemento, <code>ant</code> nunca é <code>NULL</code> e os casos especiais “inserir/remover no início” somem: o mesmo código serve para qualquer posição. O nó-cabeça também pode guardar informações da lista (tamanho, por exemplo).</p>
+  <h3>Circular</h3>
+  {{fig:lista_circ|Lista circular: o último nó aponta para o primeiro.}}
+  <p>Não existe <code>NULL</code> no fim. Útil para rodízios (escalonamento round-robin, jogos de turnos). Cuidado com o laço de percurso: a condição de parada passa a ser “voltei ao início” (<code>do { … } while (p != L)</code>), senão o laço é infinito. Truque comum: guardar o ponteiro para o <b>último</b> nó; o primeiro é <code>ultimo-&gt;prox</code>, e inserir no início ou no fim fica O(1).</p>
+  <h3>Duplamente encadeada</h3>
+  {{fig:lista_dupla|Cada nó tem ponteiros para o anterior e para o próximo.}}
+  <p>Com o ponteiro <code>ant</code> em cada nó, dá para andar nos dois sentidos e remover um nó conhecendo só ele mesmo, sem procurar o anterior:</p>
+  <pre><code class="c">typedef struct no2 { int info; struct no2 *ant, *prox; } NO2;
+
+/* remove o nó p de uma lista dupla com início em *L */
+void remover_no(NO2 **L, NO2 *p) {
+    if (p-&gt;ant != NULL) p-&gt;ant-&gt;prox = p-&gt;prox;
+    else *L = p-&gt;prox;                     /* p era o primeiro */
+    if (p-&gt;prox != NULL) p-&gt;prox-&gt;ant = p-&gt;ant;
+    free(p);
+}
+
+/* insere novo depois de p: quatro ponteiros mudam */
+void inserir_depois(NO2 *p, NO2 *novo) {
+    novo-&gt;ant = p;
+    novo-&gt;prox = p-&gt;prox;
+    if (p-&gt;prox != NULL) p-&gt;prox-&gt;ant = novo;
+    p-&gt;prox = novo;
+}</code></pre>
+  <p>A variação mais “completa” é a <b>duplamente encadeada circular com nó-cabeça</b>: sem casos especiais e com acesso O(1) às duas pontas. É a base de um bom deque.</p>
+  <table class="wide"><tr><th class="l">Variação</th><th class="l">Ganha</th><th class="l">Paga</th></tr>
+  <tr><td class="l">Simples</td><td class="l">menos memória por nó</td><td class="l">só anda para frente; precisa do anterior para remover</td></tr>
+  <tr><td class="l">Com nó-cabeça</td><td class="l">código sem casos especiais</td><td class="l">um nó a mais</td></tr>
+  <tr><td class="l">Circular</td><td class="l">percorre a partir de qualquer nó; início e fim em O(1) com ponteiro para o último</td><td class="l">cuidado com laços infinitos</td></tr>
+  <tr><td class="l">Dupla</td><td class="l">anda nos dois sentidos; remove dado o nó em O(1)</td><td class="l">um ponteiro a mais por nó; mais ligações para manter</td></tr></table>
+
+  <h2>4.5 Sequencial × encadeada</h2>
+  <table class="wide"><tr><th class="l">Operação</th><th>Sequencial</th><th>Encadeada</th></tr>
+  <tr><td class="l">Acessar o i-ésimo</td><td>O(1)</td><td>O(n)</td></tr>
+  <tr><td class="l">Buscar (ordenada)</td><td>O(log n), busca binária</td><td>O(n)</td></tr>
+  <tr><td class="l">Inserir/remover dado o local</td><td>O(n), desloca</td><td>O(1), religa ponteiros</td></tr>
+  <tr><td class="l">Tamanho</td><td>fixo</td><td>cresce conforme a memória</td></tr>
+  <tr><td class="l">Memória extra</td><td>vetor ocioso</td><td>1 ou 2 ponteiros por nó</td></tr></table>
+
+  <h2>4.6 Listas generalizadas</h2>
+  <p>Numa <b>lista generalizada</b>, cada elemento pode ser um <b>átomo</b> (um dado simples) ou <b>outra lista</b>. A definição é recursiva, como em LISP: <code>L = (a, (b, c), d)</code> tem três elementos, e o segundo é a lista <code>(b, c)</code>. Também existe a lista vazia <code>( )</code>.</p>
+  {{fig:lista_gen|Cada nó tem um campo tipo: A (átomo, guarda o valor) ou S (sublista, guarda um ponteiro para o primeiro nó da sublista).}}
+  <pre><code class="c">typedef struct ng {
+    int tipo;                 /* 0 = átomo, 1 = sublista */
+    union {
+        char atomo;
+        struct ng *sub;       /* primeiro nó da sublista */
+    } info;
+    struct ng *prox;
+} NOG;</code></pre>
+  <p>Operações clássicas: <b>cabeça</b> (<i>head</i>) devolve o primeiro elemento; <b>cauda</b> (<i>tail</i>) devolve a lista sem o primeiro. Para <code>L = (a, (b, c), d)</code>: cabeça(L) = <code>a</code>; cauda(L) = <code>((b, c), d)</code>; cabeça(cauda(L)) = <code>(b, c)</code>. A <b>profundidade</b> é o maior número de parênteses aninhados: aqui, 2.</p>
+  <p>Algoritmos sobre listas generalizadas são naturalmente <b>recursivos</b>: para um átomo, trate o valor; para uma sublista, chame a função de novo. Elas representam estruturas aninhadas: expressões, polinômios em várias variáveis, árvores gerais e o próprio código LISP.</p>
+  <pre><code class="c">/* conta todos os átomos, em qualquer nível */
+int contar_atomos(NOG *L) {
+    int c = 0;
+    for (NOG *p = L; p != NULL; p = p-&gt;prox)
+        c += (p-&gt;tipo == 0) ? 1 : contar_atomos(p-&gt;info.sub);
+    return c;
+}</code></pre>
+
+  <h2>4.7 Listas cruzadas (multilistas) e matrizes esparsas</h2>
+  <p>Numa <b>lista cruzada</b> (ou ortogonal), cada nó pertence a <b>duas listas ao mesmo tempo</b>. O exemplo clássico é a <b>matriz esparsa</b>: uma matriz em que quase todos os valores são zero. Guardar só os não nulos economiza muita memória.</p>
+  {{fig:matriz_esparsa|Cada nó não nulo está na lista da sua linha (setas pretas) e na lista da sua coluna (setas azuis).}}
+  <pre><code class="c">typedef struct ne {
+    int lin, col;
+    double valor;
+    struct ne *direita;   /* próximo não nulo na mesma linha */
+    struct ne *abaixo;    /* próximo não nulo na mesma coluna */
+} NOE;
+
+typedef struct {
+    int m, n;
+    NOE **linhas;         /* vetor de m cabeças de linha */
+    NOE **colunas;        /* vetor de n cabeças de coluna */
+} MATRIZ_ESPARSA;</code></pre>
+  <ul>
+    <li><b>Acessar (i, j)</b>: percorra a lista da linha i até achar a coluna j (ou passar dela). Custo proporcional aos não nulos da linha.</li>
+    <li><b>Somar linhas, multiplicar</b>: percorre só os não nulos, com ganho enorme quando a matriz é grande e vazia.</li>
+    <li><b>Quando compensa?</b> Cada nó guarda 5 campos em vez de 1 número. Para uma matriz m × n com k não nulos, a versão cruzada usa algo como 5k + m + n posições, contra m·n da matriz comum. Compensa quando k é bem menor que m·n.</li>
+  </ul>
+  <div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Matriz 1000 × 1000 com 3000 não nulos. Comum: 1 000 000 posições. Cruzada: 5 · 3000 + 1000 + 1000 = <b>17 000</b>, cerca de 1,7% do espaço.</p></div>
+  <div class="callout try"><div class="ct">Exercício 4.1</div><p>(a) Numa lista simples, por que inserir no fim custa O(n) e como deixar O(1)? (b) Escreva a ordem correta das ligações para remover o nó <code>p</code> de uma lista dupla. (c) Para <code>L = ((a, b), c, (d, (e)))</code>, dê cabeça(L), cauda(L), o número de átomos e a profundidade. (d) Uma matriz 500 × 400 tem 1000 não nulos. Quantas posições ocupa a versão comum e (aproximadamente) a cruzada?</p></div>
+</section>
+
+<!-- ===================================================== CAP 5 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 5</div><h1>Árvores e Árvores Binárias</h1>
+  <div class="goal">Objetivo: dominar a terminologia de árvores, as propriedades das árvores binárias, as duas representações (encadeada e vetor) e os quatro percursos.</div><div class="src">Base: árvores gerais, árvores binárias, percursos</div></div>
+
+  <h2>5.1 Por que árvores</h2>
+  <p>Listas são lineares: cada elemento tem um sucessor. Muitas coisas são <b>hierárquicas</b>: pastas e arquivos, o organograma de uma empresa, a estrutura de um livro, uma expressão matemática. A <b>árvore</b> representa isso. E, organizada do jeito certo (Caps. 6 a 9), permite buscar, inserir e remover em <b>O(log n)</b>.</p>
+
+  <h2>5.2 Terminologia</h2>
+  {{fig:arvore_termos|Uma árvore com 8 nós e 4 níveis.}}
+  <table class="wide"><tr><th class="l">Termo</th><th class="l">Significado</th><th class="l">Na figura</th></tr>
+  <tr><td class="l"><b>Raiz</b></td><td class="l">nó sem pai, no topo</td><td class="l">A</td></tr>
+  <tr><td class="l"><b>Pai / filho / irmãos</b></td><td class="l">ligação direta; irmãos têm o mesmo pai</td><td class="l">B é pai de D e E (irmãos)</td></tr>
+  <tr><td class="l"><b>Folha</b> (nó externo)</td><td class="l">nó sem filhos</td><td class="l">D, H, G</td></tr>
+  <tr><td class="l"><b>Nó interno</b></td><td class="l">tem pelo menos um filho</td><td class="l">A, B, C, E, F</td></tr>
+  <tr><td class="l"><b>Grau de um nó</b></td><td class="l">número de filhos</td><td class="l">grau(B) = 2, grau(C) = 1</td></tr>
+  <tr><td class="l"><b>Nível (profundidade)</b></td><td class="l">distância (em arestas) até a raiz</td><td class="l">nível(H) = 3</td></tr>
+  <tr><td class="l"><b>Altura</b></td><td class="l">maior distância de um nó até uma folha abaixo dele</td><td class="l">altura(A) = 3</td></tr>
+  <tr><td class="l"><b>Subárvore</b></td><td class="l">um nó e todos os seus descendentes</td><td class="l">C, F, G</td></tr>
+  <tr><td class="l"><b>Ancestral / descendente</b></td><td class="l">qualquer nó no caminho até a raiz / abaixo</td><td class="l">A e B são ancestrais de H</td></tr>
+  <tr><td class="l"><b>Floresta</b></td><td class="l">conjunto de árvores disjuntas</td><td class="l">tirando A, sobram 2 árvores</td></tr></table>
+  <div class="callout warn"><div class="ct">Cuidado na prova: convenção de altura</div><p>Há duas convenções. Contando <b>arestas</b>: folha tem altura 0 e árvore vazia, −1. Contando <b>níveis (nós)</b>: folha tem altura 1 e árvore vazia, 0. Esta apostila usa <b>arestas</b> no texto e, nos códigos de AVL, a altura em nós (vazia = 0), porque simplifica o código. A diferença entre alturas, usada no balanceamento, é a mesma nas duas. Use a convenção do seu professor.</p></div>
+
+  <h2>5.3 Árvores binárias</h2>
+  <p>Uma <b>árvore binária</b> é vazia ou é formada por uma raiz e duas subárvores binárias, a <b>esquerda</b> e a <b>direita</b>. Cada nó tem no máximo 2 filhos, e a posição importa: um filho à esquerda é diferente de um filho à direita.</p>
+  {{fig:bin_tipos|Cheia: todos os níveis completos. Completa: todos os níveis cheios, exceto o último, preenchido da esquerda para a direita. Degenerada: cada nó tem um filho só, e a árvore vira uma lista.}}
+  <p>Também se usa <b>estritamente binária</b>: todo nó tem 0 ou 2 filhos (nunca só 1).</p>
+  <h3>Propriedades (altura h em arestas)</h3>
+  <ul>
+    <li>O nível i tem no máximo <b>2<sup>i</sup></b> nós.</li>
+    <li>Uma árvore de altura h tem no máximo <b>2<sup>h+1</sup> − 1</b> nós (cheia).</li>
+    <li>Com n nós, a altura mínima é <b>⌊log₂ n⌋</b> (árvore completa) e a máxima é <b>n − 1</b> (degenerada).</li>
+    <li>Uma árvore binária com n nós tem <b>n + 1</b> ponteiros nulos.</li>
+  </ul>
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>A altura decide o custo das operações em árvores de busca. Entre a completa (altura ≈ log₂ n) e a degenerada (altura n − 1), a diferença para n = 1 000 000 é de 20 contra 999 999 passos. Os Caps. 7 e 8 servem para garantir que a altura fique perto de log₂ n.</p></div>
+
+  <h2>5.4 Representações</h2>
+  <h3>Encadeada</h3>
+  <pre><code class="c">typedef struct no_arv {
+    int info;
+    struct no_arv *esq, *dir;
+} NO_ARV;</code></pre>
+  <h3>Em vetor (só para árvores completas)</h3>
+  <p>Guarde os nós nível por nível, da esquerda para a direita, começando no índice 0. Então, para o nó do índice <b>i</b>: filho esquerdo em <b>2i + 1</b>, filho direito em <b>2i + 2</b> e pai em <b>(i − 1) / 2</b> (divisão inteira). Não é preciso guardar ponteiros. É a representação do heap (Cap. 9). Para árvores não completas, sobram buracos no vetor e há desperdício.</p>
+  <h3>Árvores gerais como binárias</h3>
+  <p>Um nó de árvore geral pode ter muitos filhos. A representação <b>filho-esquerdo / irmão-direito</b> transforma qualquer árvore em binária: o ponteiro esquerdo aponta para o <b>primeiro filho</b> e o direito para o <b>próximo irmão</b>.</p>
+
+  <h2>5.5 Percursos</h2>
+  <p>Percorrer é visitar cada nó exatamente uma vez. Os três percursos em profundidade diferem só em <b>quando</b> a raiz é visitada:</p>
+  {{fig:percursos|Os quatro percursos na mesma árvore.}}
+  <pre><code class="c">void pre_ordem(NO_ARV *r) {          /* Raiz, Esquerda, Direita */
+    if (r == NULL) return;
+    visitar(r);
+    pre_ordem(r-&gt;esq);
+    pre_ordem(r-&gt;dir);
+}
+void em_ordem(NO_ARV *r) {           /* Esquerda, Raiz, Direita */
+    if (r == NULL) return;
+    em_ordem(r-&gt;esq);
+    visitar(r);
+    em_ordem(r-&gt;dir);
+}
+void pos_ordem(NO_ARV *r) {          /* Esquerda, Direita, Raiz */
+    if (r == NULL) return;
+    pos_ordem(r-&gt;esq);
+    pos_ordem(r-&gt;dir);
+    visitar(r);
+}</code></pre>
+  <p>O percurso <b>em nível</b> (em largura) usa uma <b>fila</b>: enfileire a raiz; enquanto a fila não estiver vazia, remova um nó, visite-o e enfileire seus filhos (esquerdo, depois direito).</p>
+  <div class="callout intuit"><div class="ct">Truque para a prova</div><p>Contorne a árvore por fora, começando à esquerda da raiz, como se fosse uma cerca. Pré-ordem: anote o nó quando passar pela <b>esquerda</b> dele. Em-ordem: quando passar por <b>baixo</b>. Pós-ordem: quando passar pela <b>direita</b>.</p></div>
+  <h3>Aplicações que caem em prova</h3>
+  <ul>
+    <li><b>Liberar a árvore</b>: tem que ser em <b>pós-ordem</b> (filhos antes do pai), senão você perde os ponteiros para os filhos.</li>
+    <li><b>Árvore de expressão</b> (<code>(a + b) * c</code>: raiz *, com + à esquerda): pré-ordem dá a prefixa <code>* + a b c</code>, em-ordem dá a infixa (sem parênteses) e pós-ordem dá a pós-fixa <code>a b + c *</code>.</li>
+    <li><b>Reconstrução</b>: pré-ordem + em-ordem (ou pós + em) determinam a árvore. A pré-ordem diz quem é a raiz; a em-ordem diz quem fica à esquerda e quem fica à direita dela.</li>
+  </ul>
+  <pre><code class="c">int altura(NO_ARV *r) {               /* em arestas; vazia = -1 */
+    if (r == NULL) return -1;
+    int he = altura(r-&gt;esq), hd = altura(r-&gt;dir);
+    return 1 + (he &gt; hd ? he : hd);
+}
+int contar(NO_ARV *r) { return r == NULL ? 0 : 1 + contar(r-&gt;esq) + contar(r-&gt;dir); }
+void apagar(NO_ARV *r) {              /* pós-ordem! */
+    if (r == NULL) return;
+    apagar(r-&gt;esq); apagar(r-&gt;dir); free(r);
+}</code></pre>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: reconstrução</div><p>Pré-ordem: <code>A B D E C F</code>; em-ordem: <code>D B E A C F</code>. A pré começa com A, então A é a raiz. Na em-ordem, à esquerda de A estão <code>D B E</code> e à direita, <code>C F</code>. Na subárvore esquerda, a pré (B D E) diz que B é a raiz, com D à esquerda e E à direita. Na direita, C é a raiz e F está à sua direita (F vem depois de C na em-ordem). O resultado é a árvore da Figura 5.3.</p></div>
+  <div class="callout try"><div class="ct">Exercício 5.1</div><p>(a) Na árvore da Figura 5.1, qual a altura de B e o nível de G? Quantas folhas há? (b) Uma árvore binária tem altura 4 (em arestas). Qual o número máximo de nós? E o mínimo? (c) Dê a pré, a em e a pós-ordem da árvore de expressão de <code>a * (b - c) + d</code>. (d) Reconstrua a árvore com pós-ordem <code>D E B F C A</code> e em-ordem <code>D B E A C F</code>.</p></div>
+</section>

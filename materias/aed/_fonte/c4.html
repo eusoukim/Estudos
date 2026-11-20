@@ -1,0 +1,168 @@
+<!-- ===================================================== CAP 9 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 9</div><h1>Fila de Prioridade e Heap</h1>
+  <div class="goal">Objetivo: conhecer o TAD fila de prioridade, entender o heap binário em vetor, implementar subida e descida, construir um heap em O(n) e ordenar com heapsort.</div><div class="src">Base: filas de prioridade, heap binário, heapsort</div></div>
+
+  <h2>9.1 O TAD fila de prioridade</h2>
+  <p>Numa <b>fila de prioridade</b>, cada elemento tem uma <b>prioridade</b> e sai primeiro quem tem a <b>maior</b> (ou a menor, na versão de mínimo), não quem chegou antes. Exemplos: pronto-socorro (casos graves primeiro), escalonador de processos do sistema operacional, eventos ordenados por tempo numa simulação, e algoritmos como Dijkstra e Huffman.</p>
+  <table class="wide"><tr><th class="l">Operação</th><th class="l">O que faz</th></tr>
+  <tr><td class="l"><code>fp_inserir(f, x)</code></td><td class="l">insere com sua prioridade</td></tr>
+  <tr><td class="l"><code>fp_remover_max(f)</code></td><td class="l">remove e devolve o de maior prioridade</td></tr>
+  <tr><td class="l"><code>fp_max(f)</code></td><td class="l">consulta o de maior prioridade sem remover</td></tr>
+  <tr><td class="l"><code>fp_alterar(f, x, nova)</code></td><td class="l">muda a prioridade de um elemento</td></tr></table>
+  <h3>Implementações possíveis</h3>
+  <table class="wide"><tr><th class="l">Estrutura</th><th>Inserir</th><th>Remover máximo</th></tr>
+  <tr><td class="l">Lista/vetor não ordenado</td><td>O(1)</td><td>O(n), procura o maior</td></tr>
+  <tr><td class="l">Lista/vetor ordenado</td><td>O(n), acha o lugar</td><td>O(1)</td></tr>
+  <tr><td class="l">Árvore balanceada (AVL/RN)</td><td>O(log n)</td><td>O(log n)</td></tr>
+  <tr class="hl"><td class="l"><b>Heap binário</b></td><td><b>O(log n)</b></td><td><b>O(log n)</b>; consultar o máximo: O(1)</td></tr></table>
+  <p>O heap empata com as árvores balanceadas em custo, mas é muito mais simples: cabe num vetor, sem ponteiros e sem rotações.</p>
+
+  <h2>9.2 O heap binário</h2>
+  <p>Um <b>heap máximo</b> é uma árvore binária que obedece a duas regras:</p>
+  <ul>
+    <li><b>Forma</b>: é <b>completa</b>, com todos os níveis cheios, exceto o último, preenchido da esquerda para a direita.</li>
+    <li><b>Ordem</b>: todo pai é <b>maior ou igual</b> aos seus filhos. (No <b>heap mínimo</b>, menor ou igual.)</li>
+  </ul>
+  <p>Consequência: o maior elemento está sempre na <b>raiz</b>. Repare que o heap <b>não</b> é uma ABB: não há ordem entre irmãos, e a em-ordem não sai ordenada.</p>
+  {{fig:heap_basico|Um heap máximo e o vetor que o representa. A posição no vetor dá pai e filhos por conta.}}
+  <div class="formula">esq(i) = 2i + 1     dir(i) = 2i + 2     pai(i) = (i − 1) / 2</div>
+  <p class="small" style="text-align:center">(índices a partir de 0; com índices a partir de 1, fica esq = 2i, dir = 2i + 1, pai = i / 2)</p>
+
+  <h2>9.3 Inserção: sobe (sift-up)</h2>
+  <p>Coloque o novo elemento na primeira posição livre (fim do vetor), que mantém a árvore completa. Depois, enquanto ele for maior que o pai, <b>troque com o pai</b>. Ele sobe no máximo a altura da árvore: <b>O(log n)</b>.</p>
+  {{fig:heap_sobe|Inserindo 85: ele sobe duas vezes e para abaixo do 90.}}
+  <pre><code class="c">typedef struct { int v[MAX]; int n; } HEAP;
+
+void trocar(int *a, int *b) { int t = *a; *a = *b; *b = t; }
+
+void subir(HEAP *h, int i) {
+    while (i &gt; 0 &amp;&amp; h-&gt;v[(i - 1) / 2] &lt; h-&gt;v[i]) {
+        trocar(&amp;h-&gt;v[i], &amp;h-&gt;v[(i - 1) / 2]);
+        i = (i - 1) / 2;
+    }
+}
+bool heap_inserir(HEAP *h, int x) {
+    if (h-&gt;n == MAX) return false;
+    h-&gt;v[h-&gt;n] = x;
+    subir(h, h-&gt;n);
+    h-&gt;n++;
+    return true;
+}</code></pre>
+
+  <h2>9.4 Remoção do máximo: desce (sift-down)</h2>
+  <p>O máximo é <code>v[0]</code>. Para tirá-lo sem deixar buraco, mova o <b>último</b> elemento para a raiz e diminua <code>n</code>. Agora a raiz provavelmente é pequena demais: enquanto ela for menor que algum filho, <b>troque com o MAIOR filho</b>. Também é <b>O(log n)</b>.</p>
+  {{fig:heap_desce|Removendo o 90: o 20 vai para a raiz e desce trocando com o maior filho até virar folha.}}
+  <pre><code class="c">void descer(HEAP *h, int i) {
+    while (1) {
+        int e = 2 * i + 1, d = 2 * i + 2, maior = i;
+        if (e &lt; h-&gt;n &amp;&amp; h-&gt;v[e] &gt; h-&gt;v[maior]) maior = e;
+        if (d &lt; h-&gt;n &amp;&amp; h-&gt;v[d] &gt; h-&gt;v[maior]) maior = d;
+        if (maior == i) return;               /* já está no lugar */
+        trocar(&amp;h-&gt;v[i], &amp;h-&gt;v[maior]);
+        i = maior;
+    }
+}
+bool heap_remover_max(HEAP *h, int *x) {
+    if (h-&gt;n == 0) return false;
+    *x = h-&gt;v[0];
+    h-&gt;v[0] = h-&gt;v[--h-&gt;n];                /* último vai para a raiz */
+    descer(h, 0);
+    return true;
+}</code></pre>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><p>Na descida, troque com o <b>maior</b> dos filhos (no heap mínimo, com o <b>menor</b>). Trocar com o filho errado coloca um elemento menor acima de um maior e quebra o heap.</p></div>
+
+  <h2>9.5 Construir um heap em O(n)</h2>
+  <p>Inserir n elementos um por um custa O(n log n). Dá para fazer melhor com o vetor inteiro de uma vez: as folhas (metade final do vetor) já são heaps de um elemento. Basta chamar <code>descer</code> em cada nó interno, <b>do último para o primeiro</b>: de <code>n/2 − 1</code> até <code>0</code>.</p>
+  <pre><code class="c">void heap_construir(HEAP *h) {
+    for (int i = h-&gt;n / 2 - 1; i &gt;= 0; i--)
+        descer(h, i);
+}</code></pre>
+  <div class="callout deep"><div class="ct">Aprofundando: por que O(n)?</div><p>Metade dos nós são folhas e não descem nada; um quarto desce no máximo 1 nível; um oitavo, 2 níveis… A soma n/4·1 + n/8·2 + n/16·3 + … converge para cerca de n. Quase todo o trabalho é feito em nós baixos, que descem pouco.</p></div>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: construir a partir de [30, 60, 90, 40, 50, 80, 95]</div>
+  <p>n = 7, então os nós internos vão de 2 até 0.</p>
+  <table class="tt"><tr><th>i</th><th class="l">Ação</th><th class="l">Vetor</th></tr>
+  <tr><td>2</td><td class="l">90 vs filhos 80, 95 → troca com 95</td><td class="l">30 60 95 40 50 80 90</td></tr>
+  <tr><td>1</td><td class="l">60 vs filhos 40, 50 → já é maior</td><td class="l">30 60 95 40 50 80 90</td></tr>
+  <tr><td>0</td><td class="l">30 → troca com 95; depois 30 vs 80, 90 → troca com 90</td><td class="l">95 60 90 40 50 80 30</td></tr></table></div>
+
+  <h2>9.6 Heapsort</h2>
+  <p>Ordenação em duas fases: (1) construa um heap máximo com o vetor; (2) repita n − 1 vezes: troque a raiz (maior) com o último elemento do heap, diminua o tamanho do heap e desça a nova raiz. O maior vai para o fim, depois o segundo maior para a penúltima posição, e assim por diante.</p>
+  <pre><code class="c">void heapsort(int v[], int n) {
+    HEAP h; h.n = n;
+    for (int i = 0; i &lt; n; i++) h.v[i] = v[i];
+    heap_construir(&amp;h);
+    for (int fim = n - 1; fim &gt; 0; fim--) {
+        trocar(&amp;h.v[0], &amp;h.v[fim]);      /* maior vai para o fim */
+        h.n = fim;                        /* encolhe o heap */
+        descer(&amp;h, 0);
+    }
+    for (int i = 0; i &lt; n; i++) v[i] = h.v[i];
+}</code></pre>
+  <table><tr><th>Propriedade</th><th>Heapsort</th></tr>
+  <tr><td class="l">Tempo (pior, médio, melhor)</td><td>O(n log n)</td></tr>
+  <tr><td class="l">Memória extra</td><td>O(1) (no próprio vetor; a cópia acima é só didática)</td></tr>
+  <tr><td class="l">Estável?</td><td>não</td></tr></table>
+
+  <h2>9.7 Alterar prioridade</h2>
+  <p>Se a prioridade de um elemento <b>aumentar</b> (heap máximo), ele pode estar abaixo de um pai menor: chame <code>subir</code>. Se <b>diminuir</b>, chame <code>descer</code>. Ambos O(log n), desde que você saiba o índice do elemento (normalmente guardado num vetor auxiliar de posições).</p>
+  <div class="callout try"><div class="ct">Exercício 9.1</div><p>(a) Insira 30, 60, 90, 40, 50, 80, 95, nessa ordem, num heap máximo vazio. Qual o vetor final? Compare com o do exemplo da seção 9.5. (b) No heap da Figura 9.1, remova o máximo duas vezes e dê o vetor. (c) O vetor [50, 30, 40, 10, 35, 20] é um heap máximo? (d) Por que o heap é guardado em vetor e a ABB não?</p></div>
+</section>
+
+<!-- ===================================================== CAP 10 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 10</div><h1>Revisão, armadilhas e gabarito</h1>
+  <div class="goal">Resumo de tudo para a véspera, os erros que mais aparecem e as respostas dos exercícios.</div></div>
+
+  <h2>10.1 Resumo para a véspera</h2>
+  <div class="cheat">
+    <div class="blk"><h4>TAD e C</h4><ul><li>TAD = operações (interface .h) + representação escondida (.c, struct opaca).</li><li><code>malloc</code> pode dar NULL; todo malloc tem um free; guarde o próximo antes do free.</li><li>Apagar com <code>T **</code> para zerar o ponteiro do usuário.</li></ul></div>
+    <div class="blk"><h4>Pilha (LIFO)</h4><ul><li>Vetor: <code>topo</code> = índice do último; vazia −1; cheia MAX−1.</li><li>Encadeada: insere e remove no início.</li><li>Usos: parênteses, pós-fixa (1º desempilhado é o operando da direita), recursão, desfazer.</li></ul></div>
+    <div class="blk"><h4>Fila (FIFO) e deque</h4><ul><li>Circular: <code>i = (i+1) % MAX</code>; recuar: <code>(i−1+MAX) % MAX</code>.</li><li>Vazia × cheia: contador, ou uma posição sempre livre.</li><li>Encadeada: ponteiros início e fim; ao esvaziar, fim = NULL.</li><li>Deque encadeado: lista dupla.</li></ul></div>
+    <div class="blk"><h4>Listas</h4><ul><li>Sequencial: acesso O(1), inserir/remover O(n), busca binária se ordenada.</li><li>Encadeada: inserir/remover O(1) dado o local; liga o novo antes de desligar o antigo.</li><li>Cabeça: sem casos especiais. Circular: cuidado com laço infinito. Dupla: remove dado o nó.</li><li>Generalizada: átomo ou sublista (cabeça, cauda, profundidade).</li><li>Cruzada: nó em 2 listas (linha e coluna), para matriz esparsa.</li></ul></div>
+    <div class="blk"><h4>Árvores binárias</h4><ul><li>Nível i: até 2<sup>i</sup> nós. Altura h: até 2<sup>h+1</sup>−1 nós.</li><li>Vetor: filhos 2i+1, 2i+2; pai (i−1)/2.</li><li>Pré RED, em ERD, pós EDR, nível usa fila.</li><li>Liberar em pós-ordem. Pré + em reconstroem.</li></ul></div>
+    <div class="blk"><h4>ABB</h4><ul><li>esq &lt; nó &lt; dir em toda a subárvore; em-ordem ordenada.</li><li>Inserção sempre como folha.</li><li>Remoção: folha / 1 filho sobe / 2 filhos → sucessor (menor da direita).</li><li>O(h): log n a n.</li></ul></div>
+    <div class="blk"><h4>AVL</h4><ul><li>FB = h(esq) − h(dir) ∈ {−1, 0, +1}.</li><li>+2 &amp; filho +1 → direita · −2 &amp; filho −1 → esquerda.</li><li>+2 &amp; filho −1 → dupla esq-dir · −2 &amp; filho +1 → dupla dir-esq.</li><li>Inserção: ≤ 1 rotação. Remoção: até O(log n).</li></ul></div>
+    <div class="blk"><h4>Rubro-negra</h4><ul><li>Raiz preta, NIL preto, sem vermelho-vermelho, mesma altura negra.</li><li>Insere vermelho. Tio vermelho → recolore e sobe. Tio preto → zigue-zague: rotação no pai; reta: rotação no avô + troca cores.</li><li>Altura ≤ 2 log₂(n+1).</li></ul></div>
+    <div class="blk"><h4>Heap</h4><ul><li>Completa + pai ≥ filhos (máx). Máximo na raiz.</li><li>Inserir: fim + sobe. Remover: último na raiz + desce pelo maior filho.</li><li>Construir: desce de n/2−1 até 0, O(n).</li><li>Heapsort O(n log n), in-place, não estável.</li></ul></div>
+  </div>
+  <h3>Tabela de custos</h3>
+  <table class="wide"><tr><th class="l">Estrutura</th><th>Buscar</th><th>Inserir</th><th>Remover</th><th class="l">Obs.</th></tr>
+  <tr><td class="l">Pilha / fila</td><td>—</td><td>O(1)</td><td>O(1)</td><td class="l">só nas pontas</td></tr>
+  <tr><td class="l">Lista sequencial ordenada</td><td>O(log n)</td><td>O(n)</td><td>O(n)</td><td class="l">desloca</td></tr>
+  <tr><td class="l">Lista encadeada</td><td>O(n)</td><td>O(1)*</td><td>O(1)*</td><td class="l">*dado o local</td></tr>
+  <tr><td class="l">ABB</td><td>O(h)</td><td>O(h)</td><td>O(h)</td><td class="l">h entre log n e n</td></tr>
+  <tr><td class="l">AVL / rubro-negra</td><td>O(log n)</td><td>O(log n)</td><td>O(log n)</td><td class="l">pior caso garantido</td></tr>
+  <tr><td class="l">Heap</td><td>máx: O(1)</td><td>O(log n)</td><td>máx: O(log n)</td><td class="l">buscar outro: O(n)</td></tr></table>
+
+  <h2>10.2 Armadilhas clássicas</h2>
+  <ol>
+    <li>Na fila encadeada, esquecer <code>fim = NULL</code> ao remover o último.</li>
+    <li>Na inserção encadeada, fazer <code>p-&gt;prox = novo</code> antes de <code>novo-&gt;prox = p-&gt;prox</code>.</li>
+    <li>Dar <code>free</code> num nó e depois ler <code>-&gt;prox</code> dele.</li>
+    <li>Em pós-fixa, inverter os operandos de − e /.</li>
+    <li>Verificar ABB só entre pai e filho, e não na subárvore inteira.</li>
+    <li>Na remoção com dois filhos, usar o maior da subárvore <b>direita</b> (o certo é o menor da direita, ou o maior da esquerda).</li>
+    <li>Trocar o sinal do FB, ou escolher rotação simples quando o filho tem sinal oposto.</li>
+    <li>Na RN, inserir o novo nó preto (quebra a altura negra), ou esquecer de pintar a raiz de preto no fim.</li>
+    <li>No heap, descer trocando com o filho errado; ou achar que o heap está ordenado.</li>
+  </ol>
+
+  <h2>10.3 Gabarito</h2>
+  <p><b>1.1</b> (a) Especificação: quais operações existem e o que fazem (o contrato, no .h). Implementação: representação concreta e código (no .c). (b) Para esconder os campos: o usuário só pode usar ponteiros e as funções do TAD (encapsulamento). (c) Comportamento indefinido: a memória já foi devolvida e pode conter lixo, ser reutilizada ou derrubar o programa.</p>
+  <p><b>2.1</b> (a) Base → topo: <b>1 5</b>. (b) <code>{[()]}()</code> sim; <code>([)]</code> não. (c) 6 / 2 = 3; 3 · 4 = 12; 3 + 12 = <b>15</b>. (d) <b>A B C + * D −</b>.</p>
+  <p><b>3.1</b> (a) Vetor <b>[E, F, C, D]</b>. (b) inicio = 2, fim = 2, qtd = 4. (c) Sim: antes dela havia qtd = 3. Passo a passo: A, B, C nos índices 0–2; rem tira A (inicio 1); D no 3; E no 0 (fila cheia, qtd 4); rem tira B (inicio 2); F no 1.</p>
+  <p><b>4.1</b> (a) É preciso percorrer até o último nó. Fica O(1) guardando um ponteiro para o último (ou usando lista circular com ponteiro para o último). (b) <code>p-&gt;ant-&gt;prox = p-&gt;prox</code> (ou, se p é o primeiro, <code>L = p-&gt;prox</code>); se <code>p-&gt;prox != NULL</code>, <code>p-&gt;prox-&gt;ant = p-&gt;ant</code>; depois <code>free(p)</code>. (c) cabeça = <code>(a, b)</code>; cauda = <code>(c, (d, (e)))</code>; 5 átomos; profundidade 3. (d) Comum: 200 000 posições. Cruzada: cerca de 5 · 1000 + 500 + 400 = <b>5 900</b>.</p>
+  <p><b>5.1</b> (a) altura(B) = 2 (B → E → H); nível(G) = 3; 3 folhas (D, H, G). (b) Máximo 2<sup>5</sup> − 1 = <b>31</b>; mínimo <b>5</b> (degenerada). (c) Raiz +, com * à esquerda (a e −(b, c)) e d à direita. Pré: <code>+ * a − b c d</code>; em: <code>a * b − c + d</code>; pós: <code>a b c − * d +</code>. (d) É a árvore da Figura 5.3: A com B (filhos D, E) à esquerda e C (filho direito F) à direita.</p>
+  <p><b>6.1</b> (a)</p>
+  {{fig:gab_abb|Gabarito 6.1(a).|420px}}
+  <p>(b) O 20 tem dois filhos; o sucessor é o 30 (menor da direita). O 30 sobe e seu filho 35 ocupa o lugar dele: 45 → (30 → 10, 35), (70 → 50 → 60, 90). (c) O sucessor do 45 é o 50; o 60 sobe no lugar do 50: raiz 50, esquerda 30 (10, 35), direita 70 (60, 90). (d) <code>10 30 35 50 60 70 90</code>.</p>
+  <p><b>7.1</b> (a) Inserindo 10: o 30 fica com +2 e o 20 com +1 → LL, rotação à direita em 30 (raiz 20). 25 e 40 entram sem problema. Inserindo 50: o 20 fica com −2 e o filho 30 com −1 → RR, rotação à esquerda em 20.</p>
+  {{fig:gab_avl|Gabarito 7.1(a): árvore final com FBs.|380px}}
+  <p>(b) FB(50) = +2 e FB(20) = −1: caso <b>LR</b>. Rotação à esquerda em 20, depois à direita em 50: raiz 30 com filhos 20 e 50. (c) Com |FB| ≤ 1, o número mínimo de nós de uma AVL de altura h cresce como Fibonacci (N(h) = N(h−1) + N(h−2) + 1), ou seja, exponencialmente em h. Logo h = O(log n).</p>
+  <p><b>8.1</b> (a) Raiz vermelha viola a propriedade 2 (mas pintá-la de preto sempre corrige, sem quebrar as outras). Dois vermelhos seguidos violam a propriedade 4. (b) 5 vira raiz preta; 10 entra vermelho; 15: pai 10 vermelho, tio NIL, linha reta → caso 3, rotação à esquerda em 5 e troca de cores (10 preto, 5 e 15 vermelhos); 20: tio 5 vermelho → caso 1, 5 e 15 ficam pretos e 10 vermelho; como 10 é raiz, volta a preto. Final: 10 (P) com 5 (P) e 15 (P), e 20 (V) à direita do 15. (c) Precisa ser a árvore <b>cheia</b> de 3 níveis: com todos pretos, todo caminho até um NIL precisa ter o mesmo comprimento. Altura negra 3.</p>
+  <p><b>9.1</b> (a) <b>[95, 50, 90, 30, 40, 60, 80]</b>. É diferente do construído em O(n) ([95, 60, 90, 40, 50, 80, 30]): os dois são heaps válidos. Um mesmo conjunto admite vários heaps.</p>
+  {{fig:gab_heap|Heap obtido pela construção em O(n) da seção 9.5, para comparar.|380px}}
+  <p>(b) 1ª remoção: [80, 70, 60, 40, 50, 20, 30, 10] (Figura 9.3). 2ª: o 10 vai para a raiz e desce pelo 70 e pelo 50: <b>[70, 50, 60, 40, 10, 20, 30]</b>. (c) <b>Não.</b> A raiz 50 é maior que 30 e 40, mas o 30 (índice 1) tem como filhos o 10 e o 35 (índices 3 e 4), e 35 &gt; 30. (d) O heap é sempre uma árvore completa, então o vetor não tem buracos e os índices dão pais e filhos. Uma ABB pode ter qualquer forma, e no vetor sobrariam muitos espaços vazios.</p>
+  <div class="callout key"><div class="ct">Última dica</div><p>Refaça à mão, sem olhar: (1) uma fila circular com várias voltas; (2) inserir e remover numa lista dupla, desenhando os ponteiros; (3) os quatro percursos de uma árvore; (4) inserções e as três remoções numa ABB; (5) uma sequência de inserções AVL com todas as rotações; (6) inserções numa rubro-negra; (7) inserir, remover e construir um heap. Isso cobre quase tudo que costuma cair.</p></div>
+</section>

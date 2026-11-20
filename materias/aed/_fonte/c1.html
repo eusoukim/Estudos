@@ -1,0 +1,291 @@
+<!-- ===================================================== CAP 1 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 1</div><h1>Tipos Abstratos de Dados</h1>
+  <div class="goal">Objetivo: separar o que uma estrutura faz do jeito como ela é feita, e revisar as ferramentas de C usadas o curso inteiro: struct, ponteiros, malloc/free e notação O.</div><div class="src">Base: TADs, modularização em C, alocação dinâmica</div></div>
+
+  <h2>1.1 Dados + operações</h2>
+  <p>Todo programa manipula <b>dados</b> (números, nomes, filas de clientes) por meio de <b>operações</b> (somar, inserir, buscar). Uma <b>estrutura de dados</b> é uma forma de organizar dados na memória para que certas operações fiquem eficientes. A escolha da estrutura muda o custo das operações: buscar um nome numa lista bagunçada exige olhar um por um; numa árvore de busca balanceada, poucos passos bastam.</p>
+  <div class="callout intuit"><div class="ct">Intuição</div><p>Pense num caixa eletrônico. Você conhece as <b>operações</b> (sacar, depositar, ver saldo), mas não sabe nem precisa saber <b>como</b> o banco guarda seu dinheiro. Se o banco trocar o sistema por dentro, você continua usando os mesmos botões. Isso é um TAD.</p></div>
+
+  <h2>1.2 O que é um TAD</h2>
+  <p>Um <b>Tipo Abstrato de Dados (TAD)</b> é um tipo definido <b>pelas operações</b> que se pode fazer com ele, e não pela forma como é representado na memória. Ele tem duas faces:</p>
+  <ul>
+    <li><b>Especificação (interface)</b>: o nome das operações, o que cada uma recebe, devolve e garante. É o “contrato”.</li>
+    <li><b>Implementação</b>: a representação concreta (vetor, nós encadeados…) e o código de cada operação. Fica escondida de quem usa.</li>
+  </ul>
+  <p>Exemplos de TADs deste curso: <b>Pilha</b>, <b>Fila</b>, <b>Deque</b>, <b>Lista</b>, <b>Árvore de busca</b> e <b>Fila de prioridade</b>. Cada um pode ter várias implementações; o usuário escolhe pela eficiência, sem mudar o próprio código.</p>
+  {{fig:tad_camadas|As três camadas: o programa do usuário só conversa com a interface (.h). A implementação (.c) pode ser trocada.}}
+
+  <h2>1.3 TAD em C: arquivo .h, arquivo .c e struct opaca</h2>
+  <p>Em C, a separação é feita com dois arquivos. O <b>.h</b> declara o tipo e as operações; o <b>.c</b> define a struct e o código. O truque que esconde a representação é a <b>struct opaca</b>: o .h só diz que o tipo existe, e o usuário manipula apenas <b>ponteiros</b> para ele.</p>
+  <pre><code class="c">/* ponto.h — interface */
+#ifndef PONTO_H
+#define PONTO_H
+typedef struct ponto PONTO;          /* struct opaca: campos escondidos */
+
+PONTO *ponto_criar(float x, float y);
+void   ponto_apagar(PONTO **p);
+float  ponto_distancia(const PONTO *a, const PONTO *b);
+#endif</code></pre>
+  <pre><code class="c">/* ponto.c — implementação */
+#include &lt;stdlib.h&gt;
+#include &lt;math.h&gt;
+#include "ponto.h"
+
+struct ponto { float x, y; };        /* só este arquivo conhece os campos */
+
+PONTO *ponto_criar(float x, float y) {
+    PONTO *p = malloc(sizeof(PONTO));
+    if (p != NULL) { p-&gt;x = x; p-&gt;y = y; }
+    return p;
+}
+void ponto_apagar(PONTO **p) {
+    if (p != NULL &amp;&amp; *p != NULL) { free(*p); *p = NULL; }
+}
+float ponto_distancia(const PONTO *a, const PONTO *b) {
+    return sqrtf((a-&gt;x - b-&gt;x) * (a-&gt;x - b-&gt;x) + (a-&gt;y - b-&gt;y) * (a-&gt;y - b-&gt;y));
+}</code></pre>
+  <p>No <code>main.c</code>, escrever <code>p-&gt;x</code> dá erro de compilação: o usuário não enxerga os campos. Ele só pode usar as funções. Isso é <b>encapsulamento</b>.</p>
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>Por que <code>ponto_apagar</code> recebe <code>PONTO **</code>? Para conseguir colocar <code>NULL</code> no ponteiro do usuário depois do <code>free</code>. Assim ele não fica com um ponteiro “pendurado” (dangling pointer) apontando para memória liberada.</p></div>
+
+  <h2>1.4 Vantagens</h2>
+  <ul>
+    <li><b>Reuso</b>: a mesma pilha serve para vários programas.</li>
+    <li><b>Troca de implementação</b>: dá para trocar a pilha em vetor por uma encadeada sem mexer no programa do usuário.</li>
+    <li><b>Correção</b>: só as funções do TAD mexem nos dados, então é mais difícil corromper a estrutura (por exemplo, um <code>topo</code> errado).</li>
+    <li><b>Divisão de trabalho</b>: quem usa só precisa conhecer o contrato.</li>
+  </ul>
+
+  <h2>1.5 Revisão: ponteiros e alocação dinâmica</h2>
+  <p>As estruturas <b>sequenciais (estáticas)</b> usam vetores de tamanho fixo, definidos na compilação. As <b>encadeadas (dinâmicas)</b> pedem memória ao sistema durante a execução, um nó de cada vez, com <code>malloc</code>, e devolvem com <code>free</code>.</p>
+  <pre><code class="c">typedef struct no {
+    int info;
+    struct no *prox;      /* ponteiro para o próximo nó */
+} NO;
+
+NO *n = malloc(sizeof(NO));   /* pede memória para 1 nó */
+if (n == NULL) { /* sem memória: trate o erro */ }
+n-&gt;info = 42;               /* p-&gt;campo é o mesmo que (*p).campo */
+n-&gt;prox = NULL;
+free(n);                    /* devolve; n agora aponta para lixo */
+n = NULL;</code></pre>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><ul>
+    <li>Todo <code>malloc</code> pode devolver <code>NULL</code>: confira antes de usar.</li>
+    <li>Todo <code>malloc</code> precisa de um <code>free</code> correspondente. Senão, há <b>vazamento de memória</b>.</li>
+    <li>Nunca use um ponteiro depois do <code>free</code>, e nunca dê <code>free</code> duas vezes no mesmo endereço.</li>
+    <li>Ao remover um nó encadeado, <b>guarde o próximo antes</b> de liberar o atual.</li>
+  </ul></div>
+
+  <h2>1.6 Revisão: custo das operações (notação O)</h2>
+  <p>Para comparar estruturas, conta-se quantos passos uma operação faz em função do número de elementos <b>n</b>, ignorando constantes. A notação <b>O(·)</b> dá o limite superior do crescimento.</p>
+  <table><tr><th>Notação</th><th class="l">Nome</th><th class="l">Exemplo neste curso</th><th>n = 1 000 000</th></tr>
+  <tr><td>O(1)</td><td class="l">constante</td><td class="l">empilhar, desempilhar, acessar v[i]</td><td>1</td></tr>
+  <tr><td>O(log n)</td><td class="l">logarítmica</td><td class="l">busca em AVL, inserir em heap</td><td>~20</td></tr>
+  <tr><td>O(n)</td><td class="l">linear</td><td class="l">busca em lista, inserir ordenado em vetor</td><td>1 000 000</td></tr>
+  <tr><td>O(n log n)</td><td class="l">n log n</td><td class="l">heapsort</td><td>~20 000 000</td></tr>
+  <tr><td>O(n²)</td><td class="l">quadrática</td><td class="l">inserir n elementos ordenados em vetor</td><td>10¹²</td></tr></table>
+  <div class="callout try"><div class="ct">Exercício 1.1</div><p>(a) Qual a diferença entre a especificação e a implementação de um TAD? (b) Por que o .h usa <code>typedef struct ponto PONTO;</code> sem listar os campos? (c) O que acontece se você der <code>free(n)</code> e depois ler <code>n-&gt;prox</code>?</p></div>
+</section>
+
+<!-- ===================================================== CAP 2 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 2</div><h1>Pilhas</h1>
+  <div class="goal">Objetivo: entender a disciplina LIFO, implementar pilhas em vetor e com nós encadeados, e usar pilhas para validar parênteses e avaliar expressões.</div><div class="src">Base: TAD Pilha, implementações sequencial e encadeada, aplicações</div></div>
+
+  <h2>2.1 A ideia: último a entrar, primeiro a sair</h2>
+  <p>Uma <b>pilha</b> (<i>stack</i>) só permite mexer em uma ponta, o <b>topo</b>. O último elemento empilhado é o primeiro a sair: disciplina <b>LIFO</b> (<i>Last In, First Out</i>). Exemplos: pilha de pratos, o botão “desfazer” de um editor, o “voltar” do navegador e a <b>pilha de chamadas</b> de funções do próprio C (cada chamada empilha suas variáveis locais; o <code>return</code> desempilha).</p>
+  {{fig:pilha_ops|Uma sequência de operações. Só o topo é acessível.}}
+
+  <h2>2.2 O TAD Pilha</h2>
+  <table class="wide"><tr><th class="l">Operação</th><th class="l">O que faz</th><th>Custo</th></tr>
+  <tr><td class="l"><code>pilha_criar()</code></td><td class="l">cria pilha vazia</td><td>O(1)</td></tr>
+  <tr><td class="l"><code>pilha_empilhar(p, x)</code> (push)</td><td class="l">coloca x no topo; falha se cheia</td><td>O(1)</td></tr>
+  <tr><td class="l"><code>pilha_desempilhar(p)</code> (pop)</td><td class="l">remove e devolve o topo; falha se vazia</td><td>O(1)</td></tr>
+  <tr><td class="l"><code>pilha_topo(p)</code> (peek/top)</td><td class="l">devolve o topo sem remover</td><td>O(1)</td></tr>
+  <tr><td class="l"><code>pilha_vazia(p)</code>, <code>pilha_cheia(p)</code>, <code>pilha_tamanho(p)</code></td><td class="l">consultas</td><td>O(1)</td></tr>
+  <tr><td class="l"><code>pilha_apagar(&amp;p)</code></td><td class="l">libera tudo</td><td>O(1) ou O(n)</td></tr></table>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><p>Desempilhar de pilha vazia é <b>underflow</b>; empilhar em pilha cheia é <b>overflow</b>. Toda implementação precisa testar esses casos antes de agir.</p></div>
+
+  <h2>2.3 Implementação sequencial (vetor)</h2>
+  {{fig:pilha_seq|Pilha em vetor: os elementos ficam de itens[0] até itens[topo].}}
+  <pre><code class="c">#define MAX 100
+struct pilha {
+    int itens[MAX];
+    int topo;                      /* índice do último elemento; -1 = vazia */
+};
+
+PILHA *pilha_criar(void) {
+    PILHA *p = malloc(sizeof(PILHA));
+    if (p != NULL) p-&gt;topo = -1;
+    return p;
+}
+bool pilha_vazia(const PILHA *p) { return p-&gt;topo == -1; }
+bool pilha_cheia(const PILHA *p) { return p-&gt;topo == MAX - 1; }
+
+bool pilha_empilhar(PILHA *p, int x) {
+    if (pilha_cheia(p)) return false;      /* overflow */
+    p-&gt;itens[++p-&gt;topo] = x;               /* sobe o topo e grava */
+    return true;
+}
+bool pilha_desempilhar(PILHA *p, int *x) {
+    if (pilha_vazia(p)) return false;      /* underflow */
+    *x = p-&gt;itens[p-&gt;topo--];              /* lê e desce o topo */
+    return true;
+}</code></pre>
+  <p>Repare que desempilhar <b>não apaga</b> o valor do vetor: só move o topo. O valor antigo vira lixo e será sobrescrito no próximo push.</p>
+
+  <h2>2.4 Implementação encadeada</h2>
+  <p>Cada elemento é um nó alocado na hora. O topo é o <b>primeiro nó</b>: empilhar insere no início, desempilhar remove do início. Nenhuma das duas precisa percorrer a lista, então ambas são O(1). Não existe “cheia” (só se a memória acabar).</p>
+  {{fig:pilha_enc|Pilha encadeada: o ponteiro topo aponta para o último elemento empilhado.}}
+  <pre><code class="c">typedef struct no { int info; struct no *prox; } NO;
+struct pilha { NO *topo; int tamanho; };
+
+bool pilha_empilhar(PILHA *p, int x) {
+    NO *n = malloc(sizeof(NO));
+    if (n == NULL) return false;
+    n-&gt;info = x;
+    n-&gt;prox = p-&gt;topo;         /* novo nó aponta para o antigo topo */
+    p-&gt;topo = n;               /* e vira o topo */
+    p-&gt;tamanho++;
+    return true;
+}
+bool pilha_desempilhar(PILHA *p, int *x) {
+    if (p-&gt;topo == NULL) return false;
+    NO *velho = p-&gt;topo;
+    *x = velho-&gt;info;
+    p-&gt;topo = velho-&gt;prox;     /* guarda o próximo ANTES do free */
+    free(velho);
+    p-&gt;tamanho--;
+    return true;
+}</code></pre>
+  <table class="wide"><tr><th class="l"></th><th class="l">Sequencial</th><th class="l">Encadeada</th></tr>
+  <tr><td class="l">Tamanho máximo</td><td class="l">fixo (MAX)</td><td class="l">limitado pela memória</td></tr>
+  <tr><td class="l">Memória por elemento</td><td class="l">só o dado</td><td class="l">dado + ponteiro</td></tr>
+  <tr><td class="l">Desperdício</td><td class="l">posições não usadas do vetor</td><td class="l">nenhum (mas cada malloc tem custo)</td></tr>
+  <tr><td class="l">push / pop</td><td class="l">O(1)</td><td class="l">O(1)</td></tr></table>
+
+  <h2>2.5 Aplicação: parênteses balanceados</h2>
+  <p>Uma expressão como <code>{[()()]}</code> está balanceada se cada símbolo de abertura tem um fechamento <b>do mesmo tipo</b>, na ordem certa. Algoritmo:</p>
+  <ol class="steps">
+    <li>Percorra os caracteres da esquerda para a direita.</li>
+    <li>Abertura <code>( [ {</code>: empilhe.</li>
+    <li>Fechamento: se a pilha estiver vazia, ou se o topo não for a abertura correspondente, <b>não está balanceada</b>. Senão, desempilhe.</li>
+    <li>No fim, a expressão está balanceada se, e somente se, a pilha estiver <b>vazia</b>.</li>
+  </ol>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: <code>( [ ) ]</code></div>
+  <table class="tt"><tr><th>Lido</th><th class="l">Ação</th><th class="l">Pilha (topo à direita)</th></tr>
+  <tr><td>(</td><td class="l">empilha</td><td class="l">(</td></tr><tr><td>[</td><td class="l">empilha</td><td class="l">( [</td></tr>
+  <tr class="bad"><td>)</td><td class="l">topo é [, não combina com )</td><td class="l">erro: não balanceada</td></tr></table>
+  <p>Contar quantos “(” e “)” existem não basta: aqui as quantidades batem, mas a ordem está errada. A pilha verifica a ordem.</p></div>
+
+  <h2>2.6 Aplicação: notação pós-fixa (polonesa reversa)</h2>
+  <p>Na notação <b>infixa</b>, o operador fica entre os operandos (<code>5 + 3 * 2</code>) e precisamos de precedência e parênteses. Na <b>pós-fixa</b>, o operador vem depois dos operandos (<code>5 3 2 * +</code>) e a expressão nunca precisa de parênteses. Avaliar pós-fixa com pilha é direto:</p>
+  <ul><li><b>Número</b>: empilhe.</li><li><b>Operador</b>: desempilhe <b>b</b> (topo) e depois <b>a</b>; empilhe <b>a op b</b>.</li><li>No fim, o resultado é o único elemento da pilha.</li></ul>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: <code>5 3 2 * +</code></div>
+  <table class="tt"><tr><th>Lido</th><th class="l">Ação</th><th class="l">Pilha</th></tr>
+  <tr><td>5</td><td class="l">empilha</td><td class="l">5</td></tr><tr><td>3</td><td class="l">empilha</td><td class="l">5 3</td></tr><tr><td>2</td><td class="l">empilha</td><td class="l">5 3 2</td></tr>
+  <tr><td>*</td><td class="l">b=2, a=3 → 6</td><td class="l">5 6</td></tr><tr><td>+</td><td class="l">b=6, a=5 → 11</td><td class="l">11</td></tr></table></div>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><p>A ordem importa em <code>−</code> e <code>/</code>: o <b>primeiro</b> desempilhado é o operando da <b>direita</b>. <code>8 2 /</code> é 8 / 2 = 4, não 2 / 8.</p></div>
+  <h3>Conversão infixa → pós-fixa</h3>
+  <p>Operandos vão direto para a saída. Operadores esperam numa pilha: antes de empilhar um operador, desempilhe para a saída os que estão no topo com precedência <b>maior ou igual</b> (para operadores associativos à esquerda). “(” é empilhado; “)” desempilha até o “(”. No fim, esvazie a pilha na saída.</p>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: <code>A + B * C</code> e <code>(A + B) * C</code></div>
+  <p><code>A + B * C</code> → <b>A B C * +</b> (o * tem precedência e sai antes). <code>(A + B) * C</code> → <b>A B + C *</b> (os parênteses forçam o + a sair antes).</p></div>
+  <div class="callout try"><div class="ct">Exercício 2.1</div><p>(a) Pilha vazia: push(1), push(2), pop, push(3), push(4), pop, pop, push(5). Qual o conteúdo final (base → topo)? (b) <code>{[()]}()</code> e <code>([)]</code> estão balanceadas? (c) Avalie <code>6 2 / 3 4 * +</code>. (d) Converta <code>A * (B + C) - D</code> para pós-fixa.</p></div>
+</section>
+
+<!-- ===================================================== CAP 3 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 3</div><h1>Filas e Deques</h1>
+  <div class="goal">Objetivo: entender a disciplina FIFO, resolver o problema da fila em vetor com a fila circular, implementar a fila encadeada e generalizar para o deque.</div><div class="src">Base: TAD Fila, fila circular, fila encadeada, deque</div></div>
+
+  <h2>3.1 Primeiro a entrar, primeiro a sair</h2>
+  <p>Numa <b>fila</b> (<i>queue</i>), os elementos entram por uma ponta (o <b>fim</b>) e saem pela outra (o <b>início</b>): disciplina <b>FIFO</b> (<i>First In, First Out</i>). Exemplos: fila de banco, fila de impressão, buffer de teclado, processos esperando a CPU, busca em largura em árvores e grafos.</p>
+  <table class="wide"><tr><th class="l">Operação</th><th class="l">O que faz</th></tr>
+  <tr><td class="l"><code>fila_inserir(f, x)</code> (enqueue)</td><td class="l">coloca x no fim</td></tr>
+  <tr><td class="l"><code>fila_remover(f)</code> (dequeue)</td><td class="l">tira e devolve o elemento do início</td></tr>
+  <tr><td class="l"><code>fila_frente(f)</code></td><td class="l">consulta o início sem remover</td></tr>
+  <tr><td class="l"><code>fila_vazia</code>, <code>fila_cheia</code>, <code>fila_tamanho</code></td><td class="l">consultas</td></tr></table>
+
+  <h2>3.2 O problema da fila em vetor</h2>
+  <p>Primeira ideia: guardar no vetor e remover do índice 0, deslocando todos os outros. Funciona, mas cada remoção custa <b>O(n)</b>. Segunda ideia: manter índices <code>inicio</code> e <code>fim</code> que só andam para a direita. As operações viram O(1), mas a fila “anda” pelo vetor e logo parece cheia, mesmo com espaço livre à esquerda.</p>
+  {{fig:fila_problema|Com índices que só avançam, o espaço liberado no começo nunca é reaproveitado.}}
+
+  <h2>3.3 Fila circular</h2>
+  <p>A solução é tratar o vetor como um <b>anel</b>: depois da última posição vem a primeira. Os índices avançam com o resto da divisão:</p>
+  <div class="formula">i = (i + 1) % MAX</div>
+  {{fig:fila_circular|Fila circular com MAX = 8. O contador qtd distingue vazia de cheia.}}
+  <pre><code class="c">#define MAX 8
+struct fila {
+    int itens[MAX];
+    int inicio;      /* índice do primeiro (próximo a sair) */
+    int fim;         /* índice da próxima posição livre */
+    int qtd;
+};
+
+FILA *fila_criar(void) {
+    FILA *f = malloc(sizeof(FILA));
+    if (f != NULL) { f-&gt;inicio = 0; f-&gt;fim = 0; f-&gt;qtd = 0; }
+    return f;
+}
+bool fila_inserir(FILA *f, int x) {
+    if (f-&gt;qtd == MAX) return false;
+    f-&gt;itens[f-&gt;fim] = x;
+    f-&gt;fim = (f-&gt;fim + 1) % MAX;     /* dá a volta */
+    f-&gt;qtd++;
+    return true;
+}
+bool fila_remover(FILA *f, int *x) {
+    if (f-&gt;qtd == 0) return false;
+    *x = f-&gt;itens[f-&gt;inicio];
+    f-&gt;inicio = (f-&gt;inicio + 1) % MAX;
+    f-&gt;qtd--;
+    return true;
+}</code></pre>
+  <div class="callout key"><div class="ct">Ideia-chave: vazia ou cheia?</div><p>Se usarmos só <code>inicio</code> e <code>fim</code>, a situação <code>inicio == fim</code> acontece tanto com a fila vazia quanto com a fila cheia. Há três soluções clássicas: (1) guardar um contador <code>qtd</code> (usada acima); (2) deixar sempre uma posição vazia, de modo que cheia ⇔ <code>(fim + 1) % MAX == inicio</code>; (3) guardar um booleano. Leia com atenção qual convenção o enunciado usa: “fim” pode ser o último ocupado ou a próxima posição livre.</p></div>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: MAX = 5, inicio = fim = qtd = 0</div>
+  <table class="tt"><tr><th>Operação</th><th>vetor [0..4]</th><th>inicio</th><th>fim</th><th>qtd</th></tr>
+  <tr><td>ins 10, 20, 30</td><td>10 20 30 _ _</td><td>0</td><td>3</td><td>3</td></tr>
+  <tr><td>rem → 10</td><td>_ 20 30 _ _</td><td>1</td><td>3</td><td>2</td></tr>
+  <tr><td>ins 40, 50</td><td>_ 20 30 40 50</td><td>1</td><td>0</td><td>4</td></tr>
+  <tr class="hl"><td>ins 60</td><td>60 20 30 40 50</td><td>1</td><td>1</td><td>5 (cheia)</td></tr>
+  <tr><td>rem → 20</td><td>60 _ 30 40 50</td><td>2</td><td>1</td><td>4</td></tr></table>
+  <p>O 60 foi para o índice 0, que tinha sido liberado: é a “volta” do anel.</p></div>
+
+  <h2>3.4 Fila encadeada</h2>
+  <p>Com nós, guardam-se <b>dois</b> ponteiros: <code>inicio</code> (para remover) e <code>fim</code> (para inserir). Sem o ponteiro de fim, inserir exigiria percorrer a lista toda: O(n).</p>
+  {{fig:fila_enc|Fila encadeada: insere depois do nó apontado por fim; remove o nó apontado por início.}}
+  <pre><code class="c">struct fila { NO *inicio, *fim; int qtd; };
+
+bool fila_inserir(FILA *f, int x) {
+    NO *n = malloc(sizeof(NO));
+    if (n == NULL) return false;
+    n-&gt;info = x; n-&gt;prox = NULL;
+    if (f-&gt;fim == NULL) f-&gt;inicio = n;   /* fila estava vazia */
+    else f-&gt;fim-&gt;prox = n;
+    f-&gt;fim = n;
+    f-&gt;qtd++;
+    return true;
+}
+bool fila_remover(FILA *f, int *x) {
+    if (f-&gt;inicio == NULL) return false;
+    NO *velho = f-&gt;inicio;
+    *x = velho-&gt;info;
+    f-&gt;inicio = velho-&gt;prox;
+    if (f-&gt;inicio == NULL) f-&gt;fim = NULL;  /* ficou vazia: arruma o fim! */
+    free(velho);
+    f-&gt;qtd--;
+    return true;
+}</code></pre>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><p>O erro mais comum na fila encadeada: ao remover o <b>último</b> elemento, esquecer de fazer <code>fim = NULL</code>. O ponteiro <code>fim</code> fica apontando para um nó liberado, e a próxima inserção escreve em memória inválida.</p></div>
+
+  <h2>3.5 Deque (fila de duas pontas)</h2>
+  <p>O <b>deque</b> (<i>double-ended queue</i>, pronuncia-se “déque”) permite inserir e remover nas <b>duas</b> pontas. Ele generaliza os dois TADs anteriores: usando só uma ponta, vira pilha; inserindo numa ponta e removendo na outra, vira fila.</p>
+  {{fig:deque|As quatro operações do deque: inserir/remover no início e no fim.|500px}}
+  <ul>
+    <li><b>Em vetor circular</b>: inserir no fim e remover no início funcionam como na fila. Para inserir no início, recue: <code>inicio = (inicio - 1 + MAX) % MAX</code> (o <code>+ MAX</code> evita índice negativo). Para remover do fim, recue o <code>fim</code> da mesma forma.</li>
+    <li><b>Encadeado</b>: use lista <b>duplamente encadeada</b> (Cap. 4). Com encadeamento simples, remover do fim é O(n), porque não dá para voltar ao penúltimo nó.</li>
+    <li><b>Variações</b>: deque de <b>entrada restrita</b> (insere só numa ponta, remove nas duas) e de <b>saída restrita</b> (insere nas duas, remove só numa).</li>
+  </ul>
+  <div class="callout deep"><div class="ct">Aprofundando</div><p>Uma <b>fila de prioridade</b> não é uma fila FIFO: sai primeiro quem tem maior prioridade, não quem chegou antes. Ela tem implementação própria (o heap) e é o assunto do Cap. 9.</p></div>
+  <div class="callout try"><div class="ct">Exercício 3.1</div><p>Fila circular com MAX = 4 (convenção do exemplo: <code>fim</code> = próxima livre, com <code>qtd</code>), começando vazia em inicio = fim = 0. Faça: ins A, ins B, ins C, rem, ins D, ins E, rem, ins F. (a) Qual o conteúdo do vetor? (b) Quanto valem inicio, fim e qtd? (c) A última inserção teve sucesso?</p></div>
+</section>

@@ -4,6 +4,7 @@ const CURSO = {
   id: "ssc118",
   codigo: "SSC118",
   titulo: "Sistemas Digitais",
+  cor: "#ff7a1a",
   pdf: "apostila-ssc118.pdf",
   capitulos: [
     { id: "fundamentos", n: 1, titulo: "Combinacional × sequencial", aula: "Aula 01" },

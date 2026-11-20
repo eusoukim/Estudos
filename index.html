@@ -8,60 +8,60 @@
 <link rel="icon" href="assets/icone.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
 <link rel="stylesheet" href="assets/engine.css">
 <style>
-.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:center}
-.hero svg{width:100%;height:auto;display:block}
-.hero .wave{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 10px}
-.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.how div{display:flex;gap:12px;align-items:flex-start}
-.how b{font-family:var(--f-display)}
-.how .k{flex:none;width:30px;height:30px;border-radius:8px;background:var(--clk-soft);color:var(--clk);display:grid;place-items:center;font-family:var(--f-mono);font-weight:600;font-size:13px}
-.how p{color:var(--muted);font-size:14px}
-@media (max-width:760px){.hero{grid-template-columns:1fr}.cat-head h1{font-size:34px}}
-.trace{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 2.4s ease forwards}
-.trace:nth-of-type(2){animation-delay:.25s}.trace:nth-of-type(3){animation-delay:.5s}
-@keyframes draw{to{stroke-dashoffset:0}}
-@media (prefers-reduced-motion: reduce){.trace{stroke-dashoffset:0;animation:none}}
+:root{--mat:#ffd23f}
+.stack{position:relative;height:330px}
+.stack .card-s{position:absolute;width:62%;padding:16px 18px;border:var(--bw) solid var(--line);border-radius:10px;box-shadow:6px 6px 0 var(--line);color:#121212;display:flex;flex-direction:column;gap:6px;transition:transform .25s}
+.stack .card-s b{font-family:var(--f-display);font-weight:400;font-size:22px;line-height:1;text-transform:uppercase}
+.stack .card-s span{font-family:var(--f-mono);font-size:12px;font-weight:700}
+.stack:hover .card-s:nth-child(1){transform:rotate(-9deg) translate(-12px,-6px)}
+.stack:hover .card-s:nth-child(2){transform:rotate(5deg) translate(14px,4px)}
+.ticker{overflow:hidden;border-block:var(--bw) solid var(--line);background:var(--ink);color:var(--bg);margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)))}
+.ticker div{display:flex;gap:36px;padding:9px 0;white-space:nowrap;font-family:var(--f-display);font-size:18px;text-transform:uppercase;animation:tick 32s linear infinite;width:max-content}
+.ticker i{font-style:normal;color:var(--mat)}
+@keyframes tick{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion: reduce){.ticker div{animation:none}}
 </style>
 </head>
 <body>
 <div class="cat">
   <section class="hero">
-    <div class="cat-head">
-      <span class="eyebrow">Cursos de estudo</span>
-      <h1>Estude lendo e praticando ao mesmo tempo.</h1>
+    <div>
+      <span class="sticker">Cursos de estudo</span>
+      <h1 style="margin-top:16px">Leia.<br><span class="hl">Pratique.</span><br>Passe.</h1>
       <p class="lede">Cada matéria abre em tela dividida: a apostila de um lado, simuladores e perguntas do outro, sempre no mesmo capítulo. Seu progresso fica salvo neste navegador.</p>
     </div>
-    <div class="wave" aria-hidden="true">
-      <svg viewBox="0 0 420 150">
-        <text x="8" y="30" font-size="12" style="fill:var(--clk)" font-family="IBM Plex Mono, monospace" font-weight="600">CLK</text>
-        <text x="8" y="78" font-size="12" style="fill:var(--ink)" font-family="IBM Plex Mono, monospace" font-weight="600">D</text>
-        <text x="8" y="126" font-size="12" style="fill:var(--hi)" font-family="IBM Plex Mono, monospace" font-weight="600">Q</text>
-        <polyline class="trace" pathLength="1" points="44,36 70,36 70,16 100,16 100,36 130,36 130,16 160,16 160,36 190,36 190,16 220,16 220,36 250,36 250,16 280,16 280,36 310,36 310,16 340,16 340,36 370,36 370,16 400,16" fill="none" style="stroke:var(--clk)" stroke-width="3" stroke-linejoin="round"/>
-        <polyline class="trace" pathLength="1" points="44,84 90,84 90,64 150,64 150,84 205,84 205,64 236,64 236,84 300,84 300,64 400,64" fill="none" style="stroke:var(--ink)" stroke-width="3" stroke-linejoin="round"/>
-        <polyline class="trace" pathLength="1" points="44,132 100,132 100,112 160,112 160,132 220,132 220,112 250,112 250,132 310,132 310,112 400,112" fill="none" style="stroke:var(--hi)" stroke-width="3" stroke-linejoin="round"/>
-      </svg>
-    </div>
+    <div class="stack" id="stack" aria-hidden="true"></div>
   </section>
 
-  <section style="display:flex;flex-direction:column;gap:14px">
-    <h2 style="font-size:22px">Matérias</h2>
+  <div class="ticker" aria-hidden="true"><div id="ticker"></div></div>
+
+  <section style="display:flex;flex-direction:column;gap:20px">
+    <div class="sec-title"><h2>Matérias</h2><span class="score" id="n-mat"></span></div>
     <div class="cat-grid" id="cat-grid"></div>
   </section>
 
   <section class="how" aria-label="Como funciona">
-    <div><span class="k">1</span><span><b>Leia</b><p>A apostila parte do básico e explica com figuras e exemplos resolvidos.</p></span></div>
-    <div><span class="k">2</span><span><b>Mexa</b><p>Os laboratórios deixam você testar o conceito na hora, ao lado do texto.</p></span></div>
-    <div><span class="k">3</span><span><b>Teste</b><p>Teste rápido e flashcards por capítulo; simulado com tempo no fim.</p></span></div>
-    <div><span class="k">4</span><span><b>Revise</b><p>Toda questão errada volta numa lista até você acertar.</p></span></div>
+    <div class="box"><span class="k">01</span><b>Leia</b><p>A apostila parte do básico e explica com figuras, código e exemplos resolvidos.</p></div>
+    <div class="box"><span class="k">02</span><b>Mexa</b><p>Os laboratórios deixam você testar o conceito na hora, ao lado do texto.</p></div>
+    <div class="box"><span class="k">03</span><b>Teste</b><p>Teste rápido e flashcards em cada capítulo; simulado com tempo no fim.</p></div>
+    <div class="box"><span class="k">04</span><b>Revise</b><p>Toda questão errada volta numa lista até você acertar.</p></div>
   </section>
 
   <p class="foot">Material de estudo pessoal, feito a partir das aulas de cada disciplina. Confira sempre as convenções do professor.</p>
 </div>
 <script src="assets/engine.js"></script>
 <script src="materias/catalogo.js"></script>
-<script>Estudos.catalogo(CATALOGO);</script>
+<script>
+Estudos.catalogo(CATALOGO);
+document.getElementById("n-mat").textContent = CATALOGO.length + (CATALOGO.length === 1 ? " matéria" : " matérias");
+const rot = [-6, 4, -2, 7];
+document.getElementById("stack").innerHTML = CATALOGO.slice(0, 4).map((m, i) =>
+  `<div class="card-s" style="background:${m.cor};left:${4 + i * 22}%;top:${10 + i * 92}px;transform:rotate(${rot[i]}deg);z-index:${10 - i}"><span>${m.codigo}</span><b>${m.titulo}</b></div>`).join("");
+const words = CATALOGO.flatMap(m => [m.titulo, "<i>✦</i>"]).concat(["Apostila", "<i>✦</i>", "Laboratórios", "<i>✦</i>", "Simulado", "<i>✦</i>", "Flashcards", "<i>✦</i>"]);
+document.getElementById("ticker").innerHTML = [...words, ...words].map(w => `<span>${w}</span>`).join("");
+</script>
 </body>
 </html>

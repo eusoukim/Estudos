@@ -1,0 +1,260 @@
+<!-- ===================================================== CAP 6 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 6</div><h1>Árvore Binária de Busca (ABB)</h1>
+  <div class="goal">Objetivo: entender a propriedade de busca, implementar busca, inserção e os três casos de remoção, e ver por que a ABB pode degenerar.</div><div class="src">Base: ABB (BST): busca, inserção, remoção, custo</div></div>
+
+  <h2>6.1 A propriedade de busca</h2>
+  <p>Uma <b>ABB</b> (<i>Binary Search Tree</i>) é uma árvore binária em que, para <b>todo</b> nó com chave k:</p>
+  <ul><li>todas as chaves da subárvore <b>esquerda</b> são <b>menores</b> que k;</li><li>todas as chaves da subárvore <b>direita</b> são <b>maiores</b> que k.</li></ul>
+  {{fig:abb_ex|Uma ABB. Repare que 35 está à direita de 30, mas à esquerda de 40 e de 50: a regra vale em todos os níveis.}}
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>O percurso <b>em-ordem</b> de uma ABB lista as chaves em <b>ordem crescente</b>. Na figura: 10 20 30 35 40 50 60 70 80 90. É a forma mais rápida de conferir se uma árvore é ABB.</p></div>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><p>Não basta comparar cada nó com seus filhos diretos. Uma árvore com raiz 50, filho esquerdo 30 e, à direita do 30, um 60, passa nesse teste local, mas <b>não</b> é ABB: o 60 está à esquerda do 50. A regra vale para a subárvore inteira.</p></div>
+
+  <h2>6.2 Busca</h2>
+  <p>Compare a chave com a raiz: igual, achou; menor, desça à esquerda; maior, desça à direita. Se chegar em <code>NULL</code>, a chave não está na árvore. Cada passo desce um nível, então o custo é <b>O(h)</b>, onde h é a altura.</p>
+  {{fig:abb_busca|Buscando 35: 50 → 30 → 40 → 35. Só um caminho da raiz é visitado.}}
+  <pre><code class="c">NO_ARV *abb_buscar(NO_ARV *r, int x) {
+    while (r != NULL &amp;&amp; r-&gt;info != x)
+        r = (x &lt; r-&gt;info) ? r-&gt;esq : r-&gt;dir;
+    return r;                         /* NULL se não achou */
+}</code></pre>
+  <p>Mínimo: desça sempre à <b>esquerda</b> até não dar mais. Máximo: sempre à <b>direita</b>.</p>
+
+  <h2>6.3 Inserção</h2>
+  <p>Faça a busca pela chave nova. Ela termina num ponteiro <code>NULL</code>: é exatamente ali que o novo nó entra, <b>sempre como folha</b>.</p>
+  <pre><code class="c">NO_ARV *abb_inserir(NO_ARV *r, int x) {      /* devolve a nova raiz da subárvore */
+    if (r == NULL) {
+        NO_ARV *n = malloc(sizeof(NO_ARV));
+        n-&gt;info = x; n-&gt;esq = n-&gt;dir = NULL;
+        return n;
+    }
+    if (x &lt; r-&gt;info) r-&gt;esq = abb_inserir(r-&gt;esq, x);
+    else if (x &gt; r-&gt;info) r-&gt;dir = abb_inserir(r-&gt;dir, x);
+    /* x == r-&gt;info: chave repetida, não insere */
+    return r;
+}
+/* uso: raiz = abb_inserir(raiz, 42); */</code></pre>
+  <div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Inserir 50, 30, 70, 20, 40, 60, 80, 10, 35, 90 numa ABB vazia gera a árvore da Figura 6.1. O 35, por exemplo: 35 &lt; 50 (esquerda), 35 &gt; 30 (direita), 35 &lt; 40 (esquerda) → vira filho esquerdo do 40.</p></div>
+
+  <h2>6.4 Remoção: três casos</h2>
+  <p>Primeiro, encontre o nó. Depois, depende de quantos filhos ele tem:</p>
+  {{fig:abb_rem1|Caso 1: folha. Basta remover e fazer o pai apontar para NULL.}}
+  {{fig:abb_rem2|Caso 2: um filho. O filho “sobe” e ocupa o lugar do removido.}}
+  {{fig:abb_rem3|Caso 3: dois filhos. Copie o sucessor (menor da subárvore direita) para o nó e remova o sucessor, que cai no caso 1 ou 2.}}
+  <ol class="steps">
+    <li><b>Folha</b>: libere o nó; o ponteiro do pai vira <code>NULL</code>.</li>
+    <li><b>Um filho</b>: o ponteiro do pai passa a apontar para o único filho; libere o nó.</li>
+    <li><b>Dois filhos</b>: troque a chave pela do <b>sucessor em-ordem</b> (o menor da subárvore direita: um passo à direita, depois tudo à esquerda) ou do <b>predecessor</b> (o maior da subárvore esquerda). Depois remova esse sucessor/predecessor, que tem no máximo um filho.</li>
+  </ol>
+  <pre><code class="c">NO_ARV *abb_remover(NO_ARV *r, int x) {
+    if (r == NULL) return NULL;                         /* não achou */
+    if (x &lt; r-&gt;info) r-&gt;esq = abb_remover(r-&gt;esq, x);
+    else if (x &gt; r-&gt;info) r-&gt;dir = abb_remover(r-&gt;dir, x);
+    else {                                              /* achou */
+        if (r-&gt;esq == NULL || r-&gt;dir == NULL) {         /* casos 1 e 2 */
+            NO_ARV *filho = (r-&gt;esq != NULL) ? r-&gt;esq : r-&gt;dir;
+            free(r);
+            return filho;                               /* pode ser NULL */
+        }
+        NO_ARV *s = r-&gt;dir;                             /* caso 3: sucessor */
+        while (s-&gt;esq != NULL) s = s-&gt;esq;
+        r-&gt;info = s-&gt;info;
+        r-&gt;dir = abb_remover(r-&gt;dir, s-&gt;info);
+    }
+    return r;
+}</code></pre>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><p>O sucessor <b>nunca tem filho esquerdo</b> (senão ele não seria o menor). Por isso removê-lo é sempre o caso 1 ou 2. Se a questão não disser, pergunte-se qual convenção o professor usa: sucessor ou predecessor. As árvores resultantes são diferentes.</p></div>
+
+  <h2>6.5 Custo e degeneração</h2>
+  <p>Busca, inserção e remoção custam <b>O(h)</b>. Se a árvore estiver equilibrada, h ≈ log₂ n. Mas a forma depende da <b>ordem de inserção</b>: inserir chaves já ordenadas produz uma árvore degenerada, com h = n − 1, e tudo vira O(n), como numa lista.</p>
+  {{fig:abb_degen|As mesmas 5 chaves, em ordens diferentes, geram alturas diferentes.}}
+  <table><tr><th>Caso</th><th>Altura</th><th>Busca/inserção/remoção</th></tr>
+  <tr><td class="l">melhor / médio (chaves aleatórias)</td><td>O(log n)</td><td>O(log n)</td></tr>
+  <tr><td class="l">pior (chaves ordenadas)</td><td>n − 1</td><td>O(n)</td></tr></table>
+  <p>Para garantir O(log n) <b>sempre</b>, a árvore precisa se rebalancear sozinha: é o que fazem a AVL (Cap. 7) e a rubro-negra (Cap. 8).</p>
+  <div class="callout try"><div class="ct">Exercício 6.1</div><p>(a) Insira, nesta ordem, 45, 20, 70, 10, 30, 50, 90, 35, 60 numa ABB vazia e desenhe o resultado. (b) Na árvore obtida, remova o 20 usando o sucessor. (c) Depois, remova o 45 (raiz) usando o sucessor. (d) Qual a sequência em-ordem final?</p></div>
+</section>
+
+<!-- ===================================================== CAP 7 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 7</div><h1>Árvores AVL</h1>
+  <div class="goal">Objetivo: entender o fator de balanceamento, reconhecer os quatro casos de desbalanceamento e aplicar as rotações simples e duplas na inserção e na remoção.</div><div class="src">Base: AVL (Adelson-Velsky e Landis, 1962): fator de balanceamento, rotações</div></div>
+
+  <h2>7.1 A regra da AVL</h2>
+  <p>Uma <b>AVL</b> é uma ABB em que, para <b>todo</b> nó, as alturas das duas subárvores diferem de no máximo 1. Essa diferença é o <b>fator de balanceamento (FB)</b>:</p>
+  <div class="formula">FB(nó) = altura(esquerda) − altura(direita)  ∈  {−1, 0, +1}</div>
+  {{fig:avl_fb|Uma AVL com o FB de cada nó (etiqueta amarela). FB = +1 pende para a esquerda; −1, para a direita.}}
+  <p>Com essa regra, a altura de uma AVL com n nós é no máximo cerca de <b>1,44 log₂ n</b>. Busca, inserção e remoção ficam <b>O(log n) no pior caso</b>.</p>
+  <div class="callout warn"><div class="ct">Cuidado na prova: sinal do FB</div><p>Alguns livros e professores definem FB = altura(direita) − altura(esquerda), que inverte todos os sinais. Confira a definição antes de aplicar a tabela de rotações. Aqui, <b>positivo = pesado à esquerda</b>.</p></div>
+
+  <h2>7.2 Inserção: onde a árvore desequilibra</h2>
+  <ol class="steps">
+    <li>Insira como numa ABB comum (o novo nó entra como folha, FB = 0).</li>
+    <li>Volte pelo caminho até a raiz atualizando as alturas e os FBs.</li>
+    <li>O primeiro nó (de baixo para cima) com FB = <b>+2 ou −2</b> é o <b>nó desbalanceado</b>. Uma rotação nele resolve, e na inserção a árvore inteira volta a ficar AVL.</li>
+  </ol>
+
+  <h2>7.3 As rotações</h2>
+  <p>Rotações rearranjam três nós e suas subárvores <b>preservando a ordem da ABB</b> (a em-ordem não muda) e reduzem a altura do lado pesado.</p>
+  {{fig:rot_dir|Rotação simples à direita: o filho esquerdo B sobe; C desce para a direita; a subárvore T3 troca de pai.}}
+  {{fig:rot_esq|Rotação simples à esquerda: espelho da anterior.}}
+  {{fig:rot_dupla|Rotação dupla (esquerda-direita): o neto B, que estava “no meio”, vira a nova raiz.}}
+  <table class="wide"><tr><th>FB do nó</th><th>FB do filho do lado pesado</th><th class="l">Caso</th><th class="l">Rotação</th></tr>
+  <tr><td>+2</td><td>filho esq. com +1 (ou 0)</td><td class="l">LL (esquerda-esquerda)</td><td class="l">simples à <b>direita</b> no nó</td></tr>
+  <tr><td>−2</td><td>filho dir. com −1 (ou 0)</td><td class="l">RR (direita-direita)</td><td class="l">simples à <b>esquerda</b> no nó</td></tr>
+  <tr><td>+2</td><td>filho esq. com −1</td><td class="l">LR (esquerda-direita)</td><td class="l">dupla: esquerda no filho, direita no nó</td></tr>
+  <tr><td>−2</td><td>filho dir. com +1</td><td class="l">RL (direita-esquerda)</td><td class="l">dupla: direita no filho, esquerda no nó</td></tr></table>
+  <div class="callout intuit"><div class="ct">Regra de bolso</div><p>Se os sinais do nó e do filho são <b>iguais</b> (linha reta: “/” ou “\”), rotação <b>simples</b> para o lado contrário do peso. Se são <b>opostos</b> (zigue-zague: “&lt;” ou “&gt;”), rotação <b>dupla</b>: primeiro endireite o zigue-zague no filho, depois faça a simples no nó.</p></div>
+  <pre><code class="c">typedef struct no_avl {
+    int info, altura;               /* altura em nós: folha = 1, NULL = 0 */
+    struct no_avl *esq, *dir;
+} NO_AVL;
+
+int alt(NO_AVL *n) { return n ? n-&gt;altura : 0; }
+int max(int a, int b) { return a &gt; b ? a : b; }
+void atualiza(NO_AVL *n) { n-&gt;altura = 1 + max(alt(n-&gt;esq), alt(n-&gt;dir)); }
+int fb(NO_AVL *n) { return alt(n-&gt;esq) - alt(n-&gt;dir); }
+
+NO_AVL *rot_direita(NO_AVL *c) {     /* caso LL */
+    NO_AVL *b = c-&gt;esq;
+    c-&gt;esq = b-&gt;dir;                 /* T3 passa para C */
+    b-&gt;dir = c;
+    atualiza(c); atualiza(b);        /* C primeiro: agora ele está embaixo */
+    return b;                        /* nova raiz da subárvore */
+}
+NO_AVL *rot_esquerda(NO_AVL *a) {    /* caso RR */
+    NO_AVL *b = a-&gt;dir;
+    a-&gt;dir = b-&gt;esq;
+    b-&gt;esq = a;
+    atualiza(a); atualiza(b);
+    return b;
+}
+
+NO_AVL *avl_inserir(NO_AVL *r, int x) {
+    if (r == NULL) {
+        NO_AVL *n = malloc(sizeof(NO_AVL));
+        n-&gt;info = x; n-&gt;altura = 1; n-&gt;esq = n-&gt;dir = NULL;
+        return n;
+    }
+    if (x &lt; r-&gt;info) r-&gt;esq = avl_inserir(r-&gt;esq, x);
+    else if (x &gt; r-&gt;info) r-&gt;dir = avl_inserir(r-&gt;dir, x);
+    else return r;                               /* repetido */
+    atualiza(r);
+    int f = fb(r);
+    if (f &gt; 1) {                                 /* pesado à esquerda */
+        if (fb(r-&gt;esq) &lt; 0) r-&gt;esq = rot_esquerda(r-&gt;esq);   /* LR */
+        return rot_direita(r);                   /* LL */
+    }
+    if (f &lt; -1) {                                /* pesado à direita */
+        if (fb(r-&gt;dir) &gt; 0) r-&gt;dir = rot_direita(r-&gt;dir);    /* RL */
+        return rot_esquerda(r);                  /* RR */
+    }
+    return r;
+}</code></pre>
+
+  <h2>7.4 Exemplo: inserindo 10, 20, 30, 40, 50</h2>
+  {{fig:avl_seq|Numa ABB comum, essas inserções formariam uma lista. Na AVL, duas rotações mantêm a altura baixa.}}
+  <div class="callout ex"><div class="ct">Passo a passo</div><ol style="margin:0">
+    <li>10, 20, 30: o 10 fica com FB = −2 e o filho 20 com −1 (sinais iguais): <b>RR</b>, rotação à esquerda em 10. Raiz: 20.</li>
+    <li>40 entra à direita do 30 (FBs: 30 → −1, 20 → −1). Tudo ok.</li>
+    <li>50 entra à direita do 40. Subindo: 40 → −1, <b>30 → −2</b>. O primeiro desbalanceado de baixo para cima é o 30, com filho 40 em −1: <b>RR</b>, rotação à esquerda em 30. (O 20 também estaria com −2, mas a rotação em 30 já reduz a altura e conserta o 20.)</li>
+  </ol></div>
+
+  <h2>7.5 Remoção</h2>
+  <p>Remova como numa ABB (casos 1, 2 e 3, Cap. 6) e volte até a raiz atualizando alturas e FBs, aplicando a mesma tabela de rotações onde FB = ±2. Duas diferenças em relação à inserção:</p>
+  <ul>
+    <li>O filho do lado pesado pode ter <b>FB = 0</b>. Nesse caso use a rotação <b>simples</b> (é o “ou 0” da tabela).</li>
+    <li>Uma rotação pode diminuir a altura da subárvore e desbalancear um ancestral: na remoção, podem ser necessárias <b>várias rotações</b>, até O(log n), uma por nível.</li>
+  </ul>
+  <table><tr><th>Operação</th><th>Custo</th><th>Rotações</th></tr>
+  <tr><td class="l">Busca</td><td>O(log n)</td><td>0</td></tr>
+  <tr><td class="l">Inserção</td><td>O(log n)</td><td>no máximo 1 (simples ou dupla)</td></tr>
+  <tr><td class="l">Remoção</td><td>O(log n)</td><td>até O(log n)</td></tr></table>
+  <div class="callout try"><div class="ct">Exercício 7.1</div><p>(a) Insira 30, 20, 10, 25, 40, 50 numa AVL vazia. Indique cada rotação (tipo e nó) e desenhe a árvore final com os FBs. (b) Insira 50, 20, 30 numa AVL vazia: qual o caso e qual a rotação? (c) Por que a altura de uma AVL é O(log n)?</p></div>
+</section>
+
+<!-- ===================================================== CAP 8 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 8</div><h1>Árvores Rubro-Negras</h1>
+  <div class="goal">Objetivo: conhecer as cinco propriedades, entender por que garantem altura logarítmica e aplicar os casos de correção na inserção.</div><div class="src">Base: árvores rubro-negras (red-black): propriedades, inserção, comparação com AVL</div></div>
+
+  <h2>8.1 Balanceamento com cores</h2>
+  <p>A AVL é rígida: mantém as alturas quase iguais e, para isso, pode fazer muitas rotações nas remoções. A <b>árvore rubro-negra</b> (RN) aceita um balanceamento mais folgado. Cada nó ganha um bit de <b>cor</b>, vermelho ou preto, e algumas regras sobre as cores garantem que nenhum caminho seja mais que o dobro de outro.</p>
+
+  <h2>8.2 As cinco propriedades</h2>
+  {{fig:rn_ex|Uma árvore rubro-negra. Os NIL (folhas nulas) contam como nós pretos.}}
+  <ol class="steps">
+    <li>Todo nó é <b>vermelho ou preto</b>.</li>
+    <li>A <b>raiz é preta</b>.</li>
+    <li>Toda folha nula (<b>NIL</b>) é preta.</li>
+    <li>Se um nó é <b>vermelho</b>, seus dois filhos são <b>pretos</b> (não existem dois vermelhos seguidos).</li>
+    <li>Para cada nó, todos os caminhos dele até as folhas NIL têm o <b>mesmo número de nós pretos</b>. Esse número é a <b>altura negra</b>.</li>
+  </ol>
+  <div class="callout key"><div class="ct">Ideia-chave: por que a altura fica O(log n)</div><p>Pela propriedade 5, todo caminho tem a mesma quantidade de pretos. Pela 4, entre dois pretos cabe no máximo um vermelho. Então o caminho mais longo (alternando preto e vermelho) tem no máximo o <b>dobro</b> do mais curto (só pretos). Daí sai que a altura é no máximo <b>2 log₂(n + 1)</b>.</p></div>
+  <div class="callout ex"><div class="ct">Conferindo a Figura 8.1</div><p>Do 13 até qualquer NIL há exatamente 2 nós pretos internos (ex.: 13 → 8 → 1, ou 13 → 17 → 25), sem contar o próprio NIL. Nenhum vermelho (8, 17, 6, 22, 27) tem filho vermelho. A raiz 13 é preta. É uma RN válida.</p></div>
+
+  <h2>8.3 Inserção</h2>
+  <p>Insira como numa ABB e pinte o novo nó de <b>vermelho</b>. Pintar de vermelho nunca quebra a propriedade 5 (não muda a contagem de pretos); o único risco é quebrar a 4, se o <b>pai</b> também for vermelho. Nesse caso, olhe o <b>tio</b> (irmão do pai). Notação: N = novo, P = pai, G = avô, U = tio.</p>
+  {{fig:rn_caso1|Caso 1: tio vermelho. Recolore: P e U ficam pretos, G fica vermelho. O problema pode subir: repita o teste com G no papel de N.}}
+  {{fig:rn_caso2|Caso 2: tio preto e N em zigue-zague (N é filho direito de P, que é filho esquerdo). Rotação em P transforma no caso 3.}}
+  {{fig:rn_caso3|Caso 3: tio preto e N em linha reta. Rotação no avô G e troca das cores de P e G. Resolve de vez.}}
+  <ol class="steps">
+    <li>Se N é a raiz: pinte de preto. Fim.</li>
+    <li>Se P é preto: nada a fazer. Fim.</li>
+    <li>P vermelho e <b>tio vermelho</b> (caso 1): recolore P e U de preto e G de vermelho; continue a partir de G.</li>
+    <li>P vermelho e <b>tio preto</b> (ou NIL), N em zigue-zague (caso 2): rotação no <b>pai</b> para endireitar; agora o antigo P faz o papel de N, em linha reta.</li>
+    <li>Tio preto e N em linha reta (caso 3): rotação no <b>avô</b> (no sentido contrário ao lado de P) e troque as cores de P e G. Fim.</li>
+    <li>Ao final, garanta que a raiz é preta.</li>
+  </ol>
+  <p>Quando P é filho <b>direito</b> de G, os casos são os mesmos, espelhados.</p>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: inserir 10, 20, 30, 15, 25</div><ol style="margin:0">
+    <li><b>10</b>: raiz, pintada de preto.</li>
+    <li><b>20</b>: vermelho, filho direito do 10 (pai preto). Ok.</li>
+    <li><b>30</b>: vermelho, filho do 20 (vermelho). Tio = NIL (preto), linha reta à direita → caso 3: rotação à esquerda em 10 e troca de cores. Raiz <b>20 preto</b>, filhos 10 e 30 vermelhos.</li>
+    <li><b>15</b>: vai para a direita do 10 (vermelho). Tio 30 é vermelho → caso 1: 10 e 30 ficam pretos e 20 fica vermelho; 20 é a raiz, então volta a preto. Resultado: 20 (P), 10 (P), 30 (P), 15 (V).</li>
+    <li><b>25</b>: esquerda do 30 (preto). Pai preto: nada a fazer.</li>
+  </ol></div>
+  <pre><code class="c">typedef enum { VERMELHO, PRETO } COR;
+typedef struct no_rn {
+    int info; COR cor;
+    struct no_rn *esq, *dir, *pai;
+} NO_RN;
+
+/* corrige depois de inserir n (vermelho) como numa ABB */
+void rn_corrigir(NO_RN **raiz, NO_RN *n) {
+    while (n != *raiz &amp;&amp; n-&gt;pai-&gt;cor == VERMELHO) {
+        NO_RN *p = n-&gt;pai, *g = p-&gt;pai;
+        if (p == g-&gt;esq) {
+            NO_RN *u = g-&gt;dir;
+            if (u != NULL &amp;&amp; u-&gt;cor == VERMELHO) {        /* caso 1 */
+                p-&gt;cor = PRETO; u-&gt;cor = PRETO; g-&gt;cor = VERMELHO;
+                n = g;
+            } else {
+                if (n == p-&gt;dir) {                          /* caso 2 */
+                    rot_esquerda(raiz, p);
+                    n = p; p = n-&gt;pai;
+                }
+                p-&gt;cor = PRETO; g-&gt;cor = VERMELHO;          /* caso 3 */
+                rot_direita(raiz, g);
+            }
+        } else { /* espelho: troque esq &lt;-&gt; dir */ }
+    }
+    (*raiz)-&gt;cor = PRETO;
+}</code></pre>
+  <p class="small">Aqui as rotações recebem <code>&amp;raiz</code> e atualizam também os ponteiros <code>pai</code>. NULL faz o papel de NIL preto.</p>
+
+  <h2>8.4 Remoção (visão geral)</h2>
+  <p>Remove-se como numa ABB. Se o nó que sai fisicamente é <b>vermelho</b>, nada muda. Se é <b>preto</b>, um caminho perde um preto (propriedade 5). O nó que ocupa seu lugar recebe um “preto extra” (fica <b>duplo preto</b>), e esse excesso é empurrado para cima ou absorvido conforme a cor do <b>irmão</b> e dos filhos dele, em quatro casos com recolorações e até 3 rotações. Os detalhes costumam ser cobrados só no nível conceitual.</p>
+
+  <h2>8.5 AVL × rubro-negra</h2>
+  <table class="wide"><tr><th class="l"></th><th class="l">AVL</th><th class="l">Rubro-negra</th></tr>
+  <tr><td class="l">Regra</td><td class="l">|FB| ≤ 1 em todo nó</td><td class="l">5 propriedades de cor</td></tr>
+  <tr><td class="l">Altura máxima</td><td class="l">≈ 1,44 log₂ n</td><td class="l">2 log₂(n + 1)</td></tr>
+  <tr><td class="l">Busca</td><td class="l">um pouco mais rápida (mais baixa)</td><td class="l">O(log n)</td></tr>
+  <tr><td class="l">Rotações por inserção</td><td class="l">até 1 (simples ou dupla)</td><td class="l">até 2</td></tr>
+  <tr><td class="l">Rotações por remoção</td><td class="l">até O(log n)</td><td class="l">até 3</td></tr>
+  <tr><td class="l">Informação extra por nó</td><td class="l">altura ou FB</td><td class="l">1 bit de cor</td></tr>
+  <tr><td class="l">Onde aparece</td><td class="l">bancos de dados com muitas buscas</td><td class="l">C++ <code>std::map</code>, Java <code>TreeMap</code>, kernel do Linux</td></tr></table>
+  <div class="callout deep"><div class="ct">Aprofundando: RN e árvores 2-3-4</div><p>Toda rubro-negra corresponde a uma <b>árvore 2-3-4</b> (árvore B de ordem 4): junte cada nó preto com seus filhos vermelhos num único “supernó” de 2, 3 ou 4 filhos. A recoloração do caso 1 corresponde a dividir um supernó cheio, e as rotações são só formas de redesenhar esse supernó como árvore binária.</p></div>
+  <div class="callout try"><div class="ct">Exercício 8.1</div><p>(a) Uma árvore com raiz vermelha pode ser RN? E com dois vermelhos seguidos? (b) Insira 5, 10, 15, 20 numa RN vazia, indicando cada caso. (c) Uma RN tem 7 nós, todos pretos. Que forma ela precisa ter? Qual a sua altura negra (contando a raiz, sem contar os NIL)?</p></div>
+</section>

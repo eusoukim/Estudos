@@ -108,6 +108,7 @@ function renderQuiz(box, qs, onAnswer) {
 // ===================================================== página da matéria
 const Estudos = {};
 Estudos.iniciarMateria = function (C) {
+  if (C.cor) document.documentElement.style.setProperty("--mat", C.cor);
   const K = "m:" + C.id;
   const P = Object.assign({ lidos: {}, erros: [], acertos: 0, respostas: 0, ultimo: null }, store.get(K, {}));
   const save = () => store.set(K, P);
@@ -161,7 +162,7 @@ Estudos.iniciarMateria = function (C) {
   // ---------- apostila: ids nas seções, rodapé de cada capítulo
   $$(".ap-cap").forEach(sec => {
     const cap = sec.dataset.cap, i = caps.findIndex(c => c.id === cap), nx = caps[i + 1];
-    $$("h2", sec).forEach(h2 => { const m = h2.textContent.match(/^(\d+\.\d+)/); if (m) h2.id = "s" + m[1].replace(".", "-"); });
+    $$("h2", sec).forEach(h2 => { const m = h2.textContent.match(/^\s*(\d+\.\d+)\s*/); if (m) { h2.id = "s" + m[1].replace(".", "-"); h2.innerHTML = `<span class="sn">${m[1]}</span><span>${h2.innerHTML.replace(/^\s*\d+\.\d+\s*/, "")}</span>`; } });
     const head = $(".chap-head", sec);
     if (head) { const b = h("button", { class: "btn small", type: "button", style: "margin-top:10px" }, "Praticar este capítulo →"); b.onclick = () => { if (!wide()) setMode("pr"); else if (mode === "ap") setMode("split"); $("#pr").scrollTo(0, 0); }; head.appendChild(b); }
     const f = h("div", { class: "ap-foot" });
@@ -176,7 +177,7 @@ Estudos.iniciarMateria = function (C) {
   // ---------- prática: cabeçalho, botões "ver na apostila", quiz e flashcards
   $$(".pr-cap").forEach(sec => {
     const cap = sec.dataset.cap, c = byId[cap];
-    sec.prepend(h("div", { class: "pr-head" }, `<h2>Prática · ${c.n}. ${c.titulo}</h2><span class="hint">${c.aula || ""}</span>`));
+    sec.prepend(h("div", { class: "pr-head" }, `<h2>${c.n}. ${c.titulo}</h2>${c.aula ? `<span class="sticker">${c.aula}</span>` : ""}`));
     $$(".lab[data-ref]", sec).forEach(lab => {
       const ref = lab.dataset.ref, b = h("button", { class: "ref-btn", type: "button", title: "Rolar a apostila até a seção " + ref }, "§" + ref + " na apostila");
       b.onclick = () => irPara(ref);
@@ -235,7 +236,7 @@ Estudos.iniciarMateria = function (C) {
         const q = qs[k], esc = resp[k], certo = esc === 0;
         if (certo) ok++;
         porCap[q[0]] = porCap[q[0]] || [0, 0]; porCap[q[0]][1]++; if (certo) porCap[q[0]][0]++;
-        $$(".opt", qel).forEach(b => { b.disabled = true; b.style.background = ""; b.style.borderColor = ""; if (+b.dataset.i === 0) b.classList.add("right"); else if (+b.dataset.i === esc) b.classList.add("wrong"); });
+        $$(".opt", qel).forEach(b => { b.disabled = true; b.classList.remove("pick"); if (+b.dataset.i === 0) b.classList.add("right"); else if (+b.dataset.i === esc) b.classList.add("wrong"); });
         const ex = $(".expl", qel); ex.hidden = false; ex.innerHTML = (certo ? "<b>Certo.</b> " : esc == null ? "<b>Em branco.</b> " : "<b>Errado.</b> ") + q[3];
         registrar(q, certo);
       });
@@ -250,7 +251,7 @@ Estudos.iniciarMateria = function (C) {
       const box = $("#sim-box"); box.innerHTML = "";
       qs.forEach((q, k) => {
         const el = h("div", { class: "q" }, `<div class="stem">${k + 1}. ${q[1]}</div>`), os = h("div", { class: "opts" });
-        shuffle(q[2].map((o, i) => [o, i])).forEach(([o, i]) => { const b = h("button", { class: "opt", type: "button" }, o); b.dataset.i = i; b.onclick = () => { if (b.disabled) return; resp[k] = i; $$(".opt", os).forEach(x => x.classList.remove("right")); b.classList.add("right"); b.style.background = "var(--clk-soft)"; b.style.borderColor = "var(--clk)"; $$(".opt", os).forEach(x => { if (x !== b) { x.style.background = ""; x.style.borderColor = ""; } }); b.classList.remove("right"); }; os.appendChild(b); });
+        shuffle(q[2].map((o, i) => [o, i])).forEach(([o, i]) => { const b = h("button", { class: "opt", type: "button" }, o); b.dataset.i = i; b.onclick = () => { if (b.disabled) return; resp[k] = i; $$(".opt", os).forEach(x => x.classList.toggle("pick", x === b)); }; os.appendChild(b); });
         el.append(os, h("div", { class: "expl" })); $(".expl", el).hidden = true; box.appendChild(el);
       });
       let t = n * 60; $("#sim-t").textContent = fmt(t); clearInterval(timer);
@@ -293,11 +294,11 @@ Estudos.iniciarMateria = function (C) {
 Estudos.catalogo = function (lista) {
   const g = $("#cat-grid");
   g.innerHTML = lista.map(m => {
-    if (m.embreve) return `<div class="mat soon"><span class="code">${m.codigo}</span><h2>${m.titulo}</h2><p>${m.descricao}</p><div class="meta"><span>em breve</span></div></div>`;
+    if (m.embreve) return `<div class="mat soon" style="--c:${m.cor || "var(--panel2)"}"><span class="code">${m.codigo}</span><h2>${m.titulo}</h2><p>${m.descricao}</p><div class="meta"><span>em breve</span></div></div>`;
     const P = store.get("m:" + m.id, {}), lidos = Object.values(P.lidos || {}).filter(Boolean).length;
     const pct = Math.round(lidos / m.capitulos * 100), acc = P.respostas ? Math.round(P.acertos / P.respostas * 100) : null;
     const cont = P.ultimo ? `<span class="go">Continuar: ${P.ultimoTitulo || P.ultimo} →</span>` : `<span class="go">Começar →</span>`;
-    return `<a class="mat" href="${m.caminho}${P.ultimo ? "#" + P.ultimo : ""}"><div class="mat-top"><span class="code">${m.codigo}</span><span class="code">${m.periodo || ""}</span></div><h2>${m.titulo}</h2><p>${m.descricao}</p>
+    return `<a class="mat" style="--c:${m.cor || "var(--mat)"}" href="${m.caminho}${P.ultimo ? "#" + P.ultimo : ""}"><span class="deco" aria-hidden="true">${m.simbolo || ""}</span><span class="code">${m.codigo}</span><h2>${m.titulo}</h2><p>${m.descricao}</p>
       <div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100" aria-label="Capítulos estudados"><i style="width:${pct}%"></i></div>
       <div class="meta"><span>${lidos}/${m.capitulos} capítulos estudados</span><span>${acc == null ? "sem respostas ainda" : acc + "% de acerto"}</span></div>${cont}</a>`;
   }).join("");

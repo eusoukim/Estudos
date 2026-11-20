@@ -1,0 +1,161 @@
+<section class="pr-cap" id="v-tads" data-cap="tads" hidden>
+<div class="lab" data-ref="1.2"><div class="lab-h"><h2><span class="tag">Lab</span>Mesma interface, duas implementações</h2></div>
+ <div class="lab-b">
+  <p>Os dois botões chamam as mesmas operações do TAD Pilha. Por dentro, uma pilha usa vetor e a outra usa nós encadeados. Quem usa só vê o resultado, que é idêntico.</p>
+  <div class="row"><label class="ctl" for="tad-x">Valor</label><input type="number" id="tad-x" value="7" style="width:80px"><button class="btn primary" id="tad-push">pilha_empilhar(p, x)</button><button class="btn" id="tad-pop">pilha_desempilhar(p)</button></div>
+  <div class="status" id="tad-st">Empilhe alguns valores.</div>
+  <div class="cols"><div><h3>pilha.c versão vetor</h3><div class="diagram" id="tad-seq"></div></div><div><h3>pilha.c versão encadeada</h3><div class="diagram" id="tad-enc"></div></div></div>
+ </div></div>
+<div class="lab" data-ref="1.6"><div class="lab-h"><h2><span class="tag">Lab</span>Quanto cresce cada O(·)?</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="big-n">n =</label><input type="range" id="big-n" min="1" max="60" value="16"><span class="mono" id="big-nv"></span></div>
+  <div class="diagram" id="big-svg"></div>
+  <p class="hint">Barras em escala logarítmica. Repare como O(n²) dispara enquanto O(log n) mal se mexe.</p>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-pilhas" data-cap="pilhas" hidden>
+<div class="lab" data-ref="2.3"><div class="lab-h"><h2><span class="tag">Lab</span>Pilha em vetor (MAX = 8)</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="pl-x">Valor</label><input type="number" id="pl-x" value="5" style="width:80px"><button class="btn primary" id="pl-push">push</button><button class="btn" id="pl-pop">pop</button><button class="btn" id="pl-top">topo</button><button class="btn small" id="pl-clr">esvaziar</button></div>
+  <div class="diagram" id="pl-svg"></div>
+  <div class="status" id="pl-st"></div>
+ </div></div>
+<div class="lab" data-ref="2.5"><div class="lab-h"><h2><span class="tag">Lab</span>Parênteses balanceados, passo a passo</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="pb-in">Expressão</label><input type="text" id="pb-in" value="{[()()]}(" style="flex:1;min-width:180px"><button class="btn primary" id="pb-go">Começar</button><button class="btn" id="pb-step">Próximo caractere</button><button class="btn small" id="pb-all">Até o fim</button></div>
+  <div class="row" id="pb-chars" style="font-family:var(--f-mono);font-size:22px;gap:4px"></div>
+  <div class="cols"><div class="diagram" id="pb-stack"></div><div class="status" id="pb-st">Digite uma expressão e comece.</div></div>
+ </div></div>
+<div class="lab" data-ref="2.6"><div class="lab-h"><h2><span class="tag">Lab</span>Calculadora pós-fixa e conversor</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="pf-in">Infixa</label><input type="text" id="pf-in" value="(5 + 3) * 2 - 8 / 4" style="flex:1;min-width:200px"><button class="btn primary" id="pf-go">Converter e avaliar</button></div>
+  <p class="hint">Use números, + − * / e parênteses, separados ou não por espaço.</p>
+  <div class="cols"><div><h3>1. Infixa → pós-fixa</h3><div class="tscroll" id="pf-conv"></div></div><div><h3>2. Avaliar a pós-fixa</h3><div class="tscroll" id="pf-eval"></div></div></div>
+  <div class="status" id="pf-st"></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-filas" data-cap="filas" hidden>
+<div class="lab" data-ref="3.3"><div class="lab-h"><h2><span class="tag">Lab</span>Fila circular (MAX = 8)</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="fc-x">Valor</label><input type="number" id="fc-x" value="10" style="width:80px"><button class="btn primary" id="fc-ins">inserir (fim)</button><button class="btn" id="fc-rem">remover (início)</button><button class="btn small" id="fc-clr">reiniciar</button></div>
+  <div class="cols"><div class="diagram" id="fc-svg"></div><div style="display:flex;flex-direction:column;gap:10px"><div class="status" id="fc-st"></div><div class="tscroll" id="fc-vars"></div><div class="log" id="fc-log"></div></div></div>
+ </div></div>
+<div class="lab" data-ref="3.5"><div class="lab-h"><h2><span class="tag">Lab</span>Deque</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="dq-x">Valor</label><input type="number" id="dq-x" value="1" style="width:70px"><button class="btn" id="dq-ii">insere início</button><button class="btn" id="dq-if">insere fim</button><button class="btn" id="dq-ri">remove início</button><button class="btn" id="dq-rf">remove fim</button></div>
+  <div class="diagram" id="dq-svg"></div>
+  <div class="status" id="dq-st">Use só as operações de uma ponta e veja o deque virar pilha; insira numa ponta e remova na outra para virar fila.</div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-listas" data-cap="listas" hidden>
+<div class="lab" data-ref="4.4"><div class="lab-h"><h2><span class="tag">Lab</span>Lista encadeada: todos os tipos</h2>
+  <div class="row"><label class="ctl" for="le-kind">Tipo</label><select id="le-kind"><option value="simples">simples</option><option value="cabeca">com nó-cabeça</option><option value="circular">circular</option><option value="dupla">dupla</option><option value="duplacirc">dupla circular</option></select></div></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="le-x">Valor</label><input type="number" id="le-x" value="15" style="width:80px"><button class="btn" id="le-ini">inserir início</button><button class="btn" id="le-fim">inserir fim</button><button class="btn primary" id="le-ord">inserir ordenado</button><button class="btn" id="le-rem">remover</button><button class="btn" id="le-bus">buscar</button></div>
+  <div class="diagram" id="le-svg"></div>
+  <div class="cols"><div class="status" id="le-st"></div><div class="code-mini" id="le-code"></div></div>
+ </div></div>
+<div class="lab" data-ref="4.5"><div class="lab-h"><h2><span class="tag">Lab</span>Sequencial × encadeada: quem trabalha mais?</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="sv-x">Inserir ordenado</label><input type="number" id="sv-x" value="12" style="width:80px"><button class="btn primary" id="sv-go">Inserir nas duas</button><button class="btn small" id="sv-rnd">10 aleatórios</button><button class="btn small" id="sv-clr">limpar</button></div>
+  <div class="diagram" id="sv-svg"></div>
+  <div class="status" id="sv-st"></div>
+ </div></div>
+<div class="lab" data-ref="4.6"><div class="lab-h"><h2><span class="tag">Lab</span>Lista generalizada</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="lg-in">Lista</label><input type="text" id="lg-in" value="(a, (b, c), d, ((e)))" style="flex:1;min-width:200px"><button class="btn primary" id="lg-go">Montar</button></div>
+  <div class="diagram" id="lg-svg"></div>
+  <div class="status" id="lg-st"></div>
+ </div></div>
+<div class="lab" data-ref="4.7"><div class="lab-h"><h2><span class="tag">Lab</span>Matriz esparsa em listas cruzadas</h2></div>
+ <div class="lab-b">
+  <p class="hint">Clique nas células para colocar ou tirar valores. À direita, a representação com listas cruzadas.</p>
+  <div class="cols"><div class="diagram" id="me-grid"></div><div class="diagram" id="me-svg"></div></div>
+  <div class="status" id="me-st"></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-arvores" data-cap="arvores" hidden>
+<div class="lab" data-ref="5.5"><div class="lab-h"><h2><span class="tag">Lab</span>Percursos animados</h2>
+  <div class="row"><button class="btn small" id="pc-new">Outra árvore</button></div></div>
+ <div class="lab-b">
+  <div class="row"><button class="btn" data-pc="pre">pré-ordem</button><button class="btn" data-pc="em">em-ordem</button><button class="btn" data-pc="pos">pós-ordem</button><button class="btn" data-pc="nivel">em nível</button></div>
+  <div class="diagram" id="pc-svg"></div>
+  <div class="status" id="pc-st">Escolha um percurso. Os nós acendem na ordem da visita.</div>
+ </div></div>
+<div class="lab" data-ref="5.3"><div class="lab-h"><h2><span class="tag">Lab</span>Medidas da árvore</h2></div>
+ <div class="lab-b">
+  <p class="hint">Clique num nó da árvore acima (em “Percursos animados”) para ver suas medidas.</p>
+  <div class="status" id="pc-info">Nenhum nó selecionado.</div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-abb" data-cap="abb" hidden>
+<div class="lab" data-ref="6.3"><div class="lab-h"><h2><span class="tag">Lab</span>ABB interativa</h2>
+  <div class="row"><label class="ctl" for="abb-mode">Remoção usa</label><select id="abb-mode"><option value="suc">sucessor</option><option value="pred">predecessor</option></select></div></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="abb-x">Chave</label><input type="number" id="abb-x" value="35" style="width:80px"><button class="btn primary" id="abb-ins">inserir</button><button class="btn" id="abb-rem">remover</button><button class="btn" id="abb-bus">buscar</button><button class="btn small" id="abb-rnd">exemplo</button><button class="btn small" id="abb-ord">inserir 1..7 em ordem</button><button class="btn small" id="abb-clr">limpar</button></div>
+  <div class="diagram" id="abb-svg"></div>
+  <div class="status" id="abb-st"></div>
+  <div class="row"><span class="chip" id="abb-in"></span><span class="chip" id="abb-h"></span></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-avl" data-cap="avl" hidden>
+<div class="lab" data-ref="7.3"><div class="lab-h"><h2><span class="tag">Lab</span>AVL com rotações passo a passo</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="avl-x">Chave</label><input type="number" id="avl-x" value="25" style="width:80px"><button class="btn primary" id="avl-ins">inserir</button><button class="btn" id="avl-rem">remover</button><button class="btn small" id="avl-seq">inserir 10..50</button><button class="btn small" id="avl-clr">limpar</button></div>
+  <div class="diagram" id="avl-svg"></div>
+  <div class="row"><button class="btn small" id="avl-prev">◀ passo</button><span class="score" id="avl-pos"></span><button class="btn small" id="avl-next">passo ▶</button></div>
+  <div class="status" id="avl-st"></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-rubronegra" data-cap="rubronegra" hidden>
+<div class="lab" data-ref="8.3"><div class="lab-h"><h2><span class="tag">Lab</span>Inserção rubro-negra passo a passo</h2></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="rn-x">Chave</label><input type="number" id="rn-x" value="15" style="width:80px"><button class="btn primary" id="rn-ins">inserir</button><button class="btn small" id="rn-seq">10, 20, 30, 15, 25</button><button class="btn small" id="rn-asc">1..10 em ordem</button><button class="btn small" id="rn-clr">limpar</button></div>
+  <div class="diagram" id="rn-svg"></div>
+  <div class="row"><button class="btn small" id="rn-prev">◀ passo</button><span class="score" id="rn-pos"></span><button class="btn small" id="rn-next">passo ▶</button></div>
+  <div class="status" id="rn-st"></div>
+  <div class="row"><span class="chip" id="rn-check"></span><span class="chip" id="rn-h"></span></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-heap" data-cap="heap" hidden>
+<div class="lab" data-ref="9.3"><div class="lab-h"><h2><span class="tag">Lab</span>Heap: árvore e vetor ao mesmo tempo</h2>
+  <div class="row"><label class="ctl" for="hp-kind">Tipo</label><select id="hp-kind"><option value="max">heap máximo</option><option value="min">heap mínimo</option></select></div></div>
+ <div class="lab-b">
+  <div class="row"><label class="ctl" for="hp-x">Valor</label><input type="number" id="hp-x" value="85" style="width:80px"><button class="btn primary" id="hp-ins">inserir</button><button class="btn" id="hp-rem">remover raiz</button><button class="btn small" id="hp-clr">limpar</button></div>
+  <div class="row"><label class="ctl" for="hp-arr">Vetor</label><input type="text" id="hp-arr" value="30, 60, 90, 40, 50, 80, 95" style="flex:1;min-width:180px"><button class="btn" id="hp-build">construir heap (O(n))</button><button class="btn" id="hp-sort">heapsort</button></div>
+  <div class="diagram" id="hp-svg"></div>
+  <div class="row"><button class="btn small" id="hp-prev">◀ passo</button><span class="score" id="hp-pos"></span><button class="btn small" id="hp-next">passo ▶</button></div>
+  <div class="status" id="hp-st"></div>
+ </div></div>
+</section>
+
+<section class="pr-cap" id="v-revisao" data-cap="revisao" hidden>
+<div class="lab" data-ref="5.5"><div class="lab-h"><h2><span class="tag">Exercício</span>Escreva o percurso</h2><button class="btn small" id="tp-new">Outro</button></div>
+ <div class="lab-b">
+  <p id="tp-q"></p>
+  <div class="diagram" id="tp-svg"></div>
+  <div class="row"><input type="text" id="tp-in" placeholder="ex.: 50 30 20 40 70" style="flex:1;min-width:200px" aria-label="Sua resposta"><button class="btn primary" id="tp-ok">Conferir</button></div>
+  <div class="status" id="tp-st">Digite as chaves separadas por espaço.</div>
+ </div></div>
+<div class="lab" data-ref="7.3"><div class="lab-h"><h2><span class="tag">Exercício</span>Qual rotação a AVL faz?</h2><button class="btn small" id="tr-new">Outro</button></div>
+ <div class="lab-b">
+  <p id="tr-q"></p>
+  <div class="row" id="tr-opts"></div>
+  <div class="diagram" id="tr-svg"></div>
+  <div class="status" id="tr-st">Escolha uma opção.</div>
+ </div></div>
+<div class="lab" data-ref="9.3"><div class="lab-h"><h2><span class="tag">Exercício</span>Heap depois da operação</h2><button class="btn small" id="th-new">Outro</button></div>
+ <div class="lab-b">
+  <p id="th-q"></p>
+  <div class="row"><input type="text" id="th-in" placeholder="ex.: 90 70 80 40" style="flex:1;min-width:200px" aria-label="Sua resposta"><button class="btn primary" id="th-ok">Conferir</button></div>
+  <div class="status" id="th-st">Digite o vetor resultante, separado por espaços.</div>
+ </div></div>
+</section>
