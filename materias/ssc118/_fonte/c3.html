@@ -1,0 +1,176 @@
+<!-- ===================================================== CAP 9 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 9</div><h1>Máquinas de Estados Finitos (MEF)</h1>
+  <div class="goal">Objetivo: modelar qualquer circuito sequencial como estados e transições, distinguir Moore de Mealy, montar diagramas e tabelas, minimizar estados e ir do enunciado ao circuito.</div><div class="src">Base: Aula 08, MEF</div></div>
+
+  <h2>9.1 A ideia geral</h2>
+  <p>Tudo o que vimos (latch, contador, registrador) é um caso particular de uma <b>Máquina de Estados Finitos</b>: um circuito com um número finito de <b>estados</b>, que a cada pulso de clock passa para um <b>próximo estado</b> conforme o estado atual e as entradas, e que produz <b>saídas</b>. Recordando a estrutura do Cap. 1:</p>
+  <ul><li><b>Memória</b> (FFs): guarda o estado presente; recebe o próximo estado.</li>
+  <li><b>Lógica combinacional</b>: calcula o próximo estado e a saída a partir do estado presente e das entradas.</li></ul>
+  <p>Representa-se uma MEF por um <b>diagrama de estados</b> (um grafo: nós = estados, arcos = transições) ou por uma <b>tabela de estados</b> (tabela de transição). Os dois carregam a mesma informação.</p>
+
+  <h2>9.2 Modelo de Moore</h2>
+  <div class="formula">Saídas = f(Estado) &nbsp;&nbsp;·&nbsp;&nbsp; Próximo estado = f(Estado, Entradas)</div>
+  {{fig:moore_bloco|Moore: a saída só “enxerga” o estado.}}
+  <p><b>Notação no diagrama:</b> a saída fica <b>dentro do nó</b> (“Estado / Saída”, ex.: A/00); o arco leva só a <b>entrada</b> que causa a transição. Como a saída só muda quando o estado muda, ou seja, na borda do clock, Moore tem <b>resposta mais lenta</b> a variações na entrada (até um ciclo de atraso), mas a saída é estável e livre de glitches das entradas.</p>
+  <div class="callout ex"><div class="ct">Exemplo (slide): contador síncrono módulo 4 como Moore</div>
+  <div class="twocol"><div>{{fig:sd_mod4|Sem entradas externas: a cada clock avança um estado.|300px}}</div>
+  <div><table class="tt"><tr><th>Estado presente</th><th>Saída Z1Z2</th><th>Estado futuro</th></tr>
+  <tr><td>A</td><td>00</td><td>B</td></tr><tr><td>B</td><td>01</td><td>C</td></tr><tr><td>C</td><td>10</td><td>D</td></tr><tr><td>D</td><td>11</td><td>A</td></tr></table>
+  <p class="small">4 estados, 2 saídas, nenhuma entrada (só o clock).</p></div></div></div>
+
+  <h2>9.3 Modelo de Mealy</h2>
+  <div class="formula">Saídas = f(Estado, Entradas) &nbsp;&nbsp;·&nbsp;&nbsp; Próximo estado = f(Estado, Entradas)</div>
+  {{fig:mealy_bloco|Mealy: a entrada também vai direto para a lógica de saída.}}
+  <p><b>Notação no diagrama:</b> o nó leva só o nome do estado; o arco leva “<b>Entrada / Saída</b>” (ex.: 1/0). A saída reage à entrada <b>no mesmo ciclo</b>, sem esperar o clock: <b>resposta mais rápida</b>, mas a saída pode ter glitches se a entrada tiver.</p>
+  <div class="callout ex"><div class="ct">Exemplo (slide): entrada X, estados y1y2 (A=00, B=01, C=10, D=11), saída Z</div>
+  <div class="twocol"><div>{{fig:sd_mealy|Diagrama de Mealy do slide.|380px}}</div>
+  <div><table class="tt"><tr><th rowspan="2">Estado</th><th colspan="2">Entrada X</th></tr><tr><th>0</th><th>1</th></tr>
+  <tr><td>A</td><td>D/0</td><td>C/1</td></tr><tr><td>B</td><td>B/1</td><td>A/0</td></tr><tr><td>C</td><td>C/1</td><td>D/0</td></tr><tr><td>D</td><td>A/0</td><td>B/1</td></tr></table>
+  <p class="small">Leitura: na célula (linha B, coluna 0), “B/1” significa: estando em B com X = 0, a saída é 1 e o próximo estado é B.</p></div></div></div>
+
+  <h2>9.4 Moore × Mealy lado a lado: detector da sequência “101”</h2>
+  <p>Problema: a entrada X recebe um bit por clock; a saída Z deve valer 1 quando os três últimos bits forem <b>1, 0, 1</b> (com sobreposição: em 10101, a sequência aparece duas vezes).</p>
+  <div class="twocol"><div>{{fig:sd_101_mealy|Mealy: 3 estados. S0 = nada útil, S1 = viu “1”, S2 = viu “10”. A saída 1 sai no arco S2 —1→.|410px}}</div></div>
+  {{fig:sd_101_moore|Moore: 4 estados. Precisa de um estado extra (S3 = “viu 101”) porque a saída mora no estado.|500px}}
+  {{fig:mm_wave|Mesma entrada nas duas máquinas: o Z de Mealy sobe assim que o terceiro bit chega; o de Moore só depois da borda seguinte (um ciclo depois), mas permanece um ciclo inteiro estável. Os números embaixo são os bits de X em cada ciclo.}}
+  <table class="wide"><tr><th class="l"></th><th class="l">Moore</th><th class="l">Mealy</th></tr>
+  <tr><td class="l">Saída depende de</td><td class="l">só do estado</td><td class="l">estado <b>e</b> entradas</td></tr>
+  <tr><td class="l">Onde a saída aparece no diagrama</td><td class="l">dentro do nó (A/Z)</td><td class="l">no arco (X/Z)</td></tr>
+  <tr><td class="l">Resposta à entrada</td><td class="l">mais lenta (espera a borda)</td><td class="l">mais rápida (no mesmo ciclo)</td></tr>
+  <tr><td class="l">Número de estados</td><td class="l">em geral mais</td><td class="l">em geral menos</td></tr>
+  <tr><td class="l">Glitches na saída</td><td class="l">não (saída síncrona)</td><td class="l">pode ter, se a entrada tiver</td></tr></table>
+
+  <h2>9.5 Minimização de estados</h2>
+  <p>Dois estados são <b>equivalentes</b> quando é impossível distingui-los olhando as saídas: para toda entrada, dão a <b>mesma saída</b> e vão para estados <b>equivalentes</b>. Um deles é redundante e pode ser removido, o que reduz custo e complexidade (menos FFs e menos lógica).</p>
+  <h3>Método da inspeção (casos simples)</h3>
+  <p>Procure linhas <b>idênticas</b> na tabela, elimine uma, substitua seu nome em toda a tabela e repita.</p>
+  <div class="callout ex"><div class="ct">Exemplo resolvido (slide)</div>
+  <div class="twocol">
+  <div><table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr><td>A</td><td>B/0</td><td>C/1</td></tr><tr class="hl"><td>B</td><td>C/0</td><td>A/1</td></tr><tr><td>C</td><td>D/1</td><td>B/0</td></tr><tr class="hl"><td>D</td><td>C/0</td><td>A/1</td></tr><tr><td>E</td><td>D/0</td><td>C/1</td></tr></table><div class="cap">① B ≡ D (linhas iguais)</div></div>
+  <div><table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr class="hl"><td>A</td><td>B/0</td><td>C/1</td></tr><tr><td>B</td><td>C/0</td><td>A/1</td></tr><tr><td>C</td><td>B/1</td><td>B/0</td></tr><tr class="hl"><td>E</td><td>B/0</td><td>C/1</td></tr></table><div class="cap">② troca D→B; agora A ≡ E</div></div>
+  <div><table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr><td>A</td><td>B/0</td><td>C/1</td></tr><tr><td>B</td><td>C/0</td><td>A/1</td></tr><tr><td>C</td><td>B/1</td><td>B/0</td></tr></table><div class="cap">③ resultado: 5 → 3 estados</div></div>
+  </div></div>
+  <h3>Método da partição (sistemático, sempre funciona)</h3>
+  <ol class="steps">
+    <li><b>Partição pelas saídas</b>: agrupe os estados com a <b>mesma linha de saídas</b>.</li>
+    <li>Para cada estado, anote <b>em que grupo</b> cai cada próximo estado.</li>
+    <li>Se dois estados do mesmo grupo vão para <b>grupos diferentes</b> em alguma coluna, separe-os.</li>
+    <li>Repita até nada mudar. Cada grupo final vira <b>um</b> estado.</li>
+  </ol>
+  <div class="callout ex avoid"><div class="ct">Exemplo resolvido (slide): 8 estados</div>
+  <div class="twocol">
+  <div><table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr>
+  <tr><td>A</td><td>B/0</td><td>C/0</td></tr><tr><td>B</td><td>D/0</td><td>E/0</td></tr><tr><td>C</td><td>G/0</td><td>E/0</td></tr><tr><td>D</td><td>H/0</td><td>F/0</td></tr>
+  <tr><td>E</td><td>G/0</td><td>A/0</td></tr><tr class="hl"><td>F</td><td>G/1</td><td>A/0</td></tr><tr><td>G</td><td>D/0</td><td>C/0</td></tr><tr><td>H</td><td>H/0</td><td>A/0</td></tr></table></div>
+  <div style="flex:1.6"><p style="margin-top:0"><b>P1 (saídas):</b> só F tem saída diferente (1 com X=0) → <code>{A,B,C,D,E,G,H}=1</code>, <code>{F}=2</code>.</p>
+  <p><b>P2:</b> próximos estados por grupo: D vai para F (grupo 2) com X=1; os outros só vão para o grupo 1 → separa D: <code>{A,B,C,E,G,H}=1</code>, <code>{F}=2</code>, <code>{D}=3</code>.</p>
+  <p><b>P3:</b> B → (D,E) = (3,1) e G → (D,C) = (3,1); A, C, E, H → (1,1) → <code>{A,C,E,H}=1</code>, <code>{B,G}=4</code>.</p>
+  <p><b>P4:</b> A → (B,C) = (4,1); C → (G,E) = (4,1); E → (G,A) = (4,1); H → (H,A) = (1,1) → separa H: <code>{A,C,E}=5</code>, <code>{H}</code>.</p>
+  <p><b>P5:</b> nada muda → <b>A ≡ C ≡ E</b> e <b>B ≡ G</b>.</p></div></div>
+  <table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr><td>A</td><td>B/0</td><td>A/0</td></tr><tr><td>B</td><td>D/0</td><td>A/0</td></tr><tr><td>D</td><td>H/0</td><td>F/0</td></tr><tr><td>F</td><td>B/1</td><td>A/0</td></tr><tr><td>H</td><td>H/0</td><td>A/0</td></tr></table>
+  <div class="cap">Resultado: 8 → 5 estados. Ainda são 3 FFs (2³ = 8 ≥ 5), mas a lógica fica menor e sobram 3 códigos livres para usar como don’t care.</div></div>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><p>Na partição, compare <b>grupos</b>, não letras: B → D e G → D estão iguais; A → C e C → E também, se C e E estiverem no mesmo grupo. E só junte estados com a <b>mesma saída</b> desde o início.</p></div>
+
+  <h2>9.6 Do enunciado ao circuito: o roteiro completo</h2>
+  <ol class="steps">
+    <li><b>Entenda o problema</b>: quais são as entradas, as saídas e o que o circuito precisa lembrar.</li>
+    <li><b>Escolha o modelo</b> (Moore ou Mealy) e desenhe o <b>diagrama de estados</b>.</li>
+    <li>Monte a <b>tabela de estados</b> e <b>minimize</b>.</li>
+    <li><b>Codifique</b> os estados em binário: com k estados, use n FFs com 2ⁿ ≥ k.</li>
+    <li>Monte a <b>tabela de transição</b> em binário e, com a <b>tabela de excitação</b> do FF escolhido (Cap. 6), as colunas de entrada dos FFs.</li>
+    <li>Simplifique (Karnaugh) as entradas dos FFs e as saídas e desenhe o circuito.</li>
+  </ol>
+  <div class="callout ex avoid"><div class="ct">Exemplo resolvido: detector “101” de Mealy com FFs D</div>
+  <p>Codificação: S0 = 00, S1 = 01, S2 = 10 (11 não usado = X). Estado = y1y0.</p>
+  <table class="tt"><tr><th>y1y0</th><th>X</th><th>próx. y1y0 = D1D0</th><th>Z</th></tr>
+  <tr><td>00 (S0)</td><td>0</td><td>00</td><td>0</td></tr><tr><td>00 (S0)</td><td>1</td><td>01</td><td>0</td></tr>
+  <tr><td>01 (S1)</td><td>0</td><td>10</td><td>0</td></tr><tr><td>01 (S1)</td><td>1</td><td>01</td><td>0</td></tr>
+  <tr><td>10 (S2)</td><td>0</td><td>00</td><td>0</td></tr><tr class="hl"><td>10 (S2)</td><td>1</td><td>01</td><td>1</td></tr>
+  <tr><td>11</td><td>–</td><td>XX</td><td>X</td></tr></table>
+  <p>Com FF D, D = próximo estado. Lendo a tabela (e usando o 11 como X):</p>
+  <ul><li><b>D0 = X</b> (toda vez que X = 1 se vai para 01; com X = 0 nunca se termina em y0 = 1)</li>
+  <li><b>D1 = y0 · {{Xn}}</b> (só S1 com X = 0 vai para S2)</li>
+  <li><b>Z = y1 · X</b> (em S2, chegando 1)</li></ul>
+  <p>Circuito: 2 FFs D, uma AND com NOT para D1 e uma AND para Z. Em Mealy, Z usa X diretamente.</p></div>
+
+  <h2>9.7 Os dois casos de projeto da aula</h2>
+  <h3>Elevador (16 andares)</h3>
+  <p><b>O que lembrar:</b> o andar atual (16 andares, então 4 bits) e se está parado, subindo ou descendo. <b>Entradas:</b> andar requisitado (4 bits) e um sinal “há chamada”. <b>Saídas:</b> comandos do motor (subir / descer / parar) e o andar atual.</p>
+  <ul>
+    <li>Parado e sem chamada, ou chamada = andar atual: <b>continua parado</b>.</li>
+    <li>Chamada &gt; atual: <b>sobe</b> 1 andar por clock até igualar; chamada &lt; atual: <b>desce</b>.</li>
+  </ul>
+  <p><b>Modelo adequado: Moore</b>. A saída (motor) depende de “onde estou e para onde vou”, deve ser estável durante o ciclo e não há urgência de reagir dentro do ciclo. Observe que o andar atual é, na prática, um <b>contador crescente/decrescente</b> de 4 bits, e a decisão sobe/desce/para vem de um <b>comparador</b> entre andar atual e requisitado. Em vez de desenhar 16 × 3 estados à mão, divide-se o problema em blocos: comparador + contador up/down + MEF de controle com 3 estados (PARADO, SUBINDO, DESCENDO).</p>
+  <h3>Máquina de refrigerante (R$ 1,00)</h3>
+  <p><b>O que lembrar:</b> quanto já foi inserido. Moedas: 10, 25, 50 e 100 centavos (uma por clock). Estados = valores acumulados possíveis até R$ 1,00 (0, 10, 20, 25, 30, 35, …, 100). <b>Entradas:</b> moeda inserida (codificada) e botão. <b>Saídas:</b> liberar lata, devolver dinheiro.</p>
+  <ul>
+    <li>Moeda que faz passar de R$ 1,00: <b>devolve tudo</b> e volta ao estado 0, mesmo sem apertar o botão.</li>
+    <li>Botão apertado no estado 100: <b>libera a lata</b> e volta a 0. Botão em qualquer outro estado: <b>devolve as moedas</b> e volta a 0.</li>
+  </ul>
+  <p><b>Modelo adequado: Mealy</b>. As ações “libera” e “devolve” são respostas a um <b>evento de entrada</b> (o botão ou a moeda que estoura o valor), naquele ciclo. Em Moore seriam necessários estados extras, como “liberando” e “devolvendo”.</p>
+  <div class="callout key"><div class="ct">“Quanto mais estados, melhor?” (pergunta da aula)</div><p><b>Não.</b> Cada estado a mais pode exigir mais FFs (n = ⌈log₂ k⌉) e mais lógica combinacional, aumentando custo, área, consumo e chance de erro. O objetivo é o <b>menor número de estados que ainda distingue tudo o que importa</b>; é para isso que serve a minimização. Estados extras só valem a pena quando simplificam a lógica de saída (como em Moore, para ter saídas estáveis).</p></div>
+  <div class="callout try"><div class="ct">Exercício 9.1</div><p>(a) Desenhe uma MEF de Moore que detecte a sequência “11” na entrada X (Z = 1 quando os dois últimos bits forem 1). (b) Faça a versão Mealy. (c) Quantos FFs cada uma precisa?</p></div>
+  <div class="callout try"><div class="ct">Exercício 9.2</div><p>Minimize pelo método da partição:</p>
+  <table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr><td>A</td><td>B/0</td><td>C/0</td></tr><tr><td>B</td><td>A/0</td><td>D/1</td></tr><tr><td>C</td><td>D/0</td><td>A/0</td></tr><tr><td>D</td><td>C/0</td><td>B/1</td></tr></table></div>
+</section>
+
+<!-- ===================================================== CAP 10 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 10</div><h1>Revisão final, armadilhas e gabarito</h1>
+  <div class="goal">Use a página de resumo na véspera; use o gabarito para conferir os exercícios.</div></div>
+
+  <h2 style="margin-top:4px">10.1 Resumo para a véspera</h2>
+  <div class="cheat">
+    <div class="blk"><h4>Fundamentos</h4><ul><li>Combinacional: saída = f(entradas agora).</li><li>Sequencial: saída = f(entradas, estado); tem memória e realimentação.</li><li>Astável (0 estados estáveis), monoestável (1), biestável (2) = latch/FF.</li><li>Latch: assíncrono (muda a qualquer hora). FF: síncrono (muda na borda).</li></ul></div>
+    <div class="blk"><h4>Latches RS</h4>
+    <table class="tt"><tr><th>NOR (ativo 1)</th><th>NAND (ativo 0)</th><th>Ação</th></tr><tr><td>S=0 R=0</td><td>{{Sn}}=1 {{Rn}}=1</td><td>mantém</td></tr><tr><td>S=1 R=0</td><td>{{Sn}}=0 {{Rn}}=1</td><td>Q=1</td></tr><tr><td>S=0 R=1</td><td>{{Sn}}=1 {{Rn}}=0</td><td>Q=0</td></tr><tr class="bad"><td>S=1 R=1</td><td>{{Sn}}=0 {{Rn}}=0</td><td>inválido</td></tr></table></div>
+    <div class="blk"><h4>Flip-flops (na borda ativa)</h4>
+    <table class="tt"><tr><th>Tipo</th><th>Q<sub>próx</sub></th></tr><tr><td>D</td><td>D</td></tr><tr><td>T</td><td>T ⊕ Q</td></tr><tr><td>JK</td><td>J{{Qn}} + {{Kn}}Q</td></tr><tr><td>SR</td><td>S + {{Rn}}Q (SR≠11)</td></tr></table>
+    <ul><li>JK: 00 mantém · 10 set · 01 reset · 11 comuta.</li><li>▷ = borda; ○▷ = descida. PRE/CLR assíncronos vencem o clock.</li></ul></div>
+    <div class="blk"><h4>Excitação (Q → Q<sub>próx</sub>)</h4>
+    <table class="tt"><tr><th></th><th>D</th><th>T</th><th>JK</th></tr><tr><td>0→0</td><td>0</td><td>0</td><td>0X</td></tr><tr><td>0→1</td><td>1</td><td>1</td><td>1X</td></tr><tr><td>1→0</td><td>0</td><td>1</td><td>X1</td></tr><tr><td>1→1</td><td>1</td><td>0</td><td>X0</td></tr></table></div>
+    <div class="blk"><h4>Tempo</h4><ul><li>f = 1/T; duty = t<sub>alto</sub>/T.</li><li>t<sub>r</sub>, t<sub>f</sub>: 10%→90%. t<sub>w</sub>: 50%↔50%.</li><li>t<sub>S</sub> antes da borda, t<sub>H</sub> depois: entrada parada.</li><li>t<sub>PLH</sub> (0→1), t<sub>PHL</sub> (1→0).</li></ul></div>
+    <div class="blk"><h4>Contadores</h4><ul><li>n FFs → até 2ⁿ estados; MOD-N precisa de 2ⁿ ≥ N.</li><li>Assíncrono: CLK só no 1º; Q<sub>i</sub> → CLK<sub>i+1</sub> (borda ↓ = crescente).</li><li>MOD-N: NAND dos bits 1 de N → {{CLRn}}.</li><li>f<sub>MSB</sub> = f<sub>CLK</sub>/MOD. Decrescente = ler {{Qn}}.</li><li>Síncrono: CLK comum; T<sub>i</sub> = Q<sub>0</sub>…Q<sub>i−1</sub>.</li><li>Ripple: atraso N·t<sub>PD</sub>; síncrono: 1·t<sub>PD</sub>.</li></ul></div>
+    <div class="blk"><h4>Registradores</h4><ul><li>n bits = n FFs D.</li><li>Paralelo: 1 pulso, n fios. Série: n pulsos, 1 fio.</li><li>LOAD: D = LOAD·Dnovo + {{LOADn}}·Q.</li><li>Shift: Q<sub>i</sub> → D<sub>i+1</sub>; o 1º bit a entrar termina no último FF.</li><li>P→S: carrega via {{PREn}} = NAND(EN, P), depois desloca.</li></ul></div>
+    <div class="blk"><h4>Memórias</h4><ul><li>Capacidade = posições × bits/palavra.</li><li>n linhas de endereço → 2ⁿ posições. 1K = 2¹⁰.</li><li>ROM: não volátil. Máscara → PROM (fusível, 1×) → EPROM (UV) → EEPROM (elétrica) → Flash (setores).</li><li>SRAM: FF, rápida, cache. DRAM: capacitor, refresh, principal.</li></ul></div>
+    <div class="blk"><h4>MEF</h4><ul><li>Moore: Z = f(estado); nó “A/Z”; mais lento, mais estados.</li><li>Mealy: Z = f(estado, X); arco “X/Z”; mais rápido, menos estados.</li><li>Equivalentes: mesma saída e próximos equivalentes, para toda entrada.</li><li>Partição: separa por saída e refina por grupos dos próximos estados.</li></ul></div>
+  </div>
+
+  <h2>10.2 Armadilhas clássicas</h2>
+  <ol>
+    <li>Confundir a ordem das colunas S/R nas tabelas dos latches (positivo: R primeiro; negativo: S primeiro, nos slides).</li>
+    <li>Esquecer que entradas com barra ({{Sn}}, {{CLRn}}, {{PREn}}) são <b>ativas em 0</b>.</li>
+    <li>Atualizar Q fora da borda, ou na borda errada (bolinha = descida).</li>
+    <li>Usar os valores de J, K, D <b>depois</b> da borda em vez de <b>antes</b>.</li>
+    <li>Em MOD-N, colocar na NAND o número n (último) em vez de n + 1 (o primeiro proibido).</li>
+    <li>Ler o contador com o LSB à esquerda: Q0 é o <b>LSB</b>.</li>
+    <li>Em capacidade, usar 1K = 1000: em memória, 1K = <b>1024</b>.</li>
+    <li>Achar que “Mealy” e “Moore” são só desenhos diferentes: em Mealy a saída pode mudar no meio do ciclo quando X muda.</li>
+  </ol>
+
+  <h2>10.3 Gabarito</h2>
+  <p><b>1.1</b> (a) combinacional; (b) sequencial (precisa lembrar a contagem); (c) combinacional; (d) sequencial (precisa lembrar os dígitos já digitados, como as lâmpadas).</p>
+  <p><b>2.1</b></p>
+  {{fig:ex_nor_a|Gabarito 2.1. Nos intervalos de S = R = 0, Q mantém o valor anterior; quando S = 1 ou R = 1 isoladamente, Q segue o comando.}}
+  <p><b>2.2</b> (a) Porque a saída muda assim que as entradas mudam, sem esperar clock. (b) NOR com S = R = 1 dá Q = {{Qn}} = 0; NAND com {{Sn}} = {{Rn}} = 0 dá Q = {{Qn}} = 1; nos dois, as saídas deixam de ser complementares e, se os comandos forem retirados juntos, o estado final é imprevisível. (c) Porque, com as entradas em repouso, a realimentação sustenta o último valor indefinidamente.</p>
+  <p><b>3.1</b> (a) T = 1/30 MHz ≈ <b>33,3 ns</b>. (b) 12/40 = <b>30%</b>. (c) <b>Sim</b>: D mudou 10 ns antes da borda, mas precisava estar estável há pelo menos t<sub>S</sub> = 20 ns. O valor capturado não é garantido.</p>
+  <p><b>4.1</b></p>
+  {{fig:ex_jk_a|Gabarito 4.1. Em cada ↓ aplica-se a tabela do JK com os valores imediatamente anteriores. O pulso de {{CLRn}} chega com Q = 1 e zera Q na hora, sem esperar borda. Na borda seguinte, J = K = 1 faz Q comutar a partir de 0 e ir para 1.}}
+  <p><b>4.2</b> (a) 8/2 = <b>4 MHz</b>. (b) T: J = K = T. D: J = D e K = {{Dn}}. (c) Por causa do estado inválido S = R = 1; o JK resolve isso.</p>
+  <p><b>5.1</b></p>
+  <ol>
+    <li><b>MOD-3</b>: 2 FFs; 3 = 11 → NAND(Q1, Q0) → {{CLRn}}. Crescente: 0, 1, 2. Lendo {{Qn}} (como no slide) obtém-se 3, 2, 1, uma decrescente de 3 estados. Para 2, 1, 0 exatamente: monte o contador decrescente (Cap. 5.5, Aprofundando) e, quando ele passar de 0 para 3 (11), use a NAND(Q1, Q0) para carregar 10 de forma assíncrona: {{PREn}} no FF1 e {{CLRn}} no FF0.</li>
+    <li><b>MOD-12</b>: 4 FFs; 12 = 1100 → NAND(Q3, Q2). Lendo {{Qn}}: 15…4. Para 11…0: contador decrescente que, ao chegar em 15 (1111), carrega 1011 (PRE em Q3, Q1, Q0; CLR em Q2).</li>
+    <li>50 MHz → 1 Hz exige dividir por 50 000 000. Como 2²⁵ = 33 554 432 &lt; 50 000 000 ≤ 2²⁶ = 67 108 864, são <b>26 FFs</b>, num contador MOD-50 000 000 (NAND com os bits 1 de 50 000 000 = 10111110101111000010000000₂ → {{CLRn}}). Só com potências de 2 não se chega a 1 Hz exato (2²⁶ daria ≈ 0,745 Hz).</li>
+    <li>Cada década divide por 10: 7 décadas → 50 MHz/10⁷ = 5 Hz; falta um <b>MOD-5</b> (3 FFs). Total 7 × 4 + 3 = <b>31 FFs</b>, com o projeto mais simples e modular. (Com 8 décadas: 0,5 Hz.)</li>
+  </ol>
+  <p><b>6.1</b> (a) T0 = 1, T1 = Q0, T2 = Q0Q1, T3 = Q0Q1Q2, T4 = Q0Q1Q2Q3. (b) Sequência 000 → 010 → 100 → 110 → 000: Q0 fica sempre em 0 → T0 = 0; Q1 comuta sempre → T1 = 1; Q2 comuta quando Q1 = 1 → T2 = Q1. (c) No assíncrono o atraso seria 16 × t<sub>PD</sub>; no síncrono, um único t<sub>PD</sub> mais a lógica: muito mais rápido e sem estados intermediários falsos.</p>
+  <p><b>7.1</b></p>
+  {{fig:ex_shift_a|Gabarito 7.1. Entram 1, 0, 1, 1 (nessa ordem). Conteúdo final: Q3Q2Q1Q0 = 1011. O primeiro bit a entrar está em Q3.}}
+  <p><b>7.2</b> (a) 8 FFs. (b) 5 pulsos. (c) O de carga paralela, base dos registradores internos de processadores e de barramentos; os de deslocamento aparecem na comunicação serial.</p>
+  <p><b>8.1</b> (a) 2048 × 16 = <b>32 768 bits</b>; 2048 = 2¹¹ → <b>11 linhas</b>. (b) 2¹⁴ = 16 384 posições × 8 = <b>131 072 bits = 16 384 bytes = 16 KB</b>. (c) 6 = 4·1 + 2 → C1 (A3A2 = 01) e L2 (A1A0 = 10) → <b>0110</b>. (d) A DRAM guarda o bit como carga num capacitor, que vaza com o tempo; a SRAM usa um flip-flop, que se sustenta por realimentação enquanto houver alimentação.</p>
+  <p><b>9.1</b> (a) Moore: S0/0 (último bit 0 ou início), S1/0 (viu um 1), S2/1 (viu 11). X = 1: S0→S1, S1→S2, S2→S2. X = 0: todos → S0. (b) Mealy: S0 (último 0), S1 (último 1). S0: 0/0→S0, 1/0→S1; S1: 0/0→S0, 1/1→S1. (c) Moore: 3 estados → 2 FFs; Mealy: 2 estados → 1 FF.</p>
+  <p><b>9.2</b> P1 pelas saídas: {A, C} (saídas 0,0) e {B, D} (saídas 0,1). P2: A → (B, C) = (grupo BD, grupo AC); C → (D, A) = (BD, AC): iguais. B → (A, D) = (AC, BD); D → (C, B) = (AC, BD): iguais. Nada muda: <b>A ≡ C</b> e <b>B ≡ D</b>. Tabela mínima: A: 0 → B/0, 1 → A/0; B: 0 → A/0, 1 → B/1 (2 estados, 1 FF).</p>
+  <div class="callout key" style="margin-top:14px"><div class="ct">Última dica</div><p>Refaça à mão, sem olhar: (1) formas de onda de um latch NOR e de um JK com CLR; (2) um contador assíncrono MOD-N qualquer; (3) as equações T de um síncrono; (4) uma conta de capacidade; (5) um diagrama Moore e um Mealy para a mesma sequência; (6) uma minimização por partição. Esses seis itens cobrem quase tudo que costuma cair.</p></div>
+</section>

@@ -1,0 +1,316 @@
+<section class="cover">
+  <div>
+    <div class="tag">SSC118 · Lógica Digital · Apostila de estudo</div>
+    <h1>Circuitos Sequenciais<br>do zero à prova</h1>
+    <div class="sub">Latches, flip-flops, temporização, contadores, registradores, memórias e máquinas de estados finitos, em ordem crescente de dificuldade, com figuras, exemplos resolvidos e exercícios com gabarito.</div>
+  </div>
+  <div class="art">{{raw:wave_ripple}}</div>
+  <div class="foot">Material de estudo baseado nas Aulas 01 a 08 do Prof. Dr. Danilo Spatti (ICMC-USP). Os exemplos e as figuras foram refeitos e ampliados para explicar a matéria passo a passo. Na prova, as convenções do professor valem mais que as desta apostila.</div>
+</section>
+
+<section>
+  <h2 style="margin-top:0">Como usar esta apostila</h2>
+  <p>A matéria é uma escada: cada degrau usa o anterior. Se você pular o latch, o flip-flop não vai fazer sentido; sem o flip-flop, contadores e registradores viram decoreba. Siga a ordem e, em cada capítulo, faça os exercícios <b>antes</b> de olhar o gabarito no fim.</p>
+  {{fig:mapa|O caminho da matéria. As aulas originais estão indicadas no início de cada capítulo.}}
+  <div class="toc">
+    <div class="row"><div class="n">1</div><div><div class="t">Combinacional × sequencial: a ideia de memória</div><div class="d">Por que só portas lógicas não bastam · estado · clock · astável, monoestável e biestável (Aula 01)</div></div></div>
+    <div class="row"><div class="n">2</div><div><div class="t">Latches: o primeiro bit de memória</div><div class="d">Latch RS com NOR (positivo) e com NAND (negativo) · estado inválido · formas de onda · debounce (Aulas 01–02)</div></div></div>
+    <div class="row"><div class="n">3</div><div><div class="t">Tempo, pulsos e clock</div><div class="d">Bordas · período, frequência e duty cycle · tr, tf, tw · setup/hold · tPLH/tPHL · fMAX (Aula 02)</div></div></div>
+    <div class="row"><div class="n">4</div><div><div class="t">Flip-flops</div><div class="d">Nível × borda · RS, JK, D e T · conversões entre tipos · PRE e CLR assíncronos (Aulas 02–03)</div></div></div>
+    <div class="row"><div class="n">5</div><div><div class="t">Contadores assíncronos</div><div class="d">Contador de pulsos · divisor de frequência · módulo N com NAND · década · contagem decrescente (Aula 04)</div></div></div>
+    <div class="row"><div class="n">6</div><div><div class="t">Contadores síncronos</div><div class="d">Clock comum · contador módulo 8 · método geral de projeto com tabela de excitação (Aula 05)</div></div></div>
+    <div class="row"><div class="n">7</div><div><div class="t">Registradores</div><div class="d">Carga paralela · transferência · deslocamento · conversão série↔paralelo (Aulas 06–07)</div></div></div>
+    <div class="row"><div class="n">8</div><div><div class="t">Memórias</div><div class="d">Palavra, endereço, capacidade · leitura/escrita · ROM e seus tipos · SRAM × DRAM (Aula 06)</div></div></div>
+    <div class="row"><div class="n">9</div><div><div class="t">Máquinas de Estados Finitos (MEF)</div><div class="d">Moore × Mealy · diagrama e tabela · minimização · projeto completo (Aula 08)</div></div></div>
+    <div class="row"><div class="n">10</div><div><div class="t">Revisão final</div><div class="d">Resumo de uma página · armadilhas de prova · lista de exercícios com gabarito</div></div></div>
+  </div>
+  <h3>Legenda das caixas</h3>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+    <div class="callout intuit" style="margin:0"><div class="ct">Intuição</div><p>analogia, sem fórmula</p></div>
+    <div class="callout key" style="margin:0"><div class="ct">Ideia-chave</div><p>leve para a prova</p></div>
+    <div class="callout warn" style="margin:0"><div class="ct">Cuidado na prova</div><p>erros comuns</p></div>
+    <div class="callout ex" style="margin:0"><div class="ct">Exemplo resolvido</div><p>passo a passo</p></div>
+    <div class="callout try" style="margin:0"><div class="ct">Exercício</div><p>gabarito no Cap. 10</p></div>
+    <div class="callout deep" style="margin:0"><div class="ct">Aprofundando</div><p>além dos slides</p></div>
+  </div>
+</section>
+
+<!-- ===================================================== CAP 1 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 1</div><h1>Combinacional × Sequencial: a ideia de memória</h1>
+  <div class="goal">Objetivo: entender por que alguns problemas exigem que o circuito “lembre” do passado, e o vocabulário básico (estado, clock, realimentação).</div><div class="src">Base: Aula 01, Circuitos Sequenciais</div></div>
+
+  <h2>1.1 Revisão relâmpago: bits e portas lógicas</h2>
+  <p>Em sistemas digitais, todo sinal é tratado como apenas dois níveis: <b>0</b> (baixo, ~0 V) e <b>1</b> (alto, ~5 V ou 3,3 V). As portas lógicas são os “tijolos”: recebem bits e produzem um bit. Para este curso, duas portas merecem atenção especial, porque é com elas que se constrói a memória:</p>
+  {{fig:portas|As portas básicas. A bolinha na saída significa “inverte”. NAND = AND seguida de NOT; NOR = OR seguida de NOT.}}
+  <div class="twocol">
+    <div><table class="tt"><tr><th>A</th><th>B</th><th>NOR</th></tr><tr><td>0</td><td>0</td><td><b>1</b></td></tr><tr><td>0</td><td>1</td><td>0</td></tr><tr><td>1</td><td>0</td><td>0</td></tr><tr><td>1</td><td>1</td><td>0</td></tr></table>
+    <div class="cap">NOR: <b>qualquer 1 na entrada força a saída a 0</b>.</div></div>
+    <div><table class="tt"><tr><th>A</th><th>B</th><th>NAND</th></tr><tr><td>0</td><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td><td>1</td></tr><tr><td>1</td><td>0</td><td>1</td></tr><tr><td>1</td><td>1</td><td><b>0</b></td></tr></table>
+    <div class="cap">NAND: <b>qualquer 0 na entrada força a saída a 1</b>.</div></div>
+  </div>
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>Guarde estas duas frases, porque elas explicam sozinhas os latches do Capítulo 2: <b>“1 manda na NOR”</b> (força 0) e <b>“0 manda na NAND”</b> (força 1).</p></div>
+
+  <h2>1.2 Circuitos combinacionais: sem memória</h2>
+  <p>Em um circuito <b>combinacional</b>, a saída em um instante depende <b>apenas</b> da combinação das entradas naquele instante. É o mundo da álgebra de Boole e dos mapas de Karnaugh: somadores, multiplexadores, decodificadores. Se você aplicar as mesmas entradas amanhã, a saída será a mesma. O circuito não tem passado.</p>
+
+  <h2>1.3 O problema que o combinacional não resolve</h2>
+  <p>Exemplo da aula: observe uma fileira de 3 lâmpadas que acendem <b>uma de cada vez</b>. Se elas acenderem na sequência <b>1 → 2 → 3</b>, um alarme deve tocar.</p>
+  {{fig:lampadas|No instante t₃ a entrada é “lâmpada 3 acesa”, a mesma de qualquer outra vez em que a lâmpada 3 acendeu. A decisão depende da história.}}
+  <p>Uma função combinacional olharia só para “lâmpada 3 acesa” e não teria como distinguir “1, 2, 3” de “2, 1, 3”. O circuito precisa <b>guardar informação sobre o que já aconteceu</b>, ou seja, precisa de <b>memória</b>. Esse é o mundo dos <b>circuitos sequenciais</b>.</p>
+
+  <h2>1.4 Circuitos sequenciais: memória + realimentação</h2>
+  <p>Nos circuitos sequenciais, as saídas dependem das entradas presentes <b>e também da história das entradas no passado</b>, isto é, da sequência de valores que levou até o momento atual. Para isso eles têm duas coisas que o combinacional não tem: <b>elementos de memória</b> e <b>realimentação</b> (a saída volta para a entrada).</p>
+  {{fig:comb_seq|Comparação estrutural. No sequencial, a memória guarda o estado e o devolve à lógica combinacional.}}
+  <p>A estrutura geral de qualquer circuito sequencial (vale para tudo até o fim do curso) tem duas partes:</p>
+  <ul>
+    <li><b>Elementos de memória</b> (flip-flops): suas saídas <b>definem o estado presente</b>; suas entradas recebem o <b>próximo estado</b>.</li>
+    <li><b>Portas lógicas combinacionais</b>: calculam <b>qual é o próximo estado e qual é a saída</b>, a partir do estado presente e das entradas.</li>
+  </ul>
+
+  <h2>1.5 Estado e clock</h2>
+  <p><b>Estado</b> é cada estágio por onde o circuito sequencial passa. Em cada estado o circuito guarda uma “recordação” da história passada, suficiente para saber o que fazer a seguir. No exemplo das lâmpadas, bastam quatro estados: “nada relevante ainda”, “vi a 1”, “vi a 1 e depois a 2” e “alarme”. Não é preciso lembrar da história inteira, só do que importa para a decisão.</p>
+  {{fig:sd_lamp|Prévia do Capítulo 9: o problema das lâmpadas como uma máquina de estados. Cada círculo é um estado; cada seta, uma mudança causada por uma entrada (L1, L2, L3 = qual lâmpada acendeu).|560px}}
+  <p>A maioria dos sistemas sequenciais é <b>pulsada</b> (síncrona): o estado só é atualizado no ritmo de um sinal periódico chamado <b>clock</b> (relógio). O clock funciona como um maestro que diz “agora!” a todos os elementos de memória ao mesmo tempo. O Capítulo 3 trata do clock em detalhe.</p>
+
+  <h2>1.6 Classificação pelo número de estados estáveis</h2>
+  <table class="wide">
+    <tr><th class="l">Tipo</th><th class="l">Estados estáveis</th><th class="l">Comportamento</th><th class="l">Exemplo</th></tr>
+    <tr><td class="l"><b>Astável</b></td><td class="l">nenhum</td><td class="l">muda de estado sozinho, o tempo todo, sem estímulo externo</td><td class="l">oscilador, gerador de clock</td></tr>
+    <tr><td class="l"><b>Monoestável</b></td><td class="l">um (repouso)</td><td class="l">um sinal externo o tira do repouso; volta sozinho depois de um tempo fixo</td><td class="l">temporizador (ex.: luz de escada)</td></tr>
+    <tr><td class="l"><b>Biestável</b></td><td class="l">dois (repouso e ativo)</td><td class="l">só muda de estado com sinal externo; fica onde foi colocado</td><td class="l"><b>latches e flip-flops</b></td></tr>
+  </table>
+  {{fig:classif|Os três comportamentos. Só o biestável “lembra” para sempre do último comando: é ele que serve de memória.}}
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>Um <b>biestável</b> guarda exatamente <b>1 bit</b>. Latches e flip-flops são biestáveis e são os blocos básicos de toda memória digital.</p>
+  <p><b>Latch</b>: a saída pode mudar <b>a qualquer instante</b>, assim que as entradas mudam (circuito <b>assíncrono</b>). <b>Flip-flop</b>: a saída só muda em <b>instantes determinados pelo clock</b> (circuito <b>síncrono</b>).</p></div>
+  <div class="callout try"><div class="ct">Exercício 1.1</div><p>Classifique como combinacional ou sequencial: (a) somador de 4 bits; (b) contador de pessoas que entram numa loja; (c) display que mostra em 7 segmentos o número binário da entrada; (d) fechadura que abre após digitar 4-7-2.</p></div>
+</section>
+
+<!-- ===================================================== CAP 2 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 2</div><h1>Latches: o primeiro bit de memória</h1>
+  <div class="goal">Objetivo: entender como duas portas realimentadas guardam um bit, dominar as tabelas do latch RS positivo (NOR) e negativo (NAND) e desenhar formas de onda.</div><div class="src">Base: Aula 01 (Latches) e Aula 02 (Relembrando, Exercícios)</div></div>
+
+  <h2>2.1 O que é um latch</h2>
+  <p>O latch (“trinco”) é o biestável mais simples. Ele tem duas saídas complementares, <b>Q</b> e <b>{{Qn}}</b> (lê-se “Q barrado”), e duas entradas de comando:</p>
+  <ul>
+    <li><b>SET (S)</b>: “ligue”, que leva a <b>Q = 1</b> (estado ALTO, ou estado SET).</li>
+    <li><b>RESET (R)</b>, também chamado CLEAR: “desligue”, que leva a <b>Q = 0</b> (estado BAIXO, ou estado RESET).</li>
+  </ul>
+  <p>Quando nenhum comando é dado, o latch <b>mantém</b> o último valor: isso é a memória. Como reage a mudanças das entradas a qualquer momento (com um pequeno atraso), o latch é um circuito <b>assíncrono</b>.</p>
+
+  <h2>2.2 Latch RS positivo (com portas NOR)</h2>
+  <p>“Positivo” significa que as entradas são <b>ativas em nível alto</b>: o comando é dado colocando 1.</p>
+  {{fig:latch_nor|Latch RS com duas NOR em realimentação cruzada: a saída de cada porta entra na outra.|400px}}
+  <div class="twocol">
+    <div>
+      <table class="tt"><tr><th>R</th><th>S</th><th class="l">Saída</th></tr>
+      <tr><td>0</td><td>0</td><td class="l">não muda (memória)</td></tr>
+      <tr><td>1</td><td>0</td><td class="l">Q = 0, {{Qn}} = 1 (reset)</td></tr>
+      <tr><td>0</td><td>1</td><td class="l">Q = 1, {{Qn}} = 0 (set)</td></tr>
+      <tr class="bad"><td>1</td><td>1</td><td class="l">inválida</td></tr></table>
+    </div>
+    <div>
+      <div class="callout intuit" style="margin-top:6px"><div class="ct">Intuição: interruptor de campainha com trava</div><p>Apertar S é como apertar “liga”; R é “desliga”. Soltando os dois, a lâmpada fica como estava. Apertar os dois ao mesmo tempo é uma ordem contraditória.</p></div>
+    </div>
+  </div>
+
+  <h3>Por que funciona? Seguindo os sinais</h3>
+  <p>Use a regra “<b>1 manda na NOR</b>” (força a saída para 0):</p>
+  <ol class="steps">
+    <li><b>Set (S=1, R=0).</b> A porta de baixo tem um 1 (o S), então {{Qn}} = 0. A porta de cima recebe R = 0 e {{Qn}} = 0, então Q = NOR(0,0) = <b>1</b>.</li>
+    <li><b>Solta (S=0, R=0).</b> A porta de baixo agora recebe S = 0 e Q = 1 (realimentado), então continua com {{Qn}} = 0. A de cima continua com 0 e 0, então Q = 1. <b>O circuito se sustenta sozinho: lembrou do set.</b></li>
+    <li><b>Reset (R=1, S=0).</b> O 1 em R força Q = 0. A de baixo recebe 0 e 0, então {{Qn}} = 1. Soltando R, a situação também se sustenta.</li>
+    <li><b>Inválido (S=1, R=1).</b> As duas portas têm um 1 na entrada, então <b>Q = {{Qn}} = 0</b>. As saídas deixam de ser complementares. Pior: se S e R voltarem a 0 <b>ao mesmo tempo</b>, as duas portas “disputam” (condição de corrida) e o resultado é imprevisível.</li>
+  </ol>
+
+  <h2>2.3 Latch RS negativo (com portas NAND)</h2>
+  <p>“Negativo” significa entradas <b>ativas em nível baixo</b>: o comando é dado colocando <b>0</b>. Por isso as entradas são escritas com barra: {{Sn}} e {{Rn}}. A regra agora é “<b>0 manda na NAND</b>” (força a saída para 1).</p>
+  {{fig:latch_nand|Latch RS com duas NAND. Repouso = entradas em 1.|400px}}
+  <table class="tt"><tr><th>{{Sn}}</th><th>{{Rn}}</th><th class="l">Saída</th></tr>
+  <tr><td>1</td><td>1</td><td class="l">não muda (memória)</td></tr>
+  <tr><td>0</td><td>1</td><td class="l">Q = 1, {{Qn}} = 0 (set)</td></tr>
+  <tr><td>1</td><td>0</td><td class="l">Q = 0, {{Qn}} = 1 (reset)</td></tr>
+  <tr class="bad"><td>0</td><td>0</td><td class="l">inválida (Q = {{Qn}} = 1)</td></tr></table>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div>
+  <ul>
+    <li>Nos slides, a tabela do latch <b>positivo</b> tem a coluna <b>RESET primeiro</b> e a do <b>negativo</b> tem <b>SET primeiro</b>. Leia o cabeçalho antes de usar.</li>
+    <li>Positivo (NOR): repouso = <b>00</b>, inválido = <b>11</b>. Negativo (NAND): repouso = <b>11</b>, inválido = <b>00</b>. Um é o “espelho” do outro.</li>
+    <li>No estado inválido, o NOR dá Q = {{Qn}} = 0; o NAND dá Q = {{Qn}} = 1.</li>
+  </ul></div>
+
+  <h2>2.4 Desenhando formas de onda (o exercício clássico)</h2>
+  <p>Na prova, é comum receber os sinais S e R ao longo do tempo e ter que desenhar Q e {{Qn}}. O método:</p>
+  <ol class="steps">
+    <li>Trace linhas verticais em <b>todo instante em que S ou R muda</b>. Entre duas linhas, as entradas são constantes.</li>
+    <li>Para cada intervalo, consulte a tabela: set, reset, mantém ou inválido.</li>
+    <li>Em “mantém”, copie o valor do intervalo anterior. Para isso, você precisa saber o estado inicial (geralmente Q = 0, ou ele é dado).</li>
+    <li>Desenhe {{Qn}} como o inverso de Q (exceto no inválido).</li>
+  </ol>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: latch RS positivo (NOR)</div>
+  {{fig:wave_nor|Formas de onda do latch NOR. Faixas: verde = set, cinza-escuro = reset, vermelho = inválido/indefinido. Repare no fim: S e R valem 1 juntos e depois caem juntos, e o estado final fica indefinido (hachurado).}}
+  <p>Leitura: começa com R = 1, então Q = 0. Em seguida S = R = 0: mantém 0. S = 1: Q vai a 1. S volta a 0: <b>mantém 1</b>. R = 1: Q volta a 0, e assim por diante. Note que, depois do set, o pulso de S termina mas Q continua em 1: é a memória funcionando.</p></div>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: latch RS negativo (NAND)</div>
+  {{fig:wave_nand|Latch NAND: as ações acontecem quando a entrada <b>desce</b> para 0. Com {{Sn}} = {{Rn}} = 0 (faixa vermelha) as duas saídas vão a 1; como depois só {{Sn}} volta a 1 enquanto {{Rn}} continua em 0, o estado final é definido (reset).}}</div>
+
+  <h2>2.5 Aplicações vistas em aula</h2>
+  <h3>Alarme com fototransistor</h3>
+  <p>Um feixe de luz incide num fototransistor. Ao ligar o circuito, aperta-se a chave SW1 para colocar o latch em <b>reset</b> (alarme desligado). Se alguém interromper o feixe, o fototransistor para de conduzir e o nível lógico gerado aciona o <b>SET</b>: o alarme dispara. O ponto importante é que, <b>mesmo que o feixe volte</b>, o latch continua em set e o alarme só desliga quando SW1 é pressionada de novo. A memória “lembra” que houve uma invasão.</p>
+  <h3>Eliminação de trepidação (debounce)</h3>
+  <p>Chaves mecânicas não fecham de uma vez: os contatos “quicam” por alguns milissegundos e geram variações indesejadas da tensão (<b>trepidação</b> ou <i>bounce</i>). Um contador ligado a essa chave contaria vários pulsos em vez de um.</p>
+  {{fig:bounce|Com um latch, o primeiro contato já faz o set ou o reset. Os quiques seguintes só repetem a mesma ordem (ou colocam o latch em “mantém”), e a saída fica limpa.|560px}}
+  <p>Montagem típica: chave de duas posições (SPDT) ligada a um latch NAND, com a posição 1 aterrando {{Sn}} e a posição 2 aterrando {{Rn}}, e resistores de pull-up mantendo as entradas em 1 quando soltas.</p>
+  <div class="callout try"><div class="ct">Exercício 2.1</div><p>Desenhe Q e {{Qn}} para o latch RS <b>positivo</b> (NOR), com Q inicial = 0:</p>{{fig:ex_nor_q|Exercício 2.1. Gabarito no Capítulo 10.}}</div>
+  <div class="callout try"><div class="ct">Exercício 2.2</div><p>(a) Por que o latch é chamado de “assíncrono”? (b) Em que diferem o estado inválido do latch NOR e o do latch NAND? (c) Por que o latch serve como memória de 1 bit?</p></div>
+</section>
+
+<!-- ===================================================== CAP 3 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 3</div><h1>Tempo, pulsos e clock</h1>
+  <div class="goal">Objetivo: entender os sinais que comandam os circuitos síncronos e os parâmetros de tempo de um datasheet (setup, hold, atrasos, fMAX).</div><div class="src">Base: Aula 02, Temporização de Biestáveis</div></div>
+
+  <h2>3.1 Pulsos e bordas</h2>
+  <p>Um <b>pulso digital</b> é um sinal que passa de um nível para o outro e depois volta, realizando uma ação no dispositivo. Há <b>pulsos positivos</b> (a ação acontece no nível alto) e <b>pulsos negativos</b> (a ação acontece no nível baixo). Cada pulso tem duas <b>transições</b> (ou bordas):</p>
+  <ul><li><b>Borda de subida</b> (↑, <i>rising edge</i>): baixo → alto.</li><li><b>Borda de descida</b> (↓, <i>falling edge</i>): alto → baixo.</li></ul>
+  {{fig:pulsos|Pulsos positivo e negativo e suas bordas.|560px}}
+
+  <h2>3.2 O clock</h2>
+  <p>O <b>clock</b> é um <b>trem de pulsos com período fixo</b>, normalmente uma onda quadrada. Ele dita o ritmo do sistema.</p>
+  {{fig:clock|Período, frequência e ciclo ativo (duty cycle).}}
+  <div class="formula">f = 1 / T &nbsp;&nbsp;&nbsp;·&nbsp;&nbsp;&nbsp; duty cycle = t<sub>ativo</sub> / T</div>
+  <div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Um clock de <b>20 MHz</b> tem período T = 1 / (20 × 10⁶) = <b>50 ns</b>. Se fica 15 ns em alto, o duty cycle é 15/50 = <b>30%</b>.</p></div>
+
+  <h2>3.3 Parâmetros de um pulso real</h2>
+  <p>Na prática, as bordas não são verticais: o sinal leva algum tempo para subir e descer. Para medir isso sem ambiguidade, usam-se porcentagens da amplitude:</p>
+  <ul>
+    <li><b>Tempo de subida (t<sub>r</sub>, rise time)</b> e <b>tempo de descida (t<sub>f</sub>, fall time)</b>: tempo para ir de <b>10% a 90%</b> da transição.</li>
+    <li><b>Largura do pulso (t<sub>w</sub>, pulse width)</b>: tempo entre os pontos de <b>50%</b> da borda de subida e da de descida.</li>
+  </ul>
+  {{fig:pulse_params|t<sub>r</sub> e t<sub>f</sub> são medidos entre 10% e 90%; t<sub>w</sub>, entre os pontos de 50%.|540px}}
+
+  <h2>3.4 Parâmetros de temporização de flip-flops</h2>
+  <p>Estes parâmetros se aplicam aos flip-flops do próximo capítulo. Eles explicam <b>por que o circuito pode falhar se for rápido demais</b>.</p>
+  <h3>Setup e hold: a janela em que a entrada não pode mudar</h3>
+  <ul>
+    <li><b>Tempo de preparação (setup time, t<sub>S</sub>)</b>: intervalo <b>antes</b> da borda ativa do clock em que a entrada de controle (D, J, K...) deve estar <b>estável</b>.</li>
+    <li><b>Tempo de manutenção (hold time, t<sub>H</sub>)</b>: intervalo <b>depois</b> da borda em que a entrada ainda deve ficar estável.</li>
+  </ul>
+  {{fig:setup_hold|Se D mudar dentro da janela t<sub>S</sub> + t<sub>H</sub>, o flip-flop pode capturar o valor errado ou ficar indeciso por um tempo (metaestabilidade).|480px}}
+  <div class="callout intuit"><div class="ct">Intuição: a foto</div><p>A borda do clock é o clique de uma câmera. Se a pessoa se mexer bem na hora (dentro da janela), a foto sai borrada. t<sub>S</sub> é “fique parado um pouco antes do clique” e t<sub>H</sub> é “continue parado um pouco depois”.</p></div>
+  <h3>Atrasos de propagação</h3>
+  <p>É o tempo entre a borda do clock (ou a mudança da entrada) e a mudança correspondente na saída:</p>
+  <ul><li><b>t<sub>PLH</sub></b>: atraso quando a saída vai de 0 para 1 (Low → High).</li><li><b>t<sub>PHL</sub></b>: atraso quando a saída vai de 1 para 0 (High → Low).</li></ul>
+  {{fig:tpd|Atrasos de propagação, medidos entre os pontos de 50%.|500px}}
+  <h3>Outros limites</h3>
+  <ul>
+    <li><b>f<sub>MAX</sub></b>: maior frequência de clock em que o fabricante garante funcionamento confiável.</li>
+    <li><b>t<sub>W(L)</sub> e t<sub>W(H)</sub></b>: tempo mínimo em que o clock deve permanecer em nível baixo e em nível alto.</li>
+  </ul>
+  <h3>Valores reais (datasheets citados na aula)</h3>
+  <table>
+    <tr><th>Parâmetro</th><th>TTL 7474</th><th>TTL 74LS112</th><th>CMOS 74C74</th><th>CMOS 74HC112</th></tr>
+    <tr><td>t<sub>S</sub> (ns)</td><td>20</td><td>20</td><td>60</td><td>25</td></tr>
+    <tr><td>t<sub>H</sub> (ns)</td><td>5</td><td>0</td><td>0</td><td>0</td></tr>
+    <tr><td>t<sub>PHL</sub> (ns)</td><td>40</td><td>24</td><td>200</td><td>31</td></tr>
+    <tr><td>t<sub>PLH</sub> (ns)</td><td>25</td><td>16</td><td>200</td><td>31</td></tr>
+    <tr><td>t<sub>W(L)</sub> (ns)</td><td>37</td><td>15</td><td>100</td><td>25</td></tr>
+    <tr><td>t<sub>W(H)</sub> (ns)</td><td>30</td><td>20</td><td>100</td><td>25</td></tr>
+    <tr><td>f<sub>MAX</sub> (MHz)</td><td>15</td><td>30</td><td>5</td><td>20</td></tr>
+  </table>
+  <div class="callout deep"><div class="ct">Aprofundando: de onde vem o f<sub>MAX</sub></div><p>Os números estão ligados. Num ciclo de clock cabem, no mínimo, o tempo em alto e o tempo em baixo: para o 74LS112, t<sub>W(H)</sub> + t<sub>W(L)</sub> = 20 + 15 = 35 ns, o que daria ~28,6 MHz, perto do f<sub>MAX</sub> = 30 MHz da tabela. Em circuitos com vários flip-flops, o período também precisa acomodar <b>t<sub>PD</sub> do FF + atraso da lógica entre FFs + t<sub>S</sub> do FF seguinte</b>. É por isso que contadores síncronos (Cap. 6) são mais rápidos que os assíncronos (Cap. 5).</p></div>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><p>Simuladores lógicos como o LogiSIM em geral <b>não mostram</b> t<sub>S</sub>, t<sub>H</sub>, t<sub>r</sub> e t<sub>f</sub>, porque tratam as bordas como instantâneas (no máximo modelam um atraso de porta). Esse é o ponto do Exercício 1 da Aula 02. Simuladores elétricos (como o Falstad) chegam mais perto do comportamento real.</p></div>
+  <div class="callout try"><div class="ct">Exercício 3.1</div><p>(a) Qual o período de um clock de 30 MHz? (b) Um pulso tem t<sub>w</sub> = 12 ns num período de 40 ns: qual o duty cycle? (c) Um flip-flop tem t<sub>S</sub> = 20 ns e t<sub>H</sub> = 5 ns. A entrada D muda 10 ns antes da borda. Há problema?</p></div>
+</section>
+
+<!-- ===================================================== CAP 4 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 4</div><h1>Flip-flops</h1>
+  <div class="goal">Objetivo: entender a diferença entre sensibilidade a nível e a borda, dominar as tabelas dos flip-flops RS, JK, D e T, converter um tipo em outro e usar PRE/CLR.</div><div class="src">Base: Aula 02 (Flip-Flops) e Aula 03 (Flip-Flops)</div></div>
+
+  <h2>4.1 Do latch ao flip-flop: nível × borda</h2>
+  <p>O latch obedece às entradas <b>o tempo todo</b>. Em um sistema grande isso é um problema: sinais chegam em tempos diferentes, passam por estados intermediários e o latch “vê” tudo. Queremos que os elementos de memória só olhem as entradas em <b>um instante preciso e combinado</b>. Esse instante é a <b>borda do clock</b>.</p>
+  <ul>
+    <li><b>Sensível a nível</b> (latch com habilitação): enquanto o clock está em 1, a saída <b>segue</b> a entrada (o latch fica “transparente”).</li>
+    <li><b>Sensível a borda</b> (flip-flop): a saída só pode mudar <b>no instante da borda</b> (↑ ou ↓). Fora dela, mudanças nas entradas são ignoradas.</li>
+  </ul>
+  {{fig:nivel_borda|Mesmo D, dois comportamentos. O latch (roxo) copia D durante todo o nível alto, inclusive as oscilações. O flip-flop (vermelho) tira uma “foto” de D só nas bordas de subida (setas laranja).}}
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>Flip-flop = circuito <b>síncrono</b>: <b>quando</b> a saída muda é decidido pelo clock; <b>para qual valor</b> ela muda é decidido pelas entradas de controle.</p></div>
+
+  <h3>Como se constrói a sensibilidade à borda</h3>
+  <p>Uma forma didática (a dos circuitos da aula) é usar um <b>detector de borda</b>: uma AND recebe o CLK e o CLK invertido e atrasado por uma porta NOT. Por um instante muito curto, igual ao atraso da NOT, as duas entradas valem 1 e sai um pulso estreito. Esse pulso habilita o latch só “no instante” da borda.</p>
+  {{fig:detector|Detector de borda de subida: o atraso de propagação da NOT, que costuma ser um incômodo, é usado a favor.}}
+  {{fig:sr_clk|Flip-flop RS = latch RS + portas AND controladas pelo pulso da borda.|470px}}
+
+  <h3>Lendo o símbolo</h3>
+  {{fig:ff_simbolos|Símbolos dos quatro tipos. O triângulo na entrada de clock indica sensibilidade à borda; a bolinha antes do triângulo indica borda de descida.|600px}}
+
+  <h2>4.2 Flip-flop RS</h2>
+  <p>É o latch RS com clock. <b>Não tem versões comerciais</b> (por causa do estado inválido), mas é a base teórica dos outros.</p>
+  <div class="twocol">
+    <div><table class="tt"><tr><th>S</th><th>R</th><th>CLK</th><th class="l">Q depois da borda</th></tr>
+    <tr><td>0</td><td>0</td><td>↑</td><td class="l">não muda</td></tr><tr><td>1</td><td>0</td><td>↑</td><td class="l">Q = 1</td></tr>
+    <tr><td>0</td><td>1</td><td>↑</td><td class="l">Q = 0</td></tr><tr class="bad"><td>1</td><td>1</td><td>↑</td><td class="l">inválido</td></tr></table>
+    <div class="cap">Versão de borda de subida. A de descida é igual, com ↓.</div></div>
+  </div>
+
+  <h2>4.3 Flip-flop JK: o RS sem estado inválido</h2>
+  <p>O JK é um RS melhorado: J faz o papel de S, K faz o papel de R, e a combinação <b>J = K = 1</b>, que era proibida, vira útil: a saída <b>comuta</b> (inverte, <i>toggle</i>). Isso é obtido realimentando Q e {{Qn}} para as portas de entrada, de modo que só a entrada “que faz sentido” fica ativa: se Q = 1, só o K pode agir (para resetar); se Q = 0, só o J (para setar).</p>
+  <table class="tt"><tr><th>J</th><th>K</th><th>CLK</th><th class="l">Q depois da borda</th><th class="l">Nome</th></tr>
+  <tr><td>0</td><td>0</td><td>↑</td><td class="l">Q (não muda)</td><td class="l">mantém</td></tr>
+  <tr><td>1</td><td>0</td><td>↑</td><td class="l">1</td><td class="l">set</td></tr>
+  <tr><td>0</td><td>1</td><td>↑</td><td class="l">0</td><td class="l">reset</td></tr>
+  <tr class="hl"><td>1</td><td>1</td><td>↑</td><td class="l">{{Qn}} (inverte)</td><td class="l">comuta</td></tr></table>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: formas de onda do JK (borda de subida, Q inicial = 0)</div>
+  {{fig:wave_jk|Em cada borda ↑, olhe J e K <b>imediatamente antes</b> da borda e aplique a tabela. Entre bordas, Q não muda, mesmo que J e K mudem.}}</div>
+  <p>Equação característica (útil para projeto): <b>Q<sub>próximo</sub> = J·{{Qn}} + {{Kn}}·Q</b>.</p>
+
+  <h2>4.4 Flip-flop D (Data / Delay)</h2>
+  <p>O mais simples e o mais usado: na borda, a saída <b>copia</b> a entrada D.</p>
+  <div class="twocol"><div><table class="tt"><tr><th>D</th><th>CLK</th><th>Q</th></tr><tr><td>0</td><td>↑</td><td>0</td></tr><tr><td>1</td><td>↑</td><td>1</td></tr></table></div>
+  <div><p><b>Q<sub>próximo</sub> = D</b>. O D “atrasa” a entrada até a próxima borda e a segura por um ciclo inteiro. É o tijolo dos <b>registradores</b> e das <b>memórias</b> (Caps. 7 e 8).</p></div></div>
+  {{fig:wave_d|O pulso curto de D entre duas bordas é ignorado: o FF só “vê” D nas bordas.}}
+
+  <h2>4.5 Flip-flop T (Toggle)</h2>
+  <p>Com <b>T = 1</b> a saída <b>comuta</b> a cada borda; com T = 0 ela <b>mantém</b>.</p>
+  <div class="twocol"><div><table class="tt"><tr><th>T</th><th>CLK</th><th class="l">Q</th></tr><tr><td>0</td><td>↑</td><td class="l">mantém</td></tr><tr><td>1</td><td>↑</td><td class="l">comuta</td></tr></table></div>
+  <div><p><b>Q<sub>próximo</sub> = T ⊕ Q</b>. Com T = 1 fixo, Q tem <b>metade da frequência</b> do clock: é um <b>divisor de frequência por 2</b> e o tijolo dos <b>contadores</b> (Caps. 5 e 6).</p></div></div>
+  {{fig:wave_t|Flip-flop T: enquanto T = 1, Q inverte a cada borda ↑.}}
+
+  <h2>4.6 Convertendo um flip-flop em outro</h2>
+  <p>Os slides mostram que o D pode ser obtido do RS ou do JK, e o T pode ser obtido do RS/JK ou do D:</p>
+  <ul>
+    <li><b>D a partir do JK (ou RS)</b>: J = D e K = {{Dn}} (uma NOT). Assim só ocorrem os casos set (D=1) e reset (D=0), nunca “mantém” nem “inválido”.</li>
+    <li><b>T a partir do JK</b>: ligue J = K = T. Com T = 0 mantém; com T = 1 comuta.</li>
+    <li><b>T a partir do D</b>: D = T ⊕ Q (uma XOR com realimentação).</li>
+  </ul>
+  {{fig:conversoes|Duas conversões clássicas.}}
+
+  <h2>4.7 Flip-flops comerciais: PRE e CLR assíncronos</h2>
+  <p>CIs reais (como o 74LS112, JK com borda de descida) têm duas entradas extras que <b>ignoram o clock</b>:</p>
+  <ul><li><b>PRE (preset)</b>: força Q = 1 imediatamente.</li><li><b>CLR (clear)</b>: força Q = 0 imediatamente.</li></ul>
+  {{fig:ff_preclr|PRE e CLR com bolinha são ativos em nível baixo.|540px}}
+  <table class="tt"><tr><th>J</th><th>K</th><th>CLK</th><th>{{PREn}}</th><th>{{CLRn}}</th><th class="l">Q</th></tr>
+  <tr><td>0</td><td>0</td><td>↓</td><td>1</td><td>1</td><td class="l">não muda</td></tr>
+  <tr><td>0</td><td>1</td><td>↓</td><td>1</td><td>1</td><td class="l">0</td></tr>
+  <tr><td>1</td><td>0</td><td>↓</td><td>1</td><td>1</td><td class="l">1</td></tr>
+  <tr><td>1</td><td>1</td><td>↓</td><td>1</td><td>1</td><td class="l">comuta</td></tr>
+  <tr><td>X</td><td>X</td><td>X</td><td>1</td><td>1</td><td class="l">não muda (sem borda)</td></tr>
+  <tr class="hl"><td>X</td><td>X</td><td>X</td><td>1</td><td>0</td><td class="l">clear assíncrono → Q = 0</td></tr>
+  <tr class="hl"><td>X</td><td>X</td><td>X</td><td>0</td><td>1</td><td class="l">preset assíncrono → Q = 1</td></tr>
+  <tr class="bad"><td>X</td><td>X</td><td>X</td><td>0</td><td>0</td><td class="l">inválido</td></tr></table>
+  <div class="callout key"><div class="ct">Ideia-chave</div><p><b>Prioridade</b>: entradas assíncronas (PRE/CLR) <b>vencem</b> o clock. Enquanto CLR = 0, Q = 0, aconteça o que acontecer com J, K e CLK. “X” na tabela significa “tanto faz”. É assim que se <b>zera</b> um contador (Cap. 5) e se <b>carrega</b> um registrador sem clock (Cap. 7).</p></div>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><ul>
+  <li>Verifique sempre <b>qual borda</b> o FF usa (bolinha no clock = descida) e se PRE/CLR são ativos em <b>0</b> (bolinha) ou em 1.</li>
+  <li>“Mantém” do T e do JK é em relação ao valor <b>antes</b> da borda, e “comuta” inverte esse valor.</li>
+  <li>As entradas valem pelo que eram <b>imediatamente antes</b> da borda (respeitando t<sub>S</sub>).</li></ul></div>
+
+  <h2>4.8 Usos principais</h2>
+  <table class="wide"><tr><th class="l">Tipo</th><th class="l">Usos típicos</th></tr>
+  <tr><td class="l"><b>D</b></td><td class="l">registradores, armazenamento de dados, memórias SRAM, sincronizar um sinal externo com o clock, registradores de deslocamento</td></tr>
+  <tr><td class="l"><b>T</b></td><td class="l">divisores de frequência, contadores (assíncronos e síncronos)</td></tr>
+  <tr><td class="l"><b>JK</b></td><td class="l">“curinga”: vira D ou T com ligações simples; usado em contadores e em MEFs</td></tr>
+  <tr><td class="l"><b>RS</b></td><td class="l">base teórica; latch RS para debounce e alarmes</td></tr></table>
+
+  <div class="callout try"><div class="ct">Exercício 4.1</div><p>JK com <b>borda de descida</b> e {{CLRn}} assíncrono (ativo em 0), Q inicial = 0. Desenhe Q.</p>{{fig:ex_jk_q|Exercício 4.1. As setas ↓ marcam as bordas ativas.}}</div>
+  <div class="callout try"><div class="ct">Exercício 4.2</div><p>(a) Um FF T com T = 1 recebe um clock de 8 MHz. Qual a frequência de Q? (b) Como transformar um JK em T? E em D? (c) Por que o FF RS não tem versão comercial?</p></div>
+</section>

@@ -1,0 +1,262 @@
+<!-- ===================================================== CAP 5 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 5</div><h1>Contadores assíncronos</h1>
+  <div class="goal">Objetivo: montar contadores com flip-flops T em cascata, entender a divisão de frequência, criar contadores de módulo qualquer com uma NAND no CLR e contar para baixo.</div><div class="src">Base: Aula 04, Contadores Assíncronos</div></div>
+
+  <h2>5.1 O que é um contador</h2>
+  <p><b>Contadores</b> são circuitos que geram uma <b>sequência determinada de estados</b> sob o comando de um clock. Usos citados em aula: contar pulsos de chaves e sensores, construir temporizadores e relógios digitais, gerar sequências de pulsos e medir frequência.</p>
+  <p>Um contador de <b>n</b> flip-flops tem até <b>2ⁿ</b> estados. O número de estados distintos que ele percorre antes de repetir chama-se <b>módulo</b> (MOD). Um contador de 0 a 15 é MOD-16; um de 0 a 9 é MOD-10.</p>
+
+  <h2>5.2 Assíncrono = “efeito dominó”</h2>
+  <p>No contador <b>assíncrono</b> (ou <i>ripple counter</i>), o clock externo entra <b>apenas no primeiro flip-flop</b>. O clock de cada flip-flop seguinte é a <b>saída do anterior</b>.</p>
+  {{fig:ripple4|Contador assíncrono de 4 bits com FFs T (T = 1) sensíveis à borda de descida. A linha {{CLRn}} comum zera todos.}}
+  <h3>Funcionamento passo a passo</h3>
+  <ol class="steps">
+    <li>Aplica-se 0 na linha {{CLRn}}: todos os FFs vão para Q = 0, e o contador mostra <b>0000</b>.</li>
+    <li>Com T = 1, cada FF <b>comuta</b> quando recebe uma borda de descida no seu clock.</li>
+    <li>A cada descida do CLK, o FF0 comuta. A cada descida de Q0 (quando Q0 vai de 1 para 0), o FF1 comuta. A cada descida de Q1, comuta o FF2, e assim por diante.</li>
+    <li>Lendo Q3 Q2 Q1 Q0 (Q0 = <b>LSB</b>, Q3 = <b>MSB</b>), a saída percorre 0000, 0001, 0010, …, 1111 e, após a 16ª descida, volta a 0000.</li>
+  </ol>
+  {{fig:wave_ripple|Formas de onda do contador de 4 bits. Os números embaixo são o valor de Q3Q2Q1Q0 em decimal.}}
+  <div class="callout intuit"><div class="ct">Intuição: por que isso é contar em binário?</div><p>Some 1 em binário à mão: o bit 0 sempre inverte; o bit 1 inverte quando o bit 0 “vira” de 1 para 0 (gera “vai-um”); o bit 2 inverte quando o bit 1 vira de 1 para 0, e assim por diante. “Vira de 1 para 0” é uma <b>borda de descida</b>. Por isso FFs T disparados pela borda de descida da saída anterior contam para cima.</p></div>
+
+  <h2>5.3 Divisor de frequência</h2>
+  <p>Cada FF T com T = 1 divide a frequência por 2. Encadeando:</p>
+  <table><tr><th>Saída</th><th>Período</th><th>Frequência</th></tr><tr><td>CLK</td><td>T</td><td>f</td></tr><tr><td>Q0</td><td>2T</td><td>f/2</td></tr><tr><td>Q1</td><td>4T</td><td>f/4</td></tr><tr><td>Q2</td><td>8T</td><td>f/8</td></tr><tr><td>Q3</td><td>16T</td><td>f/16</td></tr></table>
+  <div class="formula">f(MSB) = f(CLK) / módulo do contador</div>
+  <div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Um contador de 4 bits recebe clock de 32 kHz. Frequência de Q3 = 32 kHz / 16 = <b>2 kHz</b>. Frequência de Q1 = 32 / 4 = <b>8 kHz</b>.</p></div>
+
+  <h2>5.4 Contador de módulo N (contar de 0 até n)</h2>
+  <p>E se quisermos contar só de 0 até n, com n + 1 &lt; 2ⁿ? A técnica da aula é: <b>detectar o estado seguinte a n</b> (que é N = n + 1) e, nesse instante, aplicar 0 no {{CLRn}}, zerando tudo.</p>
+  <ol class="steps">
+    <li>Número de FFs: o menor k com <b>2ᵏ ≥ N</b>.</li>
+    <li>Escreva o estado proibido <b>N = n + 1</b> em binário.</li>
+    <li>Ligue numa <b>NAND</b> as saídas Q que valem <b>1</b> nesse número. Basta usar as que, na sequência de contagem, ficam em 1 <b>simultaneamente pela primeira vez</b> em N.</li>
+    <li>Ligue a saída da NAND na linha {{CLRn}} de todos os FFs.</li>
+  </ol>
+  <p>Quando o contador chega em N, todas as entradas da NAND valem 1, a NAND vai a 0 e o {{CLRn}} zera tudo. Como o clear é assíncrono, isso acontece quase instantaneamente.</p>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: contador de 0 a 5 (MOD-6)</div>
+  <p>Estado seguinte a 5: <b>6 = 0110</b> (Q3=0, Q2=1, Q1=1, Q0=0). As saídas em 1 são <b>Q2 e Q1</b>. Na sequência 0…5, Q2 e Q1 nunca valem 1 ao mesmo tempo (5 = 0101, 3 = 0011), então NAND(Q2, Q1) só dispara em 6.</p>
+  <ul><li><b>Com 4 FFs</b>: a mesma NAND(Q2, Q1). O FF3 nunca chega a 1, só sobra.</li><li><b>Com 3 FFs</b> (2³ = 8 ≥ 6): NAND(Q2, Q1) em 3 bits, 110. É a solução econômica.</li></ul>
+  {{fig:mod6|Contador MOD-6 com 3 FFs: a NAND detecta 110 e aciona o {{CLRn}}.|600px}}
+  {{fig:wave_mod6|O estado 6 aparece por um instante muito curto (faixa vermelha) antes do clear agir: um “glitch”. Depois o contador volta a 0. A sequência útil é 0,1,2,3,4,5.}}</div>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: contador de década (0 a 9, MOD-10)</div>
+  <p>4 FFs (2⁴ = 16 ≥ 10). Estado seguinte a 9: <b>10 = 1010</b>, então ligue <b>Q3 e Q1</b> numa NAND. Ele segue o código <b>BCD</b> (0000 a 1001) e serve como <b>divisor por 10</b>.</p>
+  <table class="tt"><tr><th>Pulso</th><th>Q3</th><th>Q2</th><th>Q1</th><th>Q0</th><th>{{CLRn}}</th></tr>
+  <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr><tr><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+  <tr><td>…</td><td colspan="4">…</td><td>1</td></tr>
+  <tr><td>8</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td></tr><tr><td>9</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+  <tr class="bad"><td>10</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0 → zera</td></tr></table></div>
+  <div class="callout warn"><div class="ct">Cuidado na prova</div><ul>
+  <li>A NAND detecta o número <b>seguinte</b> ao último que se quer mostrar (n + 1), e não o próprio n.</li>
+  <li>Só entram na NAND os bits que são <b>1</b> em N. Os bits 0 ficam de fora.</li>
+  <li>O {{CLRn}} é ativo em 0, e é por isso que se usa NAND (que dá 0 quando todas as entradas são 1). Se o CLR fosse ativo em 1, seria uma AND.</li>
+  <li>O MSB de um MOD-N tem frequência f/N, mas, se N não for potência de 2, <b>o duty cycle não é 50%</b>.</li></ul></div>
+
+  <h2>5.5 Contagem decrescente</h2>
+  <p>O circuito é <b>o mesmo</b>. A contagem decrescente é o <b>complemento</b> da crescente: basta ler as saídas <b>{{Qn}}</b> em vez de Q. Se Q3Q2Q1Q0 = 0000, então {{Q3n}}{{Q2n}}{{Q1n}}{{Q0n}} = 1111 (15); quando Q vira 0001, {{Qn}} vira 1110 (14), e assim por diante.</p>
+  <table class="tt"><tr><th>Q (crescente)</th><th>0000</th><th>0001</th><th>0010</th><th>0011</th><th>…</th><th>1111</th></tr>
+  <tr><th>{{Qn}} (decrescente)</th><td>1111 = 15</td><td>1110 = 14</td><td>1101 = 13</td><td>1100 = 12</td><td>…</td><td>0000 = 0</td></tr></table>
+  <p>O estado inicial <b>1111</b> (lendo {{Qn}}) é obtido aplicando 0 no {{CLRn}}, que zera Q.</p>
+  <div class="callout deep"><div class="ct">Aprofundando: outras formas de contar para baixo</div><p>Também dá para contar para baixo lendo Q, mudando a ligação: (a) FFs de borda de <b>descida</b> com o clock de cada estágio vindo de <b>{{Qn}}</b> do anterior, ou (b) FFs de borda de <b>subida</b> com o clock vindo de <b>Q</b> do anterior. A regra geral: o estágio seguinte deve comutar quando o anterior vai de <b>0 para 1</b> (o “empresta-um” da subtração).</p></div>
+
+  <h2>5.6 A limitação do assíncrono</h2>
+  <p>Como cada FF só muda depois que o anterior mudou, os atrasos de propagação <b>se somam</b>. Na transição 0111 → 1000, Q0 muda após 1 t<sub>PD</sub>, Q1 após 2, Q2 após 3 e Q3 após 4. Nesse meio-tempo, a saída passa por valores falsos (0110, 0100, 0000). Com muitos bits ou clock rápido, a contagem não termina antes da próxima borda.</p>
+  {{fig:atraso|Atraso acumulado (ripple) × mudança simultânea (síncrono).|640px}}
+  <div class="formula">Assíncrono de N bits: &nbsp; N × t<sub>PD</sub> &lt; T<sub>clock</sub></div>
+  <div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Contador assíncrono de 4 bits com 74LS112 (t<sub>PD</sub> máx. = 24 ns). Atraso total = 4 × 24 = 96 ns. Para a saída ficar estável antes da próxima borda, T &gt; 96 ns, ou seja, f &lt; ~10,4 MHz, bem abaixo dos 30 MHz que um FF isolado aguenta.</p></div>
+  <div class="callout try"><div class="ct">Exercícios 5.1 (da Aula 04)</div><ol>
+  <li>Projete um contador assíncrono MOD-3, crescente e decrescente.</li>
+  <li>Projete um contador assíncrono MOD-12, crescente e decrescente.</li>
+  <li>Com clock de 50 MHz, quantos FFs seriam necessários para baixar a frequência a 1 Hz?</li>
+  <li>E usando contadores de década?</li></ol></div>
+</section>
+
+<!-- ===================================================== CAP 6 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 6</div><h1>Contadores síncronos</h1>
+  <div class="goal">Objetivo: entender por que ligar o mesmo clock em todos os FFs exige lógica extra, derivar o contador MOD-8 e aprender o método geral de projeto (que também é o método das máquinas de estados).</div><div class="src">Base: Aula 05, Contadores Síncronos</div></div>
+
+  <h2>6.1 Definição</h2>
+  <p>No contador <b>síncrono</b>, o CLK é ligado em <b>todos</b> os flip-flops ao mesmo tempo. Todos mudam juntos, sem dominó. Em troca, como nenhum FF “espera” o anterior, é preciso <b>lógica adicional</b> que diga a cada FF <b>se ele deve comutar</b> nesta borda. Por serem mais rápidos e livres de glitches de ripple, são usados em circuitos de alta velocidade.</p>
+
+  <h2>6.2 Derivando o contador MOD-8 com FFs T</h2>
+  <p>Olhe a sequência e pergunte, para cada bit: <b>quando ele comuta?</b></p>
+  <div class="twocol">
+    <div><table class="tt"><tr><th>Estado</th><th>Q2</th><th>Q1</th><th>Q0</th></tr>
+    <tr><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>1</td><td>0</td><td>0</td><td>1</td></tr><tr><td>2</td><td>0</td><td>1</td><td>0</td></tr><tr><td>3</td><td>0</td><td>1</td><td>1</td></tr>
+    <tr><td>4</td><td>1</td><td>0</td><td>0</td></tr><tr><td>5</td><td>1</td><td>0</td><td>1</td></tr><tr><td>6</td><td>1</td><td>1</td><td>0</td></tr><tr><td>7</td><td>1</td><td>1</td><td>1</td></tr></table></div>
+    <div><ul>
+      <li><b>Q0</b> comuta <b>sempre</b>, então <b>T0 = 1</b>.</li>
+      <li><b>Q1</b> comuta quando o estado anterior tem <b>Q0 = 1</b> (1→2, 3→4, 5→6, 7→0), então <b>T1 = Q0</b>.</li>
+      <li><b>Q2</b> comuta quando <b>Q0 = 1 e Q1 = 1</b> (3→4, 7→0), então <b>T2 = Q1 · Q0</b>.</li>
+    </ul>
+    <div class="callout key"><div class="ct">Regra geral (n bits)</div><p>T<sub>i</sub> = Q<sub>0</sub> · Q<sub>1</sub> · … · Q<sub>i−1</sub>: um bit comuta quando <b>todos os bits abaixo dele valem 1</b>.</p></div></div>
+  </div>
+  {{fig:sync8|Contador síncrono MOD-8: clock comum (azul) e lógica de habilitação T.|620px}}
+  {{fig:wave_sync8|Formas de onda: todas as transições acontecem na mesma borda ↑. O resultado lógico é igual ao do assíncrono, mas sem atraso acumulado.}}
+
+  <h2>6.3 Assíncrono × síncrono</h2>
+  <table class="wide"><tr><th class="l">Característica</th><th class="l">Assíncrono (ripple)</th><th class="l">Síncrono</th></tr>
+  <tr><td class="l">Clock</td><td class="l">só no 1º FF; os demais recebem Q do anterior</td><td class="l">em todos os FFs</td></tr>
+  <tr><td class="l">Lógica extra</td><td class="l">nenhuma (T = 1)</td><td class="l">ANDs que calculam os T<sub>i</sub></td></tr>
+  <tr><td class="l">Atraso</td><td class="l">acumula: N × t<sub>PD</sub></td><td class="l">1 × t<sub>PD</sub> + lógica + t<sub>S</sub></td></tr>
+  <tr><td class="l">Estados intermediários falsos</td><td class="l">sim (glitches)</td><td class="l">não</td></tr>
+  <tr><td class="l">Velocidade</td><td class="l">menor</td><td class="l">maior (alta velocidade)</td></tr>
+  <tr><td class="l">Projeto</td><td class="l">simples</td><td class="l">mais trabalhoso (mas sistemático)</td></tr></table>
+
+  <h2>6.4 Método geral de projeto (vale para qualquer sequência)</h2>
+  <p>O raciocínio “quando o bit comuta?” funciona para qualquer sequência, não só a binária. O método formal usa a <b>tabela de excitação</b>, que é a tabela do FF “ao contrário”: dado que quero ir de Q para Q<sub>próximo</sub>, que entrada devo aplicar?</p>
+  <table class="tt"><tr><th>Q → Q<sub>próx</sub></th><th>D</th><th>T</th><th>J K</th><th>S R</th></tr>
+  <tr><td>0 → 0</td><td>0</td><td>0</td><td>0 X</td><td>0 X</td></tr>
+  <tr><td>0 → 1</td><td>1</td><td>1</td><td>1 X</td><td>1 0</td></tr>
+  <tr><td>1 → 0</td><td>0</td><td>1</td><td>X 1</td><td>0 1</td></tr>
+  <tr><td>1 → 1</td><td>1</td><td>0</td><td>X 0</td><td>X 0</td></tr></table>
+  <p class="small" style="text-align:center">X = “tanto faz” (don’t care). Ex.: para ir de 0 a 1 no JK, J tem que ser 1; K pode ser 0 (set) ou 1 (comuta), dá no mesmo.</p>
+  <ol class="steps">
+    <li>Liste os estados na ordem desejada (estado atual → próximo).</li>
+    <li>Para cada bit, use a tabela de excitação do FF escolhido e encontre a entrada necessária.</li>
+    <li>Estados que nunca ocorrem viram <b>don’t care</b> (X).</li>
+    <li>Simplifique cada entrada com mapa de Karnaugh e desenhe o circuito.</li>
+  </ol>
+  <div class="callout ex"><div class="ct">Exemplo resolvido: contador síncrono MOD-5 (0 a 4) com FFs T</div>
+  <table class="tt"><tr><th>Atual Q2Q1Q0</th><th>Próximo</th><th>T2</th><th>T1</th><th>T0</th></tr>
+  <tr><td>000 (0)</td><td>001</td><td>0</td><td>0</td><td>1</td></tr>
+  <tr><td>001 (1)</td><td>010</td><td>0</td><td>1</td><td>1</td></tr>
+  <tr><td>010 (2)</td><td>011</td><td>0</td><td>0</td><td>1</td></tr>
+  <tr><td>011 (3)</td><td>100</td><td>1</td><td>1</td><td>1</td></tr>
+  <tr><td>100 (4)</td><td>000</td><td>1</td><td>0</td><td>0</td></tr>
+  <tr><td>101, 110, 111</td><td>—</td><td>X</td><td>X</td><td>X</td></tr></table>
+  <p>(T = 1 onde o bit muda; compare coluna a coluna.) Simplificando, com os X ajudando:</p>
+  <ul><li><b>T0 = {{Q2n}}</b> (T0 é 1 em 0–3 e 0 em 4)</li><li><b>T1 = Q0</b> (1 só nos estados 1 e 3)</li><li><b>T2 = Q2 + Q1·Q0</b> (1 nos estados 3 e 4)</li></ul>
+  <p>Conferência: no estado 4 (100), T2T1T0 = 100, então só Q2 comuta e o próximo é 000. ✔</p></div>
+
+  <h2>6.5 Recursos práticos (perguntas da Aula 05)</h2>
+  <ul>
+    <li><b>O síncrono serve de divisor de frequência?</b> Sim: o bit Q<sub>i</sub> de um contador binário tem frequência f/2<sup>i+1</sup>, igual ao assíncrono, só que sem atraso acumulado.</li>
+    <li><b>Como forçar um número (ex.: 1101) sem contar?</b> Use as entradas assíncronas: PRE = 0 nos FFs que devem ser 1 e CLR = 0 nos que devem ser 0. (CIs contadores comerciais também têm uma entrada de <b>carga paralela síncrona</b>, LOAD.)</li>
+    <li><b>Como interromper a contagem?</b> Acrescente uma entrada de habilitação <b>EN</b>: T0 = EN e T<sub>i</sub> = EN · Q<sub>0</sub>···Q<sub>i−1</sub>. Com EN = 0, todos os T = 0 e o contador “congela”. Evite bloquear o próprio clock com portas, porque isso cria atrasos e glitches no clock.</li>
+  </ul>
+  <div class="callout try"><div class="ct">Exercício 6.1</div><p>(a) Escreva as equações T de um contador síncrono crescente de 5 bits. (b) Projete um contador síncrono com FFs T que conte 0, 2, 4, 6, 0, … (só pares, 3 bits). (c) Qual a vantagem do síncrono para um contador de 16 bits?</p></div>
+</section>
+
+<!-- ===================================================== CAP 7 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 7</div><h1>Registradores</h1>
+  <div class="goal">Objetivo: agrupar flip-flops D para guardar e mover palavras binárias: carga paralela, transferência, deslocamento e conversão série↔paralelo.</div><div class="src">Base: Aula 06, Registradores (I), e Aula 07, Registradores (II)</div></div>
+
+  <h2>7.1 Definição</h2>
+  <p>O uso mais comum de flip-flops é <b>armazenar dados binários</b>. Como um FF guarda só 1 bit, agrupam-se vários: um <b>registrador</b> é um grupo de FFs tipo D que armazena e transfere uma palavra. <b>Registrador de n bits = n flip-flops.</b></p>
+
+  <h2>7.2 Registrador de carga paralela</h2>
+  <h3>Sem sinal de carga</h3>
+  <p>Cada bit D<sub>i</sub> entra no seu FF e todos compartilham o CLK. Na borda, a palavra inteira é copiada <b>simultaneamente</b>.</p>
+  {{fig:reg_par|Registrador de 3 bits, carga paralela: um pulso de clock armazena D2D1D0.|480px}}
+  <h3>Com sinal de carga (LOAD)</h3>
+  <p>No circuito anterior, <b>todo</b> pulso de clock sobrescreve o conteúdo. Em sistemas reais o clock não para, então é preciso decidir <b>quando</b> carregar. Solução: um multiplexador antes de cada D.</p>
+  {{fig:reg_load|Uma fatia (1 bit) do registrador com LOAD. Repete-se para cada bit.|430px}}
+  <div class="formula">D<sub>i</sub> = LOAD · (dado novo) + {{LOADn}} · Q<sub>i</sub></div>
+  <p>Com LOAD = 1 o FF recebe o dado novo; com LOAD = 0 recebe o próprio Q e “recarrega” o mesmo valor, ou seja, <b>mantém</b>. O clock continua livre e comum a todos.</p>
+
+  <h2>7.3 Transferência entre registradores</h2>
+  {{fig:xfer|Transferência paralela X → Y: um único pulso de TRANSFER copia todos os bits.|600px}}
+  <p>A transferência paralela <b>não altera o conteúdo da fonte</b> (X continua igual). É uma cópia, não uma mudança de lugar.</p>
+  <table><tr><th>Parâmetro</th><th>Paralela</th><th>Série</th></tr>
+  <tr><td>Transmissão de N bits</td><td>simultânea (1 pulso)</td><td>N pulsos</td></tr>
+  <tr><td>Conexões para N bits</td><td>N fios</td><td>1 fio</td></tr>
+  <tr><td>Velocidade</td><td>maior</td><td>menor</td></tr></table>
+
+  <h2>7.4 Registrador de deslocamento (shift register)</h2>
+  <p>Os FFs são ligados <b>em fila</b>: Q de um vai no D do seguinte. O dado entra por <b>Din</b>, <b>um bit por pulso</b>. A cada borda (aqui, de descida), cada FF assume o valor que o FF à sua esquerda tinha antes.</p>
+  {{fig:shift3|Registrador de deslocamento de 3 bits: Din → FF0 → FF1 → FF2.}}
+  <div class="callout ex"><div class="ct">Exemplo resolvido (slide da Aula 07): inserir o dado 110₂, registrador inicialmente limpo</div>
+  <p>Os bits entram <b>a partir do MSB</b>: primeiro 1, depois 1, depois 0. D0 = Din, D1 = Q0, D2 = Q1.</p>
+  <table class="tt"><tr><th>CLK</th><th>D0 (Din)</th><th>D1</th><th>D2</th><th>Q0</th><th>Q1</th><th>Q2</th></tr>
+  <tr><td>início</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+  <tr><td>1ª ↓</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+  <tr><td>2ª ↓</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+  <tr class="hl"><td>3ª ↓</td><td>x</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td></tr></table>
+  <p>Depois de 3 pulsos, <b>Q2 Q1 Q0 = 1 1 0</b>: o dado está inteiro no registrador. Truque para montar a tabela: as colunas D de uma linha são exatamente os Q da linha seguinte.</p></div>
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>Para carregar <b>n bits</b> em série são necessários <b>n pulsos</b> de clock (e n FFs).</p></div>
+
+  <h2>7.5 Conversores série ↔ paralelo</h2>
+  <h3>Série → paralelo</h3>
+  <p>É o próprio registrador de deslocamento: os bits entram um por um em Din e, após n pulsos, a palavra está disponível <b>ao mesmo tempo</b> em Q<sub>n−1</sub>…Q<sub>0</sub>. Exemplo: receber um byte por um fio serial e entregá-lo a um barramento de 8 fios.</p>
+  <h3>Paralelo → série</h3>
+  <p>Precisa de FFs com <b>PRE e CLR</b>. A palavra é carregada de uma vez pelos PRE (sem clock) e depois deslocada para fora pelo último FF.</p>
+  {{fig:ps|Conversor paralelo → série. Cada NAND produz {{PREn}} = NAND(Enable, P<sub>i</sub>).}}
+  <ol class="steps">
+    <li><b>Zera</b>: {{CLRn}} = 0 leva todos os Q a 0.</li>
+    <li><b>Carrega</b>: Enable = 1. Cada NAND entrega {{PREn}} = {{Pin}}, o complemento da entrada paralela. Onde P<sub>i</sub> = 1, {{PREn}} = 0 e o FF vai a 1; onde P<sub>i</sub> = 0, {{PREn}} = 1 e o FF continua em 0. Agora Q = P.</li>
+    <li><b>Trava</b>: Enable = 0. Todos os {{PREn}} = 1 e o registrador mantém o estado.</li>
+    <li><b>Desloca</b>: a cada pulso de CLK um bit sai pela <b>saída série</b> (Q do último FF). Após n pulsos, a palavra inteira saiu.</li>
+  </ol>
+  <div class="callout deep"><div class="ct">Aplicações</div><p>Comunicação serial (UART, SPI, USB) usa exatamente essa dupla: paralelo→série no transmissor, série→paralelo no receptor. Deslocar à esquerda/direita também multiplica/divide por 2, e um registrador de deslocamento fechado em anel vira um <b>contador em anel</b> (gerador de sequências).</p></div>
+  <div class="callout try"><div class="ct">Exercício 7.1</div><p>Registrador de deslocamento de 4 bits (borda ↓), inicialmente zerado. Desenhe Q0…Q3 para a entrada abaixo e diga o conteúdo final.</p>{{fig:ex_shift_q|Exercício 7.1.}}</div>
+  <div class="callout try"><div class="ct">Exercício 7.2 (das Aulas 06–07)</div><p>(a) Quantos FFs tem um registrador de 8 bits? (b) Quantos pulsos para converter 5 bits de série para paralelo? (c) Qual tipo de registrador tem mais aplicação em sistemas computacionais?</p></div>
+</section>
+
+<!-- ===================================================== CAP 8 -->
+<section class="chapter">
+  <div class="chap-head"><div class="num">Capítulo 8</div><h1>Memórias</h1>
+  <div class="goal">Objetivo: dominar o vocabulário (célula, palavra, endereço, capacidade), fazer contas de capacidade, entender leitura/escrita e organização matricial, e diferenciar os tipos de ROM e RAM.</div><div class="src">Base: Aula 06, Registradores (I), parte de Memórias; Aula 07 (Relembrando)</div></div>
+
+  <h2>8.1 Vocabulário</h2>
+  <p>Memórias armazenam informação codificada digitalmente: números, caracteres, instruções, endereços. São usadas em computadores e periféricos, e também para implementar funções combinacionais (tabela verdade gravada em ROM), auxiliar contadores e conversores e gerar formas de onda.</p>
+  <table class="wide"><tr><th class="l">Termo</th><th class="l">Significado</th><th class="l">Exemplo</th></tr>
+  <tr><td class="l"><b>Célula</b></td><td class="l">armazena 1 bit</td><td class="l">um flip-flop</td></tr>
+  <tr><td class="l"><b>Palavra</b></td><td class="l">grupo de células acessadas <b>juntas</b></td><td class="l">registrador de 8 bits = palavra de 8 bits</td></tr>
+  <tr><td class="l"><b>Byte</b></td><td class="l">grupo de 8 bits</td><td class="l">palavra de 2 bytes = 16 bits</td></tr>
+  <tr><td class="l"><b>Posição</b></td><td class="l">lugar que guarda uma palavra</td><td class="l">cada uma tem um endereço</td></tr>
+  <tr><td class="l"><b>Endereço</b></td><td class="l">número binário único que identifica a posição</td><td class="l">000 → P0, 001 → P1, …, 111 → P7</td></tr>
+  <tr><td class="l"><b>Capacidade</b></td><td class="l">nº de posições × tamanho da palavra</td><td class="l">4096 × 20 = 81 920 bits</td></tr>
+  <tr><td class="l"><b>Volatilidade</b></td><td class="l">volátil perde os dados sem energia; não volátil retém</td><td class="l">RAM volátil; ROM/Flash não volátil</td></tr></table>
+
+  <h2>8.2 Contas de capacidade</h2>
+  <p>O número de palavras é sempre potência de 2. Em memória, os prefixos são binários:</p>
+  <table><tr><th>Prefixo</th><th>Valor</th><th>Potência</th></tr><tr><td>1K</td><td>1 024</td><td>2¹⁰</td></tr><tr><td>1M</td><td>1 048 576</td><td>2²⁰</td></tr><tr><td>1G</td><td>1 073 741 824</td><td>2³⁰</td></tr><tr><td>1T</td><td>1 099 511 627 776</td><td>2⁴⁰</td></tr></table>
+  <div class="formula">Notação “P × W”: P posições (palavras) de W bits &nbsp;→&nbsp; capacidade = P · W bits</div>
+  <div class="formula">n linhas de endereço endereçam 2ⁿ posições &nbsp;⇔&nbsp; n = log₂(P)</div>
+  <div class="callout ex"><div class="ct">Exemplos resolvidos (slides)</div>
+  <p><b>(1) Chip 2K × 8.</b> Palavras: 2 × 1024 = <b>2048</b>. Tamanho da palavra: <b>8 bits (1 byte)</b>. Total: 2048 × 8 = <b>16 384 bits</b>. Endereço: 2048 = 2¹¹, então <b>11 linhas</b>.</p>
+  <p><b>(2) Qual armazena mais: 5M × 8 ou 1M × 16?</b> 5 × 1 048 576 × 8 = <b>41 943 040 bits</b>; 1 × 1 048 576 × 16 = <b>16 777 216 bits</b>. A 5M × 8 armazena mais.</p>
+  <p class="small">Observação: o slide traz “41.493.040”, um erro de digitação; o valor correto é 41 943 040.</p></div>
+
+  <h2>8.3 Acesso e barramentos</h2>
+  <ul><li><b>Acesso sequencial</b>: percorre-se a memória a partir de um ponto de referência; o tempo depende de onde está o dado (ex.: fita magnética).</li>
+  <li><b>Acesso aleatório</b>: qualquer posição é acessada diretamente, com o <b>mesmo tempo</b> (é o “random” de RAM).</li></ul>
+  {{fig:mem_bus|Diagrama geral: endereço entra, dados entram ou saem, e o controle diz o que fazer.|580px}}
+  <div class="twocol">
+    <div class="callout ex"><div class="ct">Leitura (memória 8 × 8, posição #3)</div><ol style="margin:0"><li>011 é colocado na via de endereços;</li><li>um comando <b>read</b> é processado;</li><li>uma cópia do dado (<code>11010111</code>) vai para a via de dados. O conteúdo não se altera.</li></ol></div>
+    <div class="callout ex"><div class="ct">Escrita (posição #5, dado 10001101)</div><ol style="margin:0"><li>101 é colocado na via de endereços;</li><li>10001101 é colocado na via de dados;</li><li>um comando <b>write</b> é processado; o conteúdo antigo é sobrescrito.</li></ol></div>
+  </div>
+
+  <h2>8.4 ROM e organização matricial</h2>
+  <p>A <b>ROM</b> (<i>Read Only Memory</i>) é <b>não volátil</b>. Os dados são gravados na fabricação ou eletricamente; o processo se chama <b>programação</b> ou “queima”. Para ler: (1) aplica-se o endereço, por exemplo A3A2A1A0 = 0111; (2) ativam-se as entradas de controle (ex.: {{CSn}} = 0); (3) a palavra aparece em D7…D0.</p>
+  <table class="tt"><tr><th>Palavra</th><th>A3A2A1A0</th><th>D7…D0</th></tr>
+  <tr><td>0</td><td>0000</td><td>10101110</td></tr><tr><td>1</td><td>0001</td><td>10111010</td></tr><tr><td>…</td><td>…</td><td>…</td></tr>
+  <tr class="hl"><td>7</td><td>0111</td><td>10111010</td></tr><tr><td>…</td><td>…</td><td>…</td></tr><tr><td>15</td><td>1111</td><td>10101101</td></tr></table>
+  <p class="cap">Trecho da ROM 16 × 8 do slide.</p>
+  <p>Internamente, os 16 registradores ficam numa <b>matriz 4 × 4</b>. Dois bits do endereço escolhem a <b>linha</b> e dois escolhem a <b>coluna</b>; só o registrador no cruzamento é habilitado.</p>
+  {{fig:rom|Decodificação em linha e coluna (layout da aula): A1A0 → linha, A3A2 → coluna.|600px}}
+  <div class="callout ex"><div class="ct">Exemplos resolvidos (slide)</div><p><b>Qual registrador a entrada 1101 habilita?</b> A3A2 = 11 → C3; A1A0 = 01 → L1. Logo, <b>Reg_13</b> (4·3 + 1).<br><b>Qual entrada habilita o Reg_10?</b> 10 = 4·2 + 2 → C2 (A3A2 = 10) e L2 (A1A0 = 10). Entrada <b>1010</b>.</p></div>
+  <div class="callout deep"><div class="ct">Por que matriz?</div><p>Um decodificador direto de 4 bits precisaria de 16 saídas. Com linha + coluna são 4 + 4 = 8 linhas de seleção. Para 1M posições: 1 048 576 saídas contra 1024 + 1024. A economia cresce muito com o tamanho.</p></div>
+
+  <h2>8.5 Tipos de ROM</h2>
+  <table class="wide"><tr><th class="l">Tipo</th><th class="l">Como grava</th><th class="l">Regravável?</th><th class="l">Observações</th></tr>
+  <tr><td class="l"><b>ROM por máscara</b></td><td class="l">na fabricação, conectando transistores por uma máscara definida pelo cliente</td><td class="l">não</td><td class="l">barata só em larga escala; flexibilidade nula</td></tr>
+  <tr><td class="l"><b>PROM</b></td><td class="l">pelo usuário, uma única vez, queimando microfusíveis</td><td class="l">não (1 vez)</td><td class="l">fusível queimado = nível baixo</td></tr>
+  <tr><td class="l"><b>EPROM</b></td><td class="l">pelo usuário, eletricamente</td><td class="l">sim, após apagar com <b>luz ultravioleta</b></td><td class="l">alta densidade; regravada em geral só no desenvolvimento (tem janela de quartzo)</td></tr>
+  <tr><td class="l"><b>EEPROM</b></td><td class="l">eletricamente, com tensão maior que a de operação</td><td class="l">sim, <b>apagamento elétrico</b></td><td class="l">mais cara e menos densa</td></tr>
+  <tr><td class="l"><b>Flash</b></td><td class="l">elétrica e rápida</td><td class="l">sim, mas apaga por <b>setores</b>, não por palavra</td><td class="l">junta vantagens da EPROM e da EEPROM; pendrives e SSDs (NAND Flash, e 3D NAND empilhada para mais capacidade)</td></tr></table>
+
+  <h2>8.6 RAM: SRAM × DRAM</h2>
+  <p>RAM é usada para armazenamento <b>temporário</b>: é <b>volátil</b> e tem leitura e escrita simples e rápidas.</p>
+  <table class="wide"><tr><th class="l"></th><th class="l">SRAM (estática)</th><th class="l">DRAM (dinâmica)</th></tr>
+  <tr><td class="l"><b>Célula</b></td><td class="l">flip-flop</td><td class="l">transistor + capacitor</td></tr>
+  <tr><td class="l"><b>Retenção</b></td><td class="l">enquanto houver alimentação</td><td class="l">capacitor descarrega: precisa de <b>refresh</b> periódico</td></tr>
+  <tr><td class="l"><b>Velocidade</b></td><td class="l">mais rápida</td><td class="l">mais lenta</td></tr>
+  <tr><td class="l"><b>Custo/complexidade</b></td><td class="l">mais cara e complexa</td><td class="l">mais barata e densa</td></tr>
+  <tr><td class="l"><b>Uso</b></td><td class="l">memória <b>cache</b></td><td class="l">memória <b>principal</b></td></tr></table>
+  <div class="callout try"><div class="ct">Exercício 8.1</div><p>(a) Quantos bits armazena uma memória 2K × 16? Quantas linhas de endereço ela tem? (b) Uma memória tem 14 linhas de endereço e 8 de dados: qual a capacidade em bits e em bytes? (c) Na ROM matricial da Figura, que endereço habilita o Reg_6? (d) Por que a DRAM precisa de refresh e a SRAM não?</p></div>
+</section>

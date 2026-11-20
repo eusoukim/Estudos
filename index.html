@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Estudos</title>
+<meta name="description" content="Apostilas e laboratórios interativos para estudar para as provas.">
+<link rel="icon" href="assets/icone.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="assets/engine.css">
+<style>
+.hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:28px;align-items:center}
+.hero svg{width:100%;height:auto;display:block}
+.hero .wave{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 10px}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.how div{display:flex;gap:12px;align-items:flex-start}
+.how b{font-family:var(--f-display)}
+.how .k{flex:none;width:30px;height:30px;border-radius:8px;background:var(--clk-soft);color:var(--clk);display:grid;place-items:center;font-family:var(--f-mono);font-weight:600;font-size:13px}
+.how p{color:var(--muted);font-size:14px}
+@media (max-width:760px){.hero{grid-template-columns:1fr}.cat-head h1{font-size:34px}}
+.trace{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 2.4s ease forwards}
+.trace:nth-of-type(2){animation-delay:.25s}.trace:nth-of-type(3){animation-delay:.5s}
+@keyframes draw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion: reduce){.trace{stroke-dashoffset:0;animation:none}}
+</style>
+</head>
+<body>
+<div class="cat">
+  <section class="hero">
+    <div class="cat-head">
+      <span class="eyebrow">Cursos de estudo</span>
+      <h1>Estude lendo e praticando ao mesmo tempo.</h1>
+      <p class="lede">Cada matéria abre em tela dividida: a apostila de um lado, simuladores e perguntas do outro, sempre no mesmo capítulo. Seu progresso fica salvo neste navegador.</p>
+    </div>
+    <div class="wave" aria-hidden="true">
+      <svg viewBox="0 0 420 150">
+        <text x="8" y="30" font-size="12" style="fill:var(--clk)" font-family="IBM Plex Mono, monospace" font-weight="600">CLK</text>
+        <text x="8" y="78" font-size="12" style="fill:var(--ink)" font-family="IBM Plex Mono, monospace" font-weight="600">D</text>
+        <text x="8" y="126" font-size="12" style="fill:var(--hi)" font-family="IBM Plex Mono, monospace" font-weight="600">Q</text>
+        <polyline class="trace" pathLength="1" points="44,36 70,36 70,16 100,16 100,36 130,36 130,16 160,16 160,36 190,36 190,16 220,16 220,36 250,36 250,16 280,16 280,36 310,36 310,16 340,16 340,36 370,36 370,16 400,16" fill="none" style="stroke:var(--clk)" stroke-width="3" stroke-linejoin="round"/>
+        <polyline class="trace" pathLength="1" points="44,84 90,84 90,64 150,64 150,84 205,84 205,64 236,64 236,84 300,84 300,64 400,64" fill="none" style="stroke:var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+        <polyline class="trace" pathLength="1" points="44,132 100,132 100,112 160,112 160,132 220,132 220,112 250,112 250,132 310,132 310,112 400,112" fill="none" style="stroke:var(--hi)" stroke-width="3" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <h2 style="font-size:22px">Matérias</h2>
+    <div class="cat-grid" id="cat-grid"></div>
+  </section>
+
+  <section class="how" aria-label="Como funciona">
+    <div><span class="k">1</span><span><b>Leia</b><p>A apostila parte do básico e explica com figuras e exemplos resolvidos.</p></span></div>
+    <div><span class="k">2</span><span><b>Mexa</b><p>Os laboratórios deixam você testar o conceito na hora, ao lado do texto.</p></span></div>
+    <div><span class="k">3</span><span><b>Teste</b><p>Teste rápido e flashcards por capítulo; simulado com tempo no fim.</p></span></div>
+    <div><span class="k">4</span><span><b>Revise</b><p>Toda questão errada volta numa lista até você acertar.</p></span></div>
+  </section>
+
+  <p class="foot">Material de estudo pessoal, feito a partir das aulas de cada disciplina. Confira sempre as convenções do professor.</p>
+</div>
+<script src="assets/engine.js"></script>
+<script src="materias/catalogo.js"></script>
+<script>Estudos.catalogo(CATALOGO);</script>
+</body>
+</html>

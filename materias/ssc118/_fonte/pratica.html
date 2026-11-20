@@ -1,0 +1,161 @@
+<section class="pr-cap" data-cap="fundamentos" hidden="" id="v-fundamentos">
+<div class="lab" data-ref="1.3"><div class="lab-h"><h2><span class="tag">Lab</span>As lâmpadas da Aula 01</h2></div><div class="lab-b"><p>Acenda as lâmpadas em qualquer ordem. O alarme só toca se as três últimas forem 1 → 2 → 3: o circuito precisa lembrar o passado.</p><div class="row" id="lampDemo"></div></div></div>
+</section>
+<section class="pr-cap" data-cap="latches" hidden="" id="v-latches">
+<div class="lab" data-ref="2.2">
+<div class="lab-h"><h2><span class="tag">Lab</span>Latch RS ao vivo</h2>
+<div class="row"><label class="ctl" for="lt-kind">Tipo</label><select id="lt-kind"><option value="nor">Positivo (NOR)</option><option value="nand">Negativo (NAND)</option></select></div></div>
+<div class="lab-b">
+<div class="cols">
+<div class="diagram" id="lt-circ"></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="row" id="lt-inputs"></div>
+<div class="row" id="lt-leds"></div>
+<div class="status" id="lt-status"></div>
+<div class="row"><button class="btn small" id="lt-race">Soltar as duas ordens juntas</button><button class="btn small" id="lt-clear">Limpar osciloscópio</button></div>
+</div>
+</div>
+<div class="scope" id="lt-scope"></div>
+<p class="hint">Fios laranja estão em 1; cinza, em 0. Cada clique grava uma coluna no osciloscópio. Experimente: dê um SET, solte, e veja que Q continua em 1.</p>
+</div>
+</div>
+</section>
+<section class="pr-cap" data-cap="tempo" hidden="" id="v-tempo">
+<div class="lab" data-ref="3.2"><div class="lab-h"><h2><span class="tag">Lab</span>Gerador de clock</h2></div>
+<div class="lab-b">
+<div class="row"><label class="ctl" for="ck-f">Frequência</label><input id="ck-f" max="100" min="1" type="range" value="20"/><span class="mono" id="ck-fv"></span>
+<label class="ctl" for="ck-d">Duty cycle</label><input id="ck-d" max="90" min="10" step="5" type="range" value="50"/><span class="mono" id="ck-dv"></span></div>
+<div class="diagram" id="ck-svg"></div>
+<div class="row" id="ck-read"></div>
+</div></div>
+<div class="lab" data-ref="3.4"><div class="lab-h"><h2><span class="tag">Lab</span>Setup e hold: o dado chega a tempo?</h2>
+<div class="row"><label class="ctl" for="sh-chip">Chip</label><select id="sh-chip"></select></div></div>
+<div class="lab-b">
+<div class="row"><label class="ctl" for="sh-t">D muda em</label><input id="sh-t" max="40" min="-60" type="range" value="-30"/><span class="mono" id="sh-tv"></span></div>
+<div class="diagram" id="sh-svg"></div>
+<div class="status" id="sh-status"></div>
+<div class="tscroll"><table id="sh-table"></table></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="flipflops" hidden="" id="v-flipflops">
+<div class="lab" data-ref="4.3"><div class="lab-h"><h2><span class="tag">Lab</span>Flip-flop na bancada</h2>
+<div class="row"><label class="ctl" for="ff-type">Tipo</label><select id="ff-type"><option>JK</option><option>D</option><option>T</option><option>SR</option></select>
+<label class="ctl" for="ff-edge">Borda</label><select id="ff-edge"><option value="rise">subida ↑</option><option value="fall">descida ↓</option></select></div></div>
+<div class="lab-b">
+<div class="cols">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="row" id="ff-inputs"></div>
+<div class="row"><button class="btn" id="ff-clk-lvl">CLK = 0 (clique para subir)</button><button class="btn primary" id="ff-pulse">Pulso completo</button><label class="ctl"><input id="ff-auto" type="checkbox"/> clock automático</label></div>
+<div class="row" id="ff-async"></div>
+<div class="row" id="ff-leds"></div>
+<div class="status" id="ff-status"></div>
+</div>
+<div class="tscroll" id="ff-table"></div>
+</div>
+<div class="scope" id="ff-scope"></div>
+<div class="row"><label class="ctl"><input checked="" id="ff-showlatch" type="checkbox"/> mostrar também um latch D sensível a nível (mesmo D e CLK)</label><button class="btn small" id="ff-clear">Limpar osciloscópio</button></div>
+<p class="hint">Teste a diferença entre nível e borda: escolha o tipo D, deixe CLK em 1 e mude D várias vezes. O latch acompanha; o flip-flop não.</p>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="assincronos" hidden="" id="v-assincronos">
+<div class="lab" data-ref="5.2"><div class="lab-h"><h2><span class="tag">Lab</span>Contador ripple</h2>
+<div class="row"><label class="ctl" for="ac-n">Bits</label><select id="ac-n"><option>2</option><option>3</option><option selected="">4</option><option>5</option></select>
+<label class="ctl" for="ac-mod">Módulo</label><input id="ac-mod" max="32" min="2" style="width:72px" type="number" value="16"/>
+<label class="ctl" for="ac-read">Ler</label><select id="ac-read"><option value="q">Q (crescente)</option><option value="qn">Q̄ (decrescente)</option></select></div></div>
+<div class="lab-b">
+<div class="diagram" id="ac-chain"></div>
+<div class="row"><div><div class="hint">Valor lido</div><div class="big" id="ac-val"></div></div><div class="status" id="ac-status" style="flex:1;min-width:220px"></div></div>
+<div class="row"><button class="btn primary" id="ac-pulse">Pulso de clock</button><label class="ctl"><input id="ac-auto" type="checkbox"/> automático</label><label class="ctl"><input checked="" id="ac-slow" type="checkbox"/> mostrar o efeito dominó (atraso)</label><button class="btn small" id="ac-reset">Zerar (CLR)</button><button class="btn small" id="ac-clear">Limpar osciloscópio</button></div>
+<div class="scope" id="ac-scope"></div>
+<div class="tscroll" id="ac-freq"></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="sincronos" hidden="" id="v-sincronos">
+<div class="lab" data-ref="6.2"><div class="lab-h"><h2><span class="tag">Lab</span>Contador síncrono binário</h2>
+<div class="row"><label class="ctl" for="sc-n">Bits</label><select id="sc-n"><option>2</option><option selected="">3</option><option>4</option></select><label class="ctl"><input checked="" id="sc-en" type="checkbox"/> EN (habilita)</label></div></div>
+<div class="lab-b">
+<div class="diagram" id="sc-chain"></div>
+<div class="row"><div><div class="hint">Valor</div><div class="big" id="sc-val"></div></div><div class="status" id="sc-status" style="flex:1;min-width:220px"></div></div>
+<div class="row"><button class="btn primary" id="sc-pulse">Borda de clock ↑</button><label class="ctl"><input id="sc-auto" type="checkbox"/> automático</label><button class="btn small" id="sc-reset">Zerar</button></div>
+<div class="scope" id="sc-scope"></div>
+</div></div>
+<div class="lab" data-ref="6.4"><div class="lab-h"><h2><span class="tag">Lab</span>Projetista de contadores</h2>
+<div class="row"><label class="ctl" for="pd-ff">Flip-flop</label><select id="pd-ff"><option>T</option><option>D</option><option>JK</option></select></div></div>
+<div class="lab-b">
+<div class="row"><label class="ctl" for="pd-seq">Sequência</label><input id="pd-seq" style="flex:1;min-width:200px" type="text" value="0,1,2,3,4"/><button class="btn primary" id="pd-go">Projetar</button></div>
+<p class="hint">Digite a sequência em decimal, separada por vírgulas (ex.: 0,2,4,6 ou 0,1,3,7,6,4). Estados que não aparecem viram don't care. O projetista monta a tabela com a excitação, simplifica cada entrada e roda o circuito.</p>
+<div class="status" hidden="" id="pd-err"></div>
+<div class="cols"><div class="tscroll" id="pd-table"></div><div id="pd-eqs" style="display:flex;flex-direction:column;gap:8px"></div></div>
+<div class="row"><button class="btn" id="pd-step">Borda de clock ↑</button><span class="mono" id="pd-run"></span></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="registradores" hidden="" id="v-registradores">
+<div class="lab" data-ref="7.4"><div class="lab-h"><h2><span class="tag">Lab</span>Registrador de 4 bits</h2><span class="hint">FFs D, borda de descida</span></div>
+<div class="lab-b">
+<div class="diagram" id="rg-chain"></div>
+<div class="cols">
+<div style="display:flex;flex-direction:column;gap:10px"><h3>Entrada série</h3><div class="row" id="rg-din"></div><div class="row"><button class="btn primary" id="rg-pulse">Pulso de clock ↓</button><button class="btn small" id="rg-clr">CLR</button></div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><h3>Carga paralela (via PRE)</h3><div class="row" id="rg-par"></div><div class="row"><button class="btn" id="rg-load">Enable: carregar P</button></div></div>
+</div>
+<div class="status" id="rg-status"></div>
+<div class="scope" id="rg-scope"></div>
+<div class="tscroll" id="rg-log"></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="memorias" hidden="" id="v-memorias">
+<div class="lab" data-ref="8.4"><div class="lab-h"><h2><span class="tag">Lab</span>ROM 16 × 8 da aula</h2></div>
+<div class="lab-b">
+<div class="row" id="rom-addr"></div>
+<div class="diagram" id="rom-svg"></div>
+<div class="status" id="rom-status"></div>
+</div></div>
+<div class="lab" data-ref="8.3"><div class="lab-h"><h2><span class="tag">Lab</span>RAM 8 × 8: leitura e escrita</h2></div>
+<div class="lab-b">
+<div class="cols">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div><div class="hint">Via de endereços</div><div class="row" id="ram-addr"></div></div>
+<div><div class="hint">Via de dados (para escrita)</div><div class="row" id="ram-data"></div></div>
+<div class="row"><button class="btn" id="ram-read">Ler (read)</button><button class="btn primary" id="ram-write">Escrever (write)</button></div>
+<div class="status" id="ram-status"></div>
+</div>
+<div class="tscroll" id="ram-table"></div>
+</div>
+</div></div>
+<div class="lab" data-ref="8.2"><div class="lab-h"><h2><span class="tag">Lab</span>Calculadora de capacidade</h2></div>
+<div class="lab-b">
+<div class="row"><label class="ctl" for="cap-p">Posições</label><input id="cap-p" min="1" style="width:90px" type="number" value="2"/><select id="cap-u"><option value="1">×1</option><option selected="" value="1024">K</option><option value="1048576">M</option><option value="1073741824">G</option></select><span>×</span><label class="ctl" for="cap-w">bits por palavra</label><input id="cap-w" min="1" style="width:80px" type="number" value="16"/></div>
+<div class="status" id="cap-out"></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="mef" hidden="" id="v-mef">
+<div class="lab" data-ref="9.4"><div class="lab-h"><h2><span class="tag">Lab</span>Detector de “101”: Moore × Mealy lado a lado</h2></div>
+<div class="lab-b">
+<div class="row"><div id="mm-x"></div><button class="btn primary" id="mm-clk">Borda de clock ↑</button><label class="ctl" for="mm-seq">Sequência</label><input id="mm-seq" style="width:130px" type="text" value="10101101"/><button class="btn" id="mm-play">Tocar sequência</button><button class="btn small" id="mm-reset">Reiniciar</button></div>
+<div class="cols" style="grid-template-columns:repeat(auto-fit,minmax(380px,1fr))"><div><h3>Mealy (3 estados)</h3><div class="diagram" id="mm-mealy"></div></div><div><h3>Moore (4 estados)</h3><div class="diagram" id="mm-moore"></div></div></div>
+<div class="status" id="mm-status"></div>
+<div class="scope" id="mm-scope"></div>
+<p class="hint">Mude X entre bordas e observe: Z de Mealy reage na hora; Z de Moore só depois da borda.</p>
+</div></div>
+<div class="lab" data-ref="9.5"><div class="lab-h"><h2><span class="tag">Lab</span>Minimização pelo método da partição</h2>
+<div class="row"><label class="ctl" for="pm-preset">Tabela</label><select id="pm-preset"><option value="slide">Slide: 8 estados</option><option value="insp">Slide: inspeção (5 estados)</option><option value="ex">Exercício: 4 estados</option></select></div></div>
+<div class="lab-b">
+<div class="cols"><div class="tscroll" id="pm-table"></div><div style="display:flex;flex-direction:column;gap:10px"><div id="pm-steps" style="display:flex;flex-direction:column;gap:8px"></div><div class="row"><button class="btn primary" id="pm-next">Próximo passo</button><button class="btn small" id="pm-restart">Recomeçar</button></div></div></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="revisao" hidden="" id="v-revisao">
+<div class="lab" data-ref="2.4"><div class="lab-h"><h2><span class="tag">Exercício</span>Complete a forma de onda de Q</h2>
+<div class="row"><select aria-label="Circuito" id="wv-kind"><option value="nor">Latch RS NOR</option><option value="nand">Latch RS NAND</option><option value="jk">JK, borda ↑</option><option value="jkf">JK, borda ↓ com CLR</option><option value="d">D, borda ↑</option><option value="t">T, borda ↓</option></select><button class="btn" id="wv-new">Novo</button></div></div>
+<div class="lab-b">
+<p class="hint">Clique na linha de Q no ponto onde ela deve mudar: a partir dali o valor inverte. Q começa em 0. Depois clique em Corrigir.</p>
+<div class="scope" id="wv-scope"></div>
+<div class="row"><button class="btn primary" id="wv-check">Corrigir</button><button class="btn small" id="wv-show">Mostrar resposta</button><button class="btn small" id="wv-zero">Apagar Q</button></div>
+<div class="status" id="wv-status">Desenhe Q e clique em Corrigir.</div>
+</div></div>
+<div class="cols">
+<div class="lab" data-ref="5.4"><div class="lab-h"><h2><span class="tag">Contas</span>Qual NAND vai no CLR?</h2><button class="btn small" id="mn-new">Outro</button></div>
+<div class="lab-b"><p id="mn-q"></p><div class="row" id="mn-bits"></div><div class="row"><button class="btn primary" id="mn-check">Conferir</button></div><div class="status" id="mn-status">Marque os Q que entram na NAND.</div></div></div>
+<div class="lab" data-ref="8.2"><div class="lab-h"><h2><span class="tag">Contas</span>Capacidade de memória</h2><button class="btn small" id="cq-new">Outra</button></div>
+<div class="lab-b"><p id="cq-q"></p><div class="row"><label class="ctl" for="cq-bits">Bits totais</label><input id="cq-bits" style="width:140px" type="number"/><label class="ctl" for="cq-lines">Linhas de endereço</label><input id="cq-lines" style="width:70px" type="number"/></div><div class="row"><button class="btn primary" id="cq-check">Conferir</button></div><div class="status" id="cq-status">Responda e confira.</div></div></div>
+</div>
+
+</section>

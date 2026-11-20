@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SSC118 · Sistemas Digitais</title>
+<meta name="description" content="Apostila e laboratórios interativos de circuitos sequenciais (SSC118).">
+<link rel="icon" href="../../assets/icone.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="../../assets/engine.css">
+</head>
+<body>
+<header class="top" id="top"></header>
+<main class="split" id="split">
+  <div class="pane pane-ap" id="ap"><article class="apostila">
+<section class="ap-cap" data-cap="fundamentos" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 1</div><h1>Combinacional × Sequencial: a ideia de memória</h1>
+<div class="goal">Objetivo: entender por que alguns problemas exigem que o circuito “lembre” do passado, e o vocabulário básico (estado, clock, realimentação).</div><div class="src">Base: Aula 01, Circuitos Sequenciais</div></div>
+<h2>1.1 Revisão relâmpago: bits e portas lógicas</h2>
+<p>Em sistemas digitais, todo sinal é tratado como apenas dois níveis: <b>0</b> (baixo, ~0 V) e <b>1</b> (alto, ~5 V ou 3,3 V). As portas lógicas são os “tijolos”: recebem bits e produzem um bit. Para este curso, duas portas merecem atenção especial, porque é com elas que se constrói a memória:</p>
+  <figure><div class="fig"><img src="figs/portas.svg" alt="As portas básicas. A bolinha na saída significa “inverte”. NAND = AND seguida de NOT; NOR = OR seguida de NOT." loading="lazy"></div><figcaption><b>Figura 1.1.</b> As portas básicas. A bolinha na saída significa “inverte”. NAND = AND seguida de NOT; NOR = OR seguida de NOT.</figcaption></figure>
+  <div class="twocol">
+<div><table class="tt"><tr><th>A</th><th>B</th><th>NOR</th></tr><tr><td>0</td><td>0</td><td><b>1</b></td></tr><tr><td>0</td><td>1</td><td>0</td></tr><tr><td>1</td><td>0</td><td>0</td></tr><tr><td>1</td><td>1</td><td>0</td></tr></table>
+<div class="cap">NOR: <b>qualquer 1 na entrada força a saída a 0</b>.</div></div>
+<div><table class="tt"><tr><th>A</th><th>B</th><th>NAND</th></tr><tr><td>0</td><td>0</td><td>1</td></tr><tr><td>0</td><td>1</td><td>1</td></tr><tr><td>1</td><td>0</td><td>1</td></tr><tr><td>1</td><td>1</td><td><b>0</b></td></tr></table>
+<div class="cap">NAND: <b>qualquer 0 na entrada força a saída a 1</b>.</div></div>
+</div>
+<div class="callout key"><div class="ct">Ideia-chave</div><p>Guarde estas duas frases, porque elas explicam sozinhas os latches do Capítulo 2: <b>“1 manda na NOR”</b> (força 0) e <b>“0 manda na NAND”</b> (força 1).</p></div>
+<h2>1.2 Circuitos combinacionais: sem memória</h2>
+<p>Em um circuito <b>combinacional</b>, a saída em um instante depende <b>apenas</b> da combinação das entradas naquele instante. É o mundo da álgebra de Boole e dos mapas de Karnaugh: somadores, multiplexadores, decodificadores. Se você aplicar as mesmas entradas amanhã, a saída será a mesma. O circuito não tem passado.</p>
+<h2>1.3 O problema que o combinacional não resolve</h2>
+<p>Exemplo da aula: observe uma fileira de 3 lâmpadas que acendem <b>uma de cada vez</b>. Se elas acenderem na sequência <b>1 → 2 → 3</b>, um alarme deve tocar.</p>
+  <figure><div class="fig"><img src="figs/lampadas.svg" alt="No instante t₃ a entrada é “lâmpada 3 acesa”, a mesma de qualquer outra vez em que a lâmpada 3 acendeu. A decisão depende da história." loading="lazy"></div><figcaption><b>Figura 1.2.</b> No instante t₃ a entrada é “lâmpada 3 acesa”, a mesma de qualquer outra vez em que a lâmpada 3 acendeu. A decisão depende da história.</figcaption></figure>
+  <p>Uma função combinacional olharia só para “lâmpada 3 acesa” e não teria como distinguir “1, 2, 3” de “2, 1, 3”. O circuito precisa <b>guardar informação sobre o que já aconteceu</b>, ou seja, precisa de <b>memória</b>. Esse é o mundo dos <b>circuitos sequenciais</b>.</p>
+<h2>1.4 Circuitos sequenciais: memória + realimentação</h2>
+<p>Nos circuitos sequenciais, as saídas dependem das entradas presentes <b>e também da história das entradas no passado</b>, isto é, da sequência de valores que levou até o momento atual. Para isso eles têm duas coisas que o combinacional não tem: <b>elementos de memória</b> e <b>realimentação</b> (a saída volta para a entrada).</p>
+  <figure><div class="fig"><img src="figs/comb_seq.svg" alt="Comparação estrutural. No sequencial, a memória guarda o estado e o devolve à lógica combinacional." loading="lazy"></div><figcaption><b>Figura 1.3.</b> Comparação estrutural. No sequencial, a memória guarda o estado e o devolve à lógica combinacional.</figcaption></figure>
+  <p>A estrutura geral de qualquer circuito sequencial (vale para tudo até o fim do curso) tem duas partes:</p>
+<ul>
+<li><b>Elementos de memória</b> (flip-flops): suas saídas <b>definem o estado presente</b>; suas entradas recebem o <b>próximo estado</b>.</li>
+<li><b>Portas lógicas combinacionais</b>: calculam <b>qual é o próximo estado e qual é a saída</b>, a partir do estado presente e das entradas.</li>
+</ul>
+<h2>1.5 Estado e clock</h2>
+<p><b>Estado</b> é cada estágio por onde o circuito sequencial passa. Em cada estado o circuito guarda uma “recordação” da história passada, suficiente para saber o que fazer a seguir. No exemplo das lâmpadas, bastam quatro estados: “nada relevante ainda”, “vi a 1”, “vi a 1 e depois a 2” e “alarme”. Não é preciso lembrar da história inteira, só do que importa para a decisão.</p>
+  <figure><div class="fig"><img src="figs/sd_lamp.svg" alt="Prévia do Capítulo 9: o problema das lâmpadas como uma máquina de estados. Cada círculo é um estado; cada seta, uma mudança causada por uma entrada (L1, L2, L3 = qual lâmpada acendeu)." loading="lazy" style="max-width:560px"></div><figcaption><b>Figura 1.4.</b> Prévia do Capítulo 9: o problema das lâmpadas como uma máquina de estados. Cada círculo é um estado; cada seta, uma mudança causada por uma entrada (L1, L2, L3 = qual lâmpada acendeu).</figcaption></figure>
+  <p>A maioria dos sistemas sequenciais é <b>pulsada</b> (síncrona): o estado só é atualizado no ritmo de um sinal periódico chamado <b>clock</b> (relógio). O clock funciona como um maestro que diz “agora!” a todos os elementos de memória ao mesmo tempo. O Capítulo 3 trata do clock em detalhe.</p>
+<h2>1.6 Classificação pelo número de estados estáveis</h2>
+<table class="wide">
+<tr><th class="l">Tipo</th><th class="l">Estados estáveis</th><th class="l">Comportamento</th><th class="l">Exemplo</th></tr>
+<tr><td class="l"><b>Astável</b></td><td class="l">nenhum</td><td class="l">muda de estado sozinho, o tempo todo, sem estímulo externo</td><td class="l">oscilador, gerador de clock</td></tr>
+<tr><td class="l"><b>Monoestável</b></td><td class="l">um (repouso)</td><td class="l">um sinal externo o tira do repouso; volta sozinho depois de um tempo fixo</td><td class="l">temporizador (ex.: luz de escada)</td></tr>
+<tr><td class="l"><b>Biestável</b></td><td class="l">dois (repouso e ativo)</td><td class="l">só muda de estado com sinal externo; fica onde foi colocado</td><td class="l"><b>latches e flip-flops</b></td></tr>
+</table>
+  <figure><div class="fig"><img src="figs/classif.svg" alt="Os três comportamentos. Só o biestável “lembra” para sempre do último comando: é ele que serve de memória." loading="lazy"></div><figcaption><b>Figura 1.5.</b> Os três comportamentos. Só o biestável “lembra” para sempre do último comando: é ele que serve de memória.</figcaption></figure>
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>Um <b>biestável</b> guarda exatamente <b>1 bit</b>. Latches e flip-flops são biestáveis e são os blocos básicos de toda memória digital.</p>
+<p><b>Latch</b>: a saída pode mudar <b>a qualquer instante</b>, assim que as entradas mudam (circuito <b>assíncrono</b>). <b>Flip-flop</b>: a saída só muda em <b>instantes determinados pelo clock</b> (circuito <b>síncrono</b>).</p></div>
+<div class="callout try"><div class="ct">Exercício 1.1</div><p>Classifique como combinacional ou sequencial: (a) somador de 4 bits; (b) contador de pessoas que entram numa loja; (c) display que mostra em 7 segmentos o número binário da entrada; (d) fechadura que abre após digitar 4-7-2.</p></div>
+
+</section>
+<section class="ap-cap" data-cap="latches" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 2</div><h1>Latches: o primeiro bit de memória</h1>
+<div class="goal">Objetivo: entender como duas portas realimentadas guardam um bit, dominar as tabelas do latch RS positivo (NOR) e negativo (NAND) e desenhar formas de onda.</div><div class="src">Base: Aula 01 (Latches) e Aula 02 (Relembrando, Exercícios)</div></div>
+<h2>2.1 O que é um latch</h2>
+<p>O latch (“trinco”) é o biestável mais simples. Ele tem duas saídas complementares, <b>Q</b> e <b><span class="ov">Q</span></b> (lê-se “Q barrado”), e duas entradas de comando:</p>
+<ul>
+<li><b>SET (S)</b>: “ligue”, que leva a <b>Q = 1</b> (estado ALTO, ou estado SET).</li>
+<li><b>RESET (R)</b>, também chamado CLEAR: “desligue”, que leva a <b>Q = 0</b> (estado BAIXO, ou estado RESET).</li>
+</ul>
+<p>Quando nenhum comando é dado, o latch <b>mantém</b> o último valor: isso é a memória. Como reage a mudanças das entradas a qualquer momento (com um pequeno atraso), o latch é um circuito <b>assíncrono</b>.</p>
+<h2>2.2 Latch RS positivo (com portas NOR)</h2>
+<p>“Positivo” significa que as entradas são <b>ativas em nível alto</b>: o comando é dado colocando 1.</p>
+  <figure><div class="fig"><img src="figs/latch_nor.svg" alt="Latch RS com duas NOR em realimentação cruzada: a saída de cada porta entra na outra." loading="lazy" style="max-width:400px"></div><figcaption><b>Figura 2.1.</b> Latch RS com duas NOR em realimentação cruzada: a saída de cada porta entra na outra.</figcaption></figure>
+  <div class="twocol">
+<div>
+<table class="tt"><tr><th>R</th><th>S</th><th class="l">Saída</th></tr>
+<tr><td>0</td><td>0</td><td class="l">não muda (memória)</td></tr>
+<tr><td>1</td><td>0</td><td class="l">Q = 0, <span class="ov">Q</span> = 1 (reset)</td></tr>
+<tr><td>0</td><td>1</td><td class="l">Q = 1, <span class="ov">Q</span> = 0 (set)</td></tr>
+<tr class="bad"><td>1</td><td>1</td><td class="l">inválida</td></tr></table>
+</div>
+<div>
+<div class="callout intuit" style="margin-top:6px"><div class="ct">Intuição: interruptor de campainha com trava</div><p>Apertar S é como apertar “liga”; R é “desliga”. Soltando os dois, a lâmpada fica como estava. Apertar os dois ao mesmo tempo é uma ordem contraditória.</p></div>
+</div>
+</div>
+<h3>Por que funciona? Seguindo os sinais</h3>
+<p>Use a regra “<b>1 manda na NOR</b>” (força a saída para 0):</p>
+<ol class="steps">
+<li><b>Set (S=1, R=0).</b> A porta de baixo tem um 1 (o S), então <span class="ov">Q</span> = 0. A porta de cima recebe R = 0 e <span class="ov">Q</span> = 0, então Q = NOR(0,0) = <b>1</b>.</li>
+<li><b>Solta (S=0, R=0).</b> A porta de baixo agora recebe S = 0 e Q = 1 (realimentado), então continua com <span class="ov">Q</span> = 0. A de cima continua com 0 e 0, então Q = 1. <b>O circuito se sustenta sozinho: lembrou do set.</b></li>
+<li><b>Reset (R=1, S=0).</b> O 1 em R força Q = 0. A de baixo recebe 0 e 0, então <span class="ov">Q</span> = 1. Soltando R, a situação também se sustenta.</li>
+<li><b>Inválido (S=1, R=1).</b> As duas portas têm um 1 na entrada, então <b>Q = <span class="ov">Q</span> = 0</b>. As saídas deixam de ser complementares. Pior: se S e R voltarem a 0 <b>ao mesmo tempo</b>, as duas portas “disputam” (condição de corrida) e o resultado é imprevisível.</li>
+</ol>
+<h2>2.3 Latch RS negativo (com portas NAND)</h2>
+<p>“Negativo” significa entradas <b>ativas em nível baixo</b>: o comando é dado colocando <b>0</b>. Por isso as entradas são escritas com barra: <span class="ov">S</span> e <span class="ov">R</span>. A regra agora é “<b>0 manda na NAND</b>” (força a saída para 1).</p>
+  <figure><div class="fig"><img src="figs/latch_nand.svg" alt="Latch RS com duas NAND. Repouso = entradas em 1." loading="lazy" style="max-width:400px"></div><figcaption><b>Figura 2.2.</b> Latch RS com duas NAND. Repouso = entradas em 1.</figcaption></figure>
+  <table class="tt"><tr><th><span class="ov">S</span></th><th><span class="ov">R</span></th><th class="l">Saída</th></tr>
+<tr><td>1</td><td>1</td><td class="l">não muda (memória)</td></tr>
+<tr><td>0</td><td>1</td><td class="l">Q = 1, <span class="ov">Q</span> = 0 (set)</td></tr>
+<tr><td>1</td><td>0</td><td class="l">Q = 0, <span class="ov">Q</span> = 1 (reset)</td></tr>
+<tr class="bad"><td>0</td><td>0</td><td class="l">inválida (Q = <span class="ov">Q</span> = 1)</td></tr></table>
+<div class="callout warn"><div class="ct">Cuidado na prova</div>
+<ul>
+<li>Nos slides, a tabela do latch <b>positivo</b> tem a coluna <b>RESET primeiro</b> e a do <b>negativo</b> tem <b>SET primeiro</b>. Leia o cabeçalho antes de usar.</li>
+<li>Positivo (NOR): repouso = <b>00</b>, inválido = <b>11</b>. Negativo (NAND): repouso = <b>11</b>, inválido = <b>00</b>. Um é o “espelho” do outro.</li>
+<li>No estado inválido, o NOR dá Q = <span class="ov">Q</span> = 0; o NAND dá Q = <span class="ov">Q</span> = 1.</li>
+</ul></div>
+<h2>2.4 Desenhando formas de onda (o exercício clássico)</h2>
+<p>Na prova, é comum receber os sinais S e R ao longo do tempo e ter que desenhar Q e <span class="ov">Q</span>. O método:</p>
+<ol class="steps">
+<li>Trace linhas verticais em <b>todo instante em que S ou R muda</b>. Entre duas linhas, as entradas são constantes.</li>
+<li>Para cada intervalo, consulte a tabela: set, reset, mantém ou inválido.</li>
+<li>Em “mantém”, copie o valor do intervalo anterior. Para isso, você precisa saber o estado inicial (geralmente Q = 0, ou ele é dado).</li>
+<li>Desenhe <span class="ov">Q</span> como o inverso de Q (exceto no inválido).</li>
+</ol>
+<div class="callout ex"><div class="ct">Exemplo resolvido: latch RS positivo (NOR)</div>
+  <figure><div class="fig"><img src="figs/wave_nor.svg" alt="Formas de onda do latch NOR. Faixas: verde = set, cinza-escuro = reset, vermelho = inválido/indefinido. Repare no fim: S e R valem 1 juntos e depois caem juntos, e o estado final fica indefinido (hachurado)." loading="lazy"></div><figcaption><b>Figura 2.3.</b> Formas de onda do latch NOR. Faixas: verde = set, cinza-escuro = reset, vermelho = inválido/indefinido. Repare no fim: S e R valem 1 juntos e depois caem juntos, e o estado final fica indefinido (hachurado).</figcaption></figure>
+  <p>Leitura: começa com R = 1, então Q = 0. Em seguida S = R = 0: mantém 0. S = 1: Q vai a 1. S volta a 0: <b>mantém 1</b>. R = 1: Q volta a 0, e assim por diante. Note que, depois do set, o pulso de S termina mas Q continua em 1: é a memória funcionando.</p></div>
+<div class="callout ex"><div class="ct">Exemplo resolvido: latch RS negativo (NAND)</div>
+  <figure><div class="fig"><img src="figs/wave_nand.svg" alt="Latch NAND: as ações acontecem quando a entrada desce para 0. Com S = R = 0 (faixa vermelha) as duas saídas vão a 1; como depois só S volta a 1 enquanto R continua em 0, o estado final é definido (reset)." loading="lazy"></div><figcaption><b>Figura 2.4.</b> Latch NAND: as ações acontecem quando a entrada <b>desce</b> para 0. Com <span class="ov">S</span> = <span class="ov">R</span> = 0 (faixa vermelha) as duas saídas vão a 1; como depois só <span class="ov">S</span> volta a 1 enquanto <span class="ov">R</span> continua em 0, o estado final é definido (reset).</figcaption></figure></div>
+<h2>2.5 Aplicações vistas em aula</h2>
+<h3>Alarme com fototransistor</h3>
+<p>Um feixe de luz incide num fototransistor. Ao ligar o circuito, aperta-se a chave SW1 para colocar o latch em <b>reset</b> (alarme desligado). Se alguém interromper o feixe, o fototransistor para de conduzir e o nível lógico gerado aciona o <b>SET</b>: o alarme dispara. O ponto importante é que, <b>mesmo que o feixe volte</b>, o latch continua em set e o alarme só desliga quando SW1 é pressionada de novo. A memória “lembra” que houve uma invasão.</p>
+<h3>Eliminação de trepidação (debounce)</h3>
+<p>Chaves mecânicas não fecham de uma vez: os contatos “quicam” por alguns milissegundos e geram variações indesejadas da tensão (<b>trepidação</b> ou <i>bounce</i>). Um contador ligado a essa chave contaria vários pulsos em vez de um.</p>
+  <figure><div class="fig"><img src="figs/bounce.svg" alt="Com um latch, o primeiro contato já faz o set ou o reset. Os quiques seguintes só repetem a mesma ordem (ou colocam o latch em “mantém”), e a saída fica limpa." loading="lazy" style="max-width:560px"></div><figcaption><b>Figura 2.5.</b> Com um latch, o primeiro contato já faz o set ou o reset. Os quiques seguintes só repetem a mesma ordem (ou colocam o latch em “mantém”), e a saída fica limpa.</figcaption></figure>
+  <p>Montagem típica: chave de duas posições (SPDT) ligada a um latch NAND, com a posição 1 aterrando <span class="ov">S</span> e a posição 2 aterrando <span class="ov">R</span>, e resistores de pull-up mantendo as entradas em 1 quando soltas.</p>
+<div class="callout try"><div class="ct">Exercício 2.1</div><p>Desenhe Q e <span class="ov">Q</span> para o latch RS <b>positivo</b> (NOR), com Q inicial = 0:</p><figure><div class="fig"><img src="figs/ex_nor_q.svg" alt="Exercício 2.1. Gabarito no Capítulo 10." loading="lazy"></div><figcaption><b>Figura 2.6.</b> Exercício 2.1. Gabarito no Capítulo 10.</figcaption></figure></div>
+<div class="callout try"><div class="ct">Exercício 2.2</div><p>(a) Por que o latch é chamado de “assíncrono”? (b) Em que diferem o estado inválido do latch NOR e o do latch NAND? (c) Por que o latch serve como memória de 1 bit?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="tempo" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 3</div><h1>Tempo, pulsos e clock</h1>
+<div class="goal">Objetivo: entender os sinais que comandam os circuitos síncronos e os parâmetros de tempo de um datasheet (setup, hold, atrasos, fMAX).</div><div class="src">Base: Aula 02, Temporização de Biestáveis</div></div>
+<h2>3.1 Pulsos e bordas</h2>
+<p>Um <b>pulso digital</b> é um sinal que passa de um nível para o outro e depois volta, realizando uma ação no dispositivo. Há <b>pulsos positivos</b> (a ação acontece no nível alto) e <b>pulsos negativos</b> (a ação acontece no nível baixo). Cada pulso tem duas <b>transições</b> (ou bordas):</p>
+<ul><li><b>Borda de subida</b> (↑, <i>rising edge</i>): baixo → alto.</li><li><b>Borda de descida</b> (↓, <i>falling edge</i>): alto → baixo.</li></ul>
+  <figure><div class="fig"><img src="figs/pulsos.svg" alt="Pulsos positivo e negativo e suas bordas." loading="lazy" style="max-width:560px"></div><figcaption><b>Figura 3.1.</b> Pulsos positivo e negativo e suas bordas.</figcaption></figure>
+
+  <h2>3.2 O clock</h2>
+<p>O <b>clock</b> é um <b>trem de pulsos com período fixo</b>, normalmente uma onda quadrada. Ele dita o ritmo do sistema.</p>
+  <figure><div class="fig"><img src="figs/clock.svg" alt="Período, frequência e ciclo ativo (duty cycle)." loading="lazy"></div><figcaption><b>Figura 3.2.</b> Período, frequência e ciclo ativo (duty cycle).</figcaption></figure>
+  <div class="formula">f = 1 / T    ·    duty cycle = t<sub>ativo</sub> / T</div>
+<div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Um clock de <b>20 MHz</b> tem período T = 1 / (20 × 10⁶) = <b>50 ns</b>. Se fica 15 ns em alto, o duty cycle é 15/50 = <b>30%</b>.</p></div>
+<h2>3.3 Parâmetros de um pulso real</h2>
+<p>Na prática, as bordas não são verticais: o sinal leva algum tempo para subir e descer. Para medir isso sem ambiguidade, usam-se porcentagens da amplitude:</p>
+<ul>
+<li><b>Tempo de subida (t<sub>r</sub>, rise time)</b> e <b>tempo de descida (t<sub>f</sub>, fall time)</b>: tempo para ir de <b>10% a 90%</b> da transição.</li>
+<li><b>Largura do pulso (t<sub>w</sub>, pulse width)</b>: tempo entre os pontos de <b>50%</b> da borda de subida e da de descida.</li>
+</ul>
+  <figure><div class="fig"><img src="figs/pulse_params.svg" alt="tr e tf são medidos entre 10% e 90%; tw, entre os pontos de 50%." loading="lazy" style="max-width:540px"></div><figcaption><b>Figura 3.3.</b> t<sub>r</sub> e t<sub>f</sub> são medidos entre 10% e 90%; t<sub>w</sub>, entre os pontos de 50%.</figcaption></figure>
+
+  <h2>3.4 Parâmetros de temporização de flip-flops</h2>
+<p>Estes parâmetros se aplicam aos flip-flops do próximo capítulo. Eles explicam <b>por que o circuito pode falhar se for rápido demais</b>.</p>
+<h3>Setup e hold: a janela em que a entrada não pode mudar</h3>
+<ul>
+<li><b>Tempo de preparação (setup time, t<sub>S</sub>)</b>: intervalo <b>antes</b> da borda ativa do clock em que a entrada de controle (D, J, K...) deve estar <b>estável</b>.</li>
+<li><b>Tempo de manutenção (hold time, t<sub>H</sub>)</b>: intervalo <b>depois</b> da borda em que a entrada ainda deve ficar estável.</li>
+</ul>
+  <figure><div class="fig"><img src="figs/setup_hold.svg" alt="Se D mudar dentro da janela tS + tH, o flip-flop pode capturar o valor errado ou ficar indeciso por um tempo (metaestabilidade)." loading="lazy" style="max-width:480px"></div><figcaption><b>Figura 3.4.</b> Se D mudar dentro da janela t<sub>S</sub> + t<sub>H</sub>, o flip-flop pode capturar o valor errado ou ficar indeciso por um tempo (metaestabilidade).</figcaption></figure>
+  <div class="callout intuit"><div class="ct">Intuição: a foto</div><p>A borda do clock é o clique de uma câmera. Se a pessoa se mexer bem na hora (dentro da janela), a foto sai borrada. t<sub>S</sub> é “fique parado um pouco antes do clique” e t<sub>H</sub> é “continue parado um pouco depois”.</p></div>
+<h3>Atrasos de propagação</h3>
+<p>É o tempo entre a borda do clock (ou a mudança da entrada) e a mudança correspondente na saída:</p>
+<ul><li><b>t<sub>PLH</sub></b>: atraso quando a saída vai de 0 para 1 (Low → High).</li><li><b>t<sub>PHL</sub></b>: atraso quando a saída vai de 1 para 0 (High → Low).</li></ul>
+  <figure><div class="fig"><img src="figs/tpd.svg" alt="Atrasos de propagação, medidos entre os pontos de 50%." loading="lazy" style="max-width:500px"></div><figcaption><b>Figura 3.5.</b> Atrasos de propagação, medidos entre os pontos de 50%.</figcaption></figure>
+  <h3>Outros limites</h3>
+<ul>
+<li><b>f<sub>MAX</sub></b>: maior frequência de clock em que o fabricante garante funcionamento confiável.</li>
+<li><b>t<sub>W(L)</sub> e t<sub>W(H)</sub></b>: tempo mínimo em que o clock deve permanecer em nível baixo e em nível alto.</li>
+</ul>
+<h3>Valores reais (datasheets citados na aula)</h3>
+<table>
+<tr><th>Parâmetro</th><th>TTL 7474</th><th>TTL 74LS112</th><th>CMOS 74C74</th><th>CMOS 74HC112</th></tr>
+<tr><td>t<sub>S</sub> (ns)</td><td>20</td><td>20</td><td>60</td><td>25</td></tr>
+<tr><td>t<sub>H</sub> (ns)</td><td>5</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>t<sub>PHL</sub> (ns)</td><td>40</td><td>24</td><td>200</td><td>31</td></tr>
+<tr><td>t<sub>PLH</sub> (ns)</td><td>25</td><td>16</td><td>200</td><td>31</td></tr>
+<tr><td>t<sub>W(L)</sub> (ns)</td><td>37</td><td>15</td><td>100</td><td>25</td></tr>
+<tr><td>t<sub>W(H)</sub> (ns)</td><td>30</td><td>20</td><td>100</td><td>25</td></tr>
+<tr><td>f<sub>MAX</sub> (MHz)</td><td>15</td><td>30</td><td>5</td><td>20</td></tr>
+</table>
+<div class="callout deep"><div class="ct">Aprofundando: de onde vem o f<sub>MAX</sub></div><p>Os números estão ligados. Num ciclo de clock cabem, no mínimo, o tempo em alto e o tempo em baixo: para o 74LS112, t<sub>W(H)</sub> + t<sub>W(L)</sub> = 20 + 15 = 35 ns, o que daria ~28,6 MHz, perto do f<sub>MAX</sub> = 30 MHz da tabela. Em circuitos com vários flip-flops, o período também precisa acomodar <b>t<sub>PD</sub> do FF + atraso da lógica entre FFs + t<sub>S</sub> do FF seguinte</b>. É por isso que contadores síncronos (Cap. 6) são mais rápidos que os assíncronos (Cap. 5).</p></div>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><p>Simuladores lógicos como o LogiSIM em geral <b>não mostram</b> t<sub>S</sub>, t<sub>H</sub>, t<sub>r</sub> e t<sub>f</sub>, porque tratam as bordas como instantâneas (no máximo modelam um atraso de porta). Esse é o ponto do Exercício 1 da Aula 02. Simuladores elétricos (como o Falstad) chegam mais perto do comportamento real.</p></div>
+<div class="callout try"><div class="ct">Exercício 3.1</div><p>(a) Qual o período de um clock de 30 MHz? (b) Um pulso tem t<sub>w</sub> = 12 ns num período de 40 ns: qual o duty cycle? (c) Um flip-flop tem t<sub>S</sub> = 20 ns e t<sub>H</sub> = 5 ns. A entrada D muda 10 ns antes da borda. Há problema?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="flipflops" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 4</div><h1>Flip-flops</h1>
+<div class="goal">Objetivo: entender a diferença entre sensibilidade a nível e a borda, dominar as tabelas dos flip-flops RS, JK, D e T, converter um tipo em outro e usar PRE/CLR.</div><div class="src">Base: Aula 02 (Flip-Flops) e Aula 03 (Flip-Flops)</div></div>
+<h2>4.1 Do latch ao flip-flop: nível × borda</h2>
+<p>O latch obedece às entradas <b>o tempo todo</b>. Em um sistema grande isso é um problema: sinais chegam em tempos diferentes, passam por estados intermediários e o latch “vê” tudo. Queremos que os elementos de memória só olhem as entradas em <b>um instante preciso e combinado</b>. Esse instante é a <b>borda do clock</b>.</p>
+<ul>
+<li><b>Sensível a nível</b> (latch com habilitação): enquanto o clock está em 1, a saída <b>segue</b> a entrada (o latch fica “transparente”).</li>
+<li><b>Sensível a borda</b> (flip-flop): a saída só pode mudar <b>no instante da borda</b> (↑ ou ↓). Fora dela, mudanças nas entradas são ignoradas.</li>
+</ul>
+  <figure><div class="fig"><img src="figs/nivel_borda.svg" alt="Mesmo D, dois comportamentos. O latch (roxo) copia D durante todo o nível alto, inclusive as oscilações. O flip-flop (vermelho) tira uma “foto” de D só nas bordas de subida (setas laranja)." loading="lazy"></div><figcaption><b>Figura 4.1.</b> Mesmo D, dois comportamentos. O latch (roxo) copia D durante todo o nível alto, inclusive as oscilações. O flip-flop (vermelho) tira uma “foto” de D só nas bordas de subida (setas laranja).</figcaption></figure>
+  <div class="callout key"><div class="ct">Ideia-chave</div><p>Flip-flop = circuito <b>síncrono</b>: <b>quando</b> a saída muda é decidido pelo clock; <b>para qual valor</b> ela muda é decidido pelas entradas de controle.</p></div>
+<h3>Como se constrói a sensibilidade à borda</h3>
+<p>Uma forma didática (a dos circuitos da aula) é usar um <b>detector de borda</b>: uma AND recebe o CLK e o CLK invertido e atrasado por uma porta NOT. Por um instante muito curto, igual ao atraso da NOT, as duas entradas valem 1 e sai um pulso estreito. Esse pulso habilita o latch só “no instante” da borda.</p>
+  <figure><div class="fig"><img src="figs/detector.svg" alt="Detector de borda de subida: o atraso de propagação da NOT, que costuma ser um incômodo, é usado a favor." loading="lazy"></div><figcaption><b>Figura 4.2.</b> Detector de borda de subida: o atraso de propagação da NOT, que costuma ser um incômodo, é usado a favor.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/sr_clk.svg" alt="Flip-flop RS = latch RS + portas AND controladas pelo pulso da borda." loading="lazy" style="max-width:470px"></div><figcaption><b>Figura 4.3.</b> Flip-flop RS = latch RS + portas AND controladas pelo pulso da borda.</figcaption></figure>
+
+  <h3>Lendo o símbolo</h3>
+  <figure><div class="fig"><img src="figs/ff_simbolos.svg" alt="Símbolos dos quatro tipos. O triângulo na entrada de clock indica sensibilidade à borda; a bolinha antes do triângulo indica borda de descida." loading="lazy" style="max-width:600px"></div><figcaption><b>Figura 4.4.</b> Símbolos dos quatro tipos. O triângulo na entrada de clock indica sensibilidade à borda; a bolinha antes do triângulo indica borda de descida.</figcaption></figure>
+
+  <h2>4.2 Flip-flop RS</h2>
+<p>É o latch RS com clock. <b>Não tem versões comerciais</b> (por causa do estado inválido), mas é a base teórica dos outros.</p>
+<div class="twocol">
+<div><table class="tt"><tr><th>S</th><th>R</th><th>CLK</th><th class="l">Q depois da borda</th></tr>
+<tr><td>0</td><td>0</td><td>↑</td><td class="l">não muda</td></tr><tr><td>1</td><td>0</td><td>↑</td><td class="l">Q = 1</td></tr>
+<tr><td>0</td><td>1</td><td>↑</td><td class="l">Q = 0</td></tr><tr class="bad"><td>1</td><td>1</td><td>↑</td><td class="l">inválido</td></tr></table>
+<div class="cap">Versão de borda de subida. A de descida é igual, com ↓.</div></div>
+</div>
+<h2>4.3 Flip-flop JK: o RS sem estado inválido</h2>
+<p>O JK é um RS melhorado: J faz o papel de S, K faz o papel de R, e a combinação <b>J = K = 1</b>, que era proibida, vira útil: a saída <b>comuta</b> (inverte, <i>toggle</i>). Isso é obtido realimentando Q e <span class="ov">Q</span> para as portas de entrada, de modo que só a entrada “que faz sentido” fica ativa: se Q = 1, só o K pode agir (para resetar); se Q = 0, só o J (para setar).</p>
+<table class="tt"><tr><th>J</th><th>K</th><th>CLK</th><th class="l">Q depois da borda</th><th class="l">Nome</th></tr>
+<tr><td>0</td><td>0</td><td>↑</td><td class="l">Q (não muda)</td><td class="l">mantém</td></tr>
+<tr><td>1</td><td>0</td><td>↑</td><td class="l">1</td><td class="l">set</td></tr>
+<tr><td>0</td><td>1</td><td>↑</td><td class="l">0</td><td class="l">reset</td></tr>
+<tr class="hl"><td>1</td><td>1</td><td>↑</td><td class="l"><span class="ov">Q</span> (inverte)</td><td class="l">comuta</td></tr></table>
+<div class="callout ex"><div class="ct">Exemplo resolvido: formas de onda do JK (borda de subida, Q inicial = 0)</div>
+  <figure><div class="fig"><img src="figs/wave_jk.svg" alt="Em cada borda ↑, olhe J e K imediatamente antes da borda e aplique a tabela. Entre bordas, Q não muda, mesmo que J e K mudem." loading="lazy"></div><figcaption><b>Figura 4.5.</b> Em cada borda ↑, olhe J e K <b>imediatamente antes</b> da borda e aplique a tabela. Entre bordas, Q não muda, mesmo que J e K mudem.</figcaption></figure></div>
+<p>Equação característica (útil para projeto): <b>Q<sub>próximo</sub> = J·<span class="ov">Q</span> + <span class="ov">K</span>·Q</b>.</p>
+<h2>4.4 Flip-flop D (Data / Delay)</h2>
+<p>O mais simples e o mais usado: na borda, a saída <b>copia</b> a entrada D.</p>
+<div class="twocol"><div><table class="tt"><tr><th>D</th><th>CLK</th><th>Q</th></tr><tr><td>0</td><td>↑</td><td>0</td></tr><tr><td>1</td><td>↑</td><td>1</td></tr></table></div>
+<div><p><b>Q<sub>próximo</sub> = D</b>. O D “atrasa” a entrada até a próxima borda e a segura por um ciclo inteiro. É o tijolo dos <b>registradores</b> e das <b>memórias</b> (Caps. 7 e 8).</p></div></div>
+  <figure><div class="fig"><img src="figs/wave_d.svg" alt="O pulso curto de D entre duas bordas é ignorado: o FF só “vê” D nas bordas." loading="lazy"></div><figcaption><b>Figura 4.6.</b> O pulso curto de D entre duas bordas é ignorado: o FF só “vê” D nas bordas.</figcaption></figure>
+
+  <h2>4.5 Flip-flop T (Toggle)</h2>
+<p>Com <b>T = 1</b> a saída <b>comuta</b> a cada borda; com T = 0 ela <b>mantém</b>.</p>
+<div class="twocol"><div><table class="tt"><tr><th>T</th><th>CLK</th><th class="l">Q</th></tr><tr><td>0</td><td>↑</td><td class="l">mantém</td></tr><tr><td>1</td><td>↑</td><td class="l">comuta</td></tr></table></div>
+<div><p><b>Q<sub>próximo</sub> = T ⊕ Q</b>. Com T = 1 fixo, Q tem <b>metade da frequência</b> do clock: é um <b>divisor de frequência por 2</b> e o tijolo dos <b>contadores</b> (Caps. 5 e 6).</p></div></div>
+  <figure><div class="fig"><img src="figs/wave_t.svg" alt="Flip-flop T: enquanto T = 1, Q inverte a cada borda ↑." loading="lazy"></div><figcaption><b>Figura 4.7.</b> Flip-flop T: enquanto T = 1, Q inverte a cada borda ↑.</figcaption></figure>
+
+  <h2>4.6 Convertendo um flip-flop em outro</h2>
+<p>Os slides mostram que o D pode ser obtido do RS ou do JK, e o T pode ser obtido do RS/JK ou do D:</p>
+<ul>
+<li><b>D a partir do JK (ou RS)</b>: J = D e K = <span class="ov">D</span> (uma NOT). Assim só ocorrem os casos set (D=1) e reset (D=0), nunca “mantém” nem “inválido”.</li>
+<li><b>T a partir do JK</b>: ligue J = K = T. Com T = 0 mantém; com T = 1 comuta.</li>
+<li><b>T a partir do D</b>: D = T ⊕ Q (uma XOR com realimentação).</li>
+</ul>
+  <figure><div class="fig"><img src="figs/conversoes.svg" alt="Duas conversões clássicas." loading="lazy"></div><figcaption><b>Figura 4.8.</b> Duas conversões clássicas.</figcaption></figure>
+
+  <h2>4.7 Flip-flops comerciais: PRE e CLR assíncronos</h2>
+<p>CIs reais (como o 74LS112, JK com borda de descida) têm duas entradas extras que <b>ignoram o clock</b>:</p>
+<ul><li><b>PRE (preset)</b>: força Q = 1 imediatamente.</li><li><b>CLR (clear)</b>: força Q = 0 imediatamente.</li></ul>
+  <figure><div class="fig"><img src="figs/ff_preclr.svg" alt="PRE e CLR com bolinha são ativos em nível baixo." loading="lazy" style="max-width:540px"></div><figcaption><b>Figura 4.9.</b> PRE e CLR com bolinha são ativos em nível baixo.</figcaption></figure>
+  <table class="tt"><tr><th>J</th><th>K</th><th>CLK</th><th><span class="ov">PRE</span></th><th><span class="ov">CLR</span></th><th class="l">Q</th></tr>
+<tr><td>0</td><td>0</td><td>↓</td><td>1</td><td>1</td><td class="l">não muda</td></tr>
+<tr><td>0</td><td>1</td><td>↓</td><td>1</td><td>1</td><td class="l">0</td></tr>
+<tr><td>1</td><td>0</td><td>↓</td><td>1</td><td>1</td><td class="l">1</td></tr>
+<tr><td>1</td><td>1</td><td>↓</td><td>1</td><td>1</td><td class="l">comuta</td></tr>
+<tr><td>X</td><td>X</td><td>X</td><td>1</td><td>1</td><td class="l">não muda (sem borda)</td></tr>
+<tr class="hl"><td>X</td><td>X</td><td>X</td><td>1</td><td>0</td><td class="l">clear assíncrono → Q = 0</td></tr>
+<tr class="hl"><td>X</td><td>X</td><td>X</td><td>0</td><td>1</td><td class="l">preset assíncrono → Q = 1</td></tr>
+<tr class="bad"><td>X</td><td>X</td><td>X</td><td>0</td><td>0</td><td class="l">inválido</td></tr></table>
+<div class="callout key"><div class="ct">Ideia-chave</div><p><b>Prioridade</b>: entradas assíncronas (PRE/CLR) <b>vencem</b> o clock. Enquanto CLR = 0, Q = 0, aconteça o que acontecer com J, K e CLK. “X” na tabela significa “tanto faz”. É assim que se <b>zera</b> um contador (Cap. 5) e se <b>carrega</b> um registrador sem clock (Cap. 7).</p></div>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><ul>
+<li>Verifique sempre <b>qual borda</b> o FF usa (bolinha no clock = descida) e se PRE/CLR são ativos em <b>0</b> (bolinha) ou em 1.</li>
+<li>“Mantém” do T e do JK é em relação ao valor <b>antes</b> da borda, e “comuta” inverte esse valor.</li>
+<li>As entradas valem pelo que eram <b>imediatamente antes</b> da borda (respeitando t<sub>S</sub>).</li></ul></div>
+<h2>4.8 Usos principais</h2>
+<table class="wide"><tr><th class="l">Tipo</th><th class="l">Usos típicos</th></tr>
+<tr><td class="l"><b>D</b></td><td class="l">registradores, armazenamento de dados, memórias SRAM, sincronizar um sinal externo com o clock, registradores de deslocamento</td></tr>
+<tr><td class="l"><b>T</b></td><td class="l">divisores de frequência, contadores (assíncronos e síncronos)</td></tr>
+<tr><td class="l"><b>JK</b></td><td class="l">“curinga”: vira D ou T com ligações simples; usado em contadores e em MEFs</td></tr>
+<tr><td class="l"><b>RS</b></td><td class="l">base teórica; latch RS para debounce e alarmes</td></tr></table>
+<div class="callout try"><div class="ct">Exercício 4.1</div><p>JK com <b>borda de descida</b> e <span class="ov">CLR</span> assíncrono (ativo em 0), Q inicial = 0. Desenhe Q.</p><figure><div class="fig"><img src="figs/ex_jk_q.svg" alt="Exercício 4.1. As setas ↓ marcam as bordas ativas." loading="lazy"></div><figcaption><b>Figura 4.10.</b> Exercício 4.1. As setas ↓ marcam as bordas ativas.</figcaption></figure></div>
+<div class="callout try"><div class="ct">Exercício 4.2</div><p>(a) Um FF T com T = 1 recebe um clock de 8 MHz. Qual a frequência de Q? (b) Como transformar um JK em T? E em D? (c) Por que o FF RS não tem versão comercial?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="assincronos" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 5</div><h1>Contadores assíncronos</h1>
+<div class="goal">Objetivo: montar contadores com flip-flops T em cascata, entender a divisão de frequência, criar contadores de módulo qualquer com uma NAND no CLR e contar para baixo.</div><div class="src">Base: Aula 04, Contadores Assíncronos</div></div>
+<h2>5.1 O que é um contador</h2>
+<p><b>Contadores</b> são circuitos que geram uma <b>sequência determinada de estados</b> sob o comando de um clock. Usos citados em aula: contar pulsos de chaves e sensores, construir temporizadores e relógios digitais, gerar sequências de pulsos e medir frequência.</p>
+<p>Um contador de <b>n</b> flip-flops tem até <b>2ⁿ</b> estados. O número de estados distintos que ele percorre antes de repetir chama-se <b>módulo</b> (MOD). Um contador de 0 a 15 é MOD-16; um de 0 a 9 é MOD-10.</p>
+<h2>5.2 Assíncrono = “efeito dominó”</h2>
+<p>No contador <b>assíncrono</b> (ou <i>ripple counter</i>), o clock externo entra <b>apenas no primeiro flip-flop</b>. O clock de cada flip-flop seguinte é a <b>saída do anterior</b>.</p>
+  <figure><div class="fig"><img src="figs/ripple4.svg" alt="Contador assíncrono de 4 bits com FFs T (T = 1) sensíveis à borda de descida. A linha CLR comum zera todos." loading="lazy"></div><figcaption><b>Figura 5.1.</b> Contador assíncrono de 4 bits com FFs T (T = 1) sensíveis à borda de descida. A linha <span class="ov">CLR</span> comum zera todos.</figcaption></figure>
+  <h3>Funcionamento passo a passo</h3>
+<ol class="steps">
+<li>Aplica-se 0 na linha <span class="ov">CLR</span>: todos os FFs vão para Q = 0, e o contador mostra <b>0000</b>.</li>
+<li>Com T = 1, cada FF <b>comuta</b> quando recebe uma borda de descida no seu clock.</li>
+<li>A cada descida do CLK, o FF0 comuta. A cada descida de Q0 (quando Q0 vai de 1 para 0), o FF1 comuta. A cada descida de Q1, comuta o FF2, e assim por diante.</li>
+<li>Lendo Q3 Q2 Q1 Q0 (Q0 = <b>LSB</b>, Q3 = <b>MSB</b>), a saída percorre 0000, 0001, 0010, …, 1111 e, após a 16ª descida, volta a 0000.</li>
+</ol>
+  <figure><div class="fig"><img src="figs/wave_ripple.svg" alt="Formas de onda do contador de 4 bits. Os números embaixo são o valor de Q3Q2Q1Q0 em decimal." loading="lazy"></div><figcaption><b>Figura 5.2.</b> Formas de onda do contador de 4 bits. Os números embaixo são o valor de Q3Q2Q1Q0 em decimal.</figcaption></figure>
+  <div class="callout intuit"><div class="ct">Intuição: por que isso é contar em binário?</div><p>Some 1 em binário à mão: o bit 0 sempre inverte; o bit 1 inverte quando o bit 0 “vira” de 1 para 0 (gera “vai-um”); o bit 2 inverte quando o bit 1 vira de 1 para 0, e assim por diante. “Vira de 1 para 0” é uma <b>borda de descida</b>. Por isso FFs T disparados pela borda de descida da saída anterior contam para cima.</p></div>
+<h2>5.3 Divisor de frequência</h2>
+<p>Cada FF T com T = 1 divide a frequência por 2. Encadeando:</p>
+<table><tr><th>Saída</th><th>Período</th><th>Frequência</th></tr><tr><td>CLK</td><td>T</td><td>f</td></tr><tr><td>Q0</td><td>2T</td><td>f/2</td></tr><tr><td>Q1</td><td>4T</td><td>f/4</td></tr><tr><td>Q2</td><td>8T</td><td>f/8</td></tr><tr><td>Q3</td><td>16T</td><td>f/16</td></tr></table>
+<div class="formula">f(MSB) = f(CLK) / módulo do contador</div>
+<div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Um contador de 4 bits recebe clock de 32 kHz. Frequência de Q3 = 32 kHz / 16 = <b>2 kHz</b>. Frequência de Q1 = 32 / 4 = <b>8 kHz</b>.</p></div>
+<h2>5.4 Contador de módulo N (contar de 0 até n)</h2>
+<p>E se quisermos contar só de 0 até n, com n + 1 &lt; 2ⁿ? A técnica da aula é: <b>detectar o estado seguinte a n</b> (que é N = n + 1) e, nesse instante, aplicar 0 no <span class="ov">CLR</span>, zerando tudo.</p>
+<ol class="steps">
+<li>Número de FFs: o menor k com <b>2ᵏ ≥ N</b>.</li>
+<li>Escreva o estado proibido <b>N = n + 1</b> em binário.</li>
+<li>Ligue numa <b>NAND</b> as saídas Q que valem <b>1</b> nesse número. Basta usar as que, na sequência de contagem, ficam em 1 <b>simultaneamente pela primeira vez</b> em N.</li>
+<li>Ligue a saída da NAND na linha <span class="ov">CLR</span> de todos os FFs.</li>
+</ol>
+<p>Quando o contador chega em N, todas as entradas da NAND valem 1, a NAND vai a 0 e o <span class="ov">CLR</span> zera tudo. Como o clear é assíncrono, isso acontece quase instantaneamente.</p>
+<div class="callout ex"><div class="ct">Exemplo resolvido: contador de 0 a 5 (MOD-6)</div>
+<p>Estado seguinte a 5: <b>6 = 0110</b> (Q3=0, Q2=1, Q1=1, Q0=0). As saídas em 1 são <b>Q2 e Q1</b>. Na sequência 0…5, Q2 e Q1 nunca valem 1 ao mesmo tempo (5 = 0101, 3 = 0011), então NAND(Q2, Q1) só dispara em 6.</p>
+<ul><li><b>Com 4 FFs</b>: a mesma NAND(Q2, Q1). O FF3 nunca chega a 1, só sobra.</li><li><b>Com 3 FFs</b> (2³ = 8 ≥ 6): NAND(Q2, Q1) em 3 bits, 110. É a solução econômica.</li></ul>
+  <figure><div class="fig"><img src="figs/mod6.svg" alt="Contador MOD-6 com 3 FFs: a NAND detecta 110 e aciona o CLR." loading="lazy" style="max-width:600px"></div><figcaption><b>Figura 5.3.</b> Contador MOD-6 com 3 FFs: a NAND detecta 110 e aciona o <span class="ov">CLR</span>.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/wave_mod6.svg" alt="O estado 6 aparece por um instante muito curto (faixa vermelha) antes do clear agir: um “glitch”. Depois o contador volta a 0. A sequência útil é 0,1,2,3,4,5." loading="lazy"></div><figcaption><b>Figura 5.4.</b> O estado 6 aparece por um instante muito curto (faixa vermelha) antes do clear agir: um “glitch”. Depois o contador volta a 0. A sequência útil é 0,1,2,3,4,5.</figcaption></figure></div>
+<div class="callout ex"><div class="ct">Exemplo resolvido: contador de década (0 a 9, MOD-10)</div>
+<p>4 FFs (2⁴ = 16 ≥ 10). Estado seguinte a 9: <b>10 = 1010</b>, então ligue <b>Q3 e Q1</b> numa NAND. Ele segue o código <b>BCD</b> (0000 a 1001) e serve como <b>divisor por 10</b>.</p>
+<table class="tt"><tr><th>Pulso</th><th>Q3</th><th>Q2</th><th>Q1</th><th>Q0</th><th><span class="ov">CLR</span></th></tr>
+<tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td></tr><tr><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>…</td><td colspan="4">…</td><td>1</td></tr>
+<tr><td>8</td><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td></tr><tr><td>9</td><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+<tr class="bad"><td>10</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0 → zera</td></tr></table></div>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><ul>
+<li>A NAND detecta o número <b>seguinte</b> ao último que se quer mostrar (n + 1), e não o próprio n.</li>
+<li>Só entram na NAND os bits que são <b>1</b> em N. Os bits 0 ficam de fora.</li>
+<li>O <span class="ov">CLR</span> é ativo em 0, e é por isso que se usa NAND (que dá 0 quando todas as entradas são 1). Se o CLR fosse ativo em 1, seria uma AND.</li>
+<li>O MSB de um MOD-N tem frequência f/N, mas, se N não for potência de 2, <b>o duty cycle não é 50%</b>.</li></ul></div>
+<h2>5.5 Contagem decrescente</h2>
+<p>O circuito é <b>o mesmo</b>. A contagem decrescente é o <b>complemento</b> da crescente: basta ler as saídas <b><span class="ov">Q</span></b> em vez de Q. Se Q3Q2Q1Q0 = 0000, então <span class="ov">Q3</span><span class="ov">Q2</span><span class="ov">Q1</span><span class="ov">Q0</span> = 1111 (15); quando Q vira 0001, <span class="ov">Q</span> vira 1110 (14), e assim por diante.</p>
+<table class="tt"><tr><th>Q (crescente)</th><th>0000</th><th>0001</th><th>0010</th><th>0011</th><th>…</th><th>1111</th></tr>
+<tr><th><span class="ov">Q</span> (decrescente)</th><td>1111 = 15</td><td>1110 = 14</td><td>1101 = 13</td><td>1100 = 12</td><td>…</td><td>0000 = 0</td></tr></table>
+<p>O estado inicial <b>1111</b> (lendo <span class="ov">Q</span>) é obtido aplicando 0 no <span class="ov">CLR</span>, que zera Q.</p>
+<div class="callout deep"><div class="ct">Aprofundando: outras formas de contar para baixo</div><p>Também dá para contar para baixo lendo Q, mudando a ligação: (a) FFs de borda de <b>descida</b> com o clock de cada estágio vindo de <b><span class="ov">Q</span></b> do anterior, ou (b) FFs de borda de <b>subida</b> com o clock vindo de <b>Q</b> do anterior. A regra geral: o estágio seguinte deve comutar quando o anterior vai de <b>0 para 1</b> (o “empresta-um” da subtração).</p></div>
+<h2>5.6 A limitação do assíncrono</h2>
+<p>Como cada FF só muda depois que o anterior mudou, os atrasos de propagação <b>se somam</b>. Na transição 0111 → 1000, Q0 muda após 1 t<sub>PD</sub>, Q1 após 2, Q2 após 3 e Q3 após 4. Nesse meio-tempo, a saída passa por valores falsos (0110, 0100, 0000). Com muitos bits ou clock rápido, a contagem não termina antes da próxima borda.</p>
+  <figure><div class="fig"><img src="figs/atraso.svg" alt="Atraso acumulado (ripple) × mudança simultânea (síncrono)." loading="lazy" style="max-width:640px"></div><figcaption><b>Figura 5.5.</b> Atraso acumulado (ripple) × mudança simultânea (síncrono).</figcaption></figure>
+  <div class="formula">Assíncrono de N bits:   N × t<sub>PD</sub> &lt; T<sub>clock</sub></div>
+<div class="callout ex"><div class="ct">Exemplo resolvido</div><p>Contador assíncrono de 4 bits com 74LS112 (t<sub>PD</sub> máx. = 24 ns). Atraso total = 4 × 24 = 96 ns. Para a saída ficar estável antes da próxima borda, T &gt; 96 ns, ou seja, f &lt; ~10,4 MHz, bem abaixo dos 30 MHz que um FF isolado aguenta.</p></div>
+<div class="callout try"><div class="ct">Exercícios 5.1 (da Aula 04)</div><ol>
+<li>Projete um contador assíncrono MOD-3, crescente e decrescente.</li>
+<li>Projete um contador assíncrono MOD-12, crescente e decrescente.</li>
+<li>Com clock de 50 MHz, quantos FFs seriam necessários para baixar a frequência a 1 Hz?</li>
+<li>E usando contadores de década?</li></ol></div>
+
+</section>
+<section class="ap-cap" data-cap="sincronos" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 6</div><h1>Contadores síncronos</h1>
+<div class="goal">Objetivo: entender por que ligar o mesmo clock em todos os FFs exige lógica extra, derivar o contador MOD-8 e aprender o método geral de projeto (que também é o método das máquinas de estados).</div><div class="src">Base: Aula 05, Contadores Síncronos</div></div>
+<h2>6.1 Definição</h2>
+<p>No contador <b>síncrono</b>, o CLK é ligado em <b>todos</b> os flip-flops ao mesmo tempo. Todos mudam juntos, sem dominó. Em troca, como nenhum FF “espera” o anterior, é preciso <b>lógica adicional</b> que diga a cada FF <b>se ele deve comutar</b> nesta borda. Por serem mais rápidos e livres de glitches de ripple, são usados em circuitos de alta velocidade.</p>
+<h2>6.2 Derivando o contador MOD-8 com FFs T</h2>
+<p>Olhe a sequência e pergunte, para cada bit: <b>quando ele comuta?</b></p>
+<div class="twocol">
+<div><table class="tt"><tr><th>Estado</th><th>Q2</th><th>Q1</th><th>Q0</th></tr>
+<tr><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>1</td><td>0</td><td>0</td><td>1</td></tr><tr><td>2</td><td>0</td><td>1</td><td>0</td></tr><tr><td>3</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>4</td><td>1</td><td>0</td><td>0</td></tr><tr><td>5</td><td>1</td><td>0</td><td>1</td></tr><tr><td>6</td><td>1</td><td>1</td><td>0</td></tr><tr><td>7</td><td>1</td><td>1</td><td>1</td></tr></table></div>
+<div><ul>
+<li><b>Q0</b> comuta <b>sempre</b>, então <b>T0 = 1</b>.</li>
+<li><b>Q1</b> comuta quando o estado anterior tem <b>Q0 = 1</b> (1→2, 3→4, 5→6, 7→0), então <b>T1 = Q0</b>.</li>
+<li><b>Q2</b> comuta quando <b>Q0 = 1 e Q1 = 1</b> (3→4, 7→0), então <b>T2 = Q1 · Q0</b>.</li>
+</ul>
+<div class="callout key"><div class="ct">Regra geral (n bits)</div><p>T<sub>i</sub> = Q<sub>0</sub> · Q<sub>1</sub> · … · Q<sub>i−1</sub>: um bit comuta quando <b>todos os bits abaixo dele valem 1</b>.</p></div></div>
+</div>
+  <figure><div class="fig"><img src="figs/sync8.svg" alt="Contador síncrono MOD-8: clock comum (azul) e lógica de habilitação T." loading="lazy" style="max-width:620px"></div><figcaption><b>Figura 6.1.</b> Contador síncrono MOD-8: clock comum (azul) e lógica de habilitação T.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/wave_sync8.svg" alt="Formas de onda: todas as transições acontecem na mesma borda ↑. O resultado lógico é igual ao do assíncrono, mas sem atraso acumulado." loading="lazy"></div><figcaption><b>Figura 6.2.</b> Formas de onda: todas as transições acontecem na mesma borda ↑. O resultado lógico é igual ao do assíncrono, mas sem atraso acumulado.</figcaption></figure>
+
+  <h2>6.3 Assíncrono × síncrono</h2>
+<table class="wide"><tr><th class="l">Característica</th><th class="l">Assíncrono (ripple)</th><th class="l">Síncrono</th></tr>
+<tr><td class="l">Clock</td><td class="l">só no 1º FF; os demais recebem Q do anterior</td><td class="l">em todos os FFs</td></tr>
+<tr><td class="l">Lógica extra</td><td class="l">nenhuma (T = 1)</td><td class="l">ANDs que calculam os T<sub>i</sub></td></tr>
+<tr><td class="l">Atraso</td><td class="l">acumula: N × t<sub>PD</sub></td><td class="l">1 × t<sub>PD</sub> + lógica + t<sub>S</sub></td></tr>
+<tr><td class="l">Estados intermediários falsos</td><td class="l">sim (glitches)</td><td class="l">não</td></tr>
+<tr><td class="l">Velocidade</td><td class="l">menor</td><td class="l">maior (alta velocidade)</td></tr>
+<tr><td class="l">Projeto</td><td class="l">simples</td><td class="l">mais trabalhoso (mas sistemático)</td></tr></table>
+<h2>6.4 Método geral de projeto (vale para qualquer sequência)</h2>
+<p>O raciocínio “quando o bit comuta?” funciona para qualquer sequência, não só a binária. O método formal usa a <b>tabela de excitação</b>, que é a tabela do FF “ao contrário”: dado que quero ir de Q para Q<sub>próximo</sub>, que entrada devo aplicar?</p>
+<table class="tt"><tr><th>Q → Q<sub>próx</sub></th><th>D</th><th>T</th><th>J K</th><th>S R</th></tr>
+<tr><td>0 → 0</td><td>0</td><td>0</td><td>0 X</td><td>0 X</td></tr>
+<tr><td>0 → 1</td><td>1</td><td>1</td><td>1 X</td><td>1 0</td></tr>
+<tr><td>1 → 0</td><td>0</td><td>1</td><td>X 1</td><td>0 1</td></tr>
+<tr><td>1 → 1</td><td>1</td><td>0</td><td>X 0</td><td>X 0</td></tr></table>
+<p class="small" style="text-align:center">X = “tanto faz” (don’t care). Ex.: para ir de 0 a 1 no JK, J tem que ser 1; K pode ser 0 (set) ou 1 (comuta), dá no mesmo.</p>
+<ol class="steps">
+<li>Liste os estados na ordem desejada (estado atual → próximo).</li>
+<li>Para cada bit, use a tabela de excitação do FF escolhido e encontre a entrada necessária.</li>
+<li>Estados que nunca ocorrem viram <b>don’t care</b> (X).</li>
+<li>Simplifique cada entrada com mapa de Karnaugh e desenhe o circuito.</li>
+</ol>
+<div class="callout ex"><div class="ct">Exemplo resolvido: contador síncrono MOD-5 (0 a 4) com FFs T</div>
+<table class="tt"><tr><th>Atual Q2Q1Q0</th><th>Próximo</th><th>T2</th><th>T1</th><th>T0</th></tr>
+<tr><td>000 (0)</td><td>001</td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td>001 (1)</td><td>010</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>010 (2)</td><td>011</td><td>0</td><td>0</td><td>1</td></tr>
+<tr><td>011 (3)</td><td>100</td><td>1</td><td>1</td><td>1</td></tr>
+<tr><td>100 (4)</td><td>000</td><td>1</td><td>0</td><td>0</td></tr>
+<tr><td>101, 110, 111</td><td>—</td><td>X</td><td>X</td><td>X</td></tr></table>
+<p>(T = 1 onde o bit muda; compare coluna a coluna.) Simplificando, com os X ajudando:</p>
+<ul><li><b>T0 = <span class="ov">Q2</span></b> (T0 é 1 em 0–3 e 0 em 4)</li><li><b>T1 = Q0</b> (1 só nos estados 1 e 3)</li><li><b>T2 = Q2 + Q1·Q0</b> (1 nos estados 3 e 4)</li></ul>
+<p>Conferência: no estado 4 (100), T2T1T0 = 100, então só Q2 comuta e o próximo é 000. ✔</p></div>
+<h2>6.5 Recursos práticos (perguntas da Aula 05)</h2>
+<ul>
+<li><b>O síncrono serve de divisor de frequência?</b> Sim: o bit Q<sub>i</sub> de um contador binário tem frequência f/2<sup>i+1</sup>, igual ao assíncrono, só que sem atraso acumulado.</li>
+<li><b>Como forçar um número (ex.: 1101) sem contar?</b> Use as entradas assíncronas: PRE = 0 nos FFs que devem ser 1 e CLR = 0 nos que devem ser 0. (CIs contadores comerciais também têm uma entrada de <b>carga paralela síncrona</b>, LOAD.)</li>
+<li><b>Como interromper a contagem?</b> Acrescente uma entrada de habilitação <b>EN</b>: T0 = EN e T<sub>i</sub> = EN · Q<sub>0</sub>···Q<sub>i−1</sub>. Com EN = 0, todos os T = 0 e o contador “congela”. Evite bloquear o próprio clock com portas, porque isso cria atrasos e glitches no clock.</li>
+</ul>
+<div class="callout try"><div class="ct">Exercício 6.1</div><p>(a) Escreva as equações T de um contador síncrono crescente de 5 bits. (b) Projete um contador síncrono com FFs T que conte 0, 2, 4, 6, 0, … (só pares, 3 bits). (c) Qual a vantagem do síncrono para um contador de 16 bits?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="registradores" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 7</div><h1>Registradores</h1>
+<div class="goal">Objetivo: agrupar flip-flops D para guardar e mover palavras binárias: carga paralela, transferência, deslocamento e conversão série↔paralelo.</div><div class="src">Base: Aula 06, Registradores (I), e Aula 07, Registradores (II)</div></div>
+<h2>7.1 Definição</h2>
+<p>O uso mais comum de flip-flops é <b>armazenar dados binários</b>. Como um FF guarda só 1 bit, agrupam-se vários: um <b>registrador</b> é um grupo de FFs tipo D que armazena e transfere uma palavra. <b>Registrador de n bits = n flip-flops.</b></p>
+<h2>7.2 Registrador de carga paralela</h2>
+<h3>Sem sinal de carga</h3>
+<p>Cada bit D<sub>i</sub> entra no seu FF e todos compartilham o CLK. Na borda, a palavra inteira é copiada <b>simultaneamente</b>.</p>
+  <figure><div class="fig"><img src="figs/reg_par.svg" alt="Registrador de 3 bits, carga paralela: um pulso de clock armazena D2D1D0." loading="lazy" style="max-width:480px"></div><figcaption><b>Figura 7.1.</b> Registrador de 3 bits, carga paralela: um pulso de clock armazena D2D1D0.</figcaption></figure>
+  <h3>Com sinal de carga (LOAD)</h3>
+<p>No circuito anterior, <b>todo</b> pulso de clock sobrescreve o conteúdo. Em sistemas reais o clock não para, então é preciso decidir <b>quando</b> carregar. Solução: um multiplexador antes de cada D.</p>
+  <figure><div class="fig"><img src="figs/reg_load.svg" alt="Uma fatia (1 bit) do registrador com LOAD. Repete-se para cada bit." loading="lazy" style="max-width:430px"></div><figcaption><b>Figura 7.2.</b> Uma fatia (1 bit) do registrador com LOAD. Repete-se para cada bit.</figcaption></figure>
+  <div class="formula">D<sub>i</sub> = LOAD · (dado novo) + <span class="ov">LOAD</span> · Q<sub>i</sub></div>
+<p>Com LOAD = 1 o FF recebe o dado novo; com LOAD = 0 recebe o próprio Q e “recarrega” o mesmo valor, ou seja, <b>mantém</b>. O clock continua livre e comum a todos.</p>
+<h2>7.3 Transferência entre registradores</h2>
+  <figure><div class="fig"><img src="figs/xfer.svg" alt="Transferência paralela X → Y: um único pulso de TRANSFER copia todos os bits." loading="lazy" style="max-width:600px"></div><figcaption><b>Figura 7.3.</b> Transferência paralela X → Y: um único pulso de TRANSFER copia todos os bits.</figcaption></figure>
+  <p>A transferência paralela <b>não altera o conteúdo da fonte</b> (X continua igual). É uma cópia, não uma mudança de lugar.</p>
+<table><tr><th>Parâmetro</th><th>Paralela</th><th>Série</th></tr>
+<tr><td>Transmissão de N bits</td><td>simultânea (1 pulso)</td><td>N pulsos</td></tr>
+<tr><td>Conexões para N bits</td><td>N fios</td><td>1 fio</td></tr>
+<tr><td>Velocidade</td><td>maior</td><td>menor</td></tr></table>
+<h2>7.4 Registrador de deslocamento (shift register)</h2>
+<p>Os FFs são ligados <b>em fila</b>: Q de um vai no D do seguinte. O dado entra por <b>Din</b>, <b>um bit por pulso</b>. A cada borda (aqui, de descida), cada FF assume o valor que o FF à sua esquerda tinha antes.</p>
+  <figure><div class="fig"><img src="figs/shift3.svg" alt="Registrador de deslocamento de 3 bits: Din → FF0 → FF1 → FF2." loading="lazy"></div><figcaption><b>Figura 7.4.</b> Registrador de deslocamento de 3 bits: Din → FF0 → FF1 → FF2.</figcaption></figure>
+  <div class="callout ex"><div class="ct">Exemplo resolvido (slide da Aula 07): inserir o dado 110₂, registrador inicialmente limpo</div>
+<p>Os bits entram <b>a partir do MSB</b>: primeiro 1, depois 1, depois 0. D0 = Din, D1 = Q0, D2 = Q1.</p>
+<table class="tt"><tr><th>CLK</th><th>D0 (Din)</th><th>D1</th><th>D2</th><th>Q0</th><th>Q1</th><th>Q2</th></tr>
+<tr><td>início</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>1ª ↓</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td></tr>
+<tr><td>2ª ↓</td><td>0</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+<tr class="hl"><td>3ª ↓</td><td>x</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td></tr></table>
+<p>Depois de 3 pulsos, <b>Q2 Q1 Q0 = 1 1 0</b>: o dado está inteiro no registrador. Truque para montar a tabela: as colunas D de uma linha são exatamente os Q da linha seguinte.</p></div>
+<div class="callout key"><div class="ct">Ideia-chave</div><p>Para carregar <b>n bits</b> em série são necessários <b>n pulsos</b> de clock (e n FFs).</p></div>
+<h2>7.5 Conversores série ↔ paralelo</h2>
+<h3>Série → paralelo</h3>
+<p>É o próprio registrador de deslocamento: os bits entram um por um em Din e, após n pulsos, a palavra está disponível <b>ao mesmo tempo</b> em Q<sub>n−1</sub>…Q<sub>0</sub>. Exemplo: receber um byte por um fio serial e entregá-lo a um barramento de 8 fios.</p>
+<h3>Paralelo → série</h3>
+<p>Precisa de FFs com <b>PRE e CLR</b>. A palavra é carregada de uma vez pelos PRE (sem clock) e depois deslocada para fora pelo último FF.</p>
+  <figure><div class="fig"><img src="figs/ps.svg" alt="Conversor paralelo → série. Cada NAND produz PRE = NAND(Enable, Pi)." loading="lazy"></div><figcaption><b>Figura 7.5.</b> Conversor paralelo → série. Cada NAND produz <span class="ov">PRE</span> = NAND(Enable, P<sub>i</sub>).</figcaption></figure>
+  <ol class="steps">
+<li><b>Zera</b>: <span class="ov">CLR</span> = 0 leva todos os Q a 0.</li>
+<li><b>Carrega</b>: Enable = 1. Cada NAND entrega <span class="ov">PRE</span> = <span class="ov">Pi</span>, o complemento da entrada paralela. Onde P<sub>i</sub> = 1, <span class="ov">PRE</span> = 0 e o FF vai a 1; onde P<sub>i</sub> = 0, <span class="ov">PRE</span> = 1 e o FF continua em 0. Agora Q = P.</li>
+<li><b>Trava</b>: Enable = 0. Todos os <span class="ov">PRE</span> = 1 e o registrador mantém o estado.</li>
+<li><b>Desloca</b>: a cada pulso de CLK um bit sai pela <b>saída série</b> (Q do último FF). Após n pulsos, a palavra inteira saiu.</li>
+</ol>
+<div class="callout deep"><div class="ct">Aplicações</div><p>Comunicação serial (UART, SPI, USB) usa exatamente essa dupla: paralelo→série no transmissor, série→paralelo no receptor. Deslocar à esquerda/direita também multiplica/divide por 2, e um registrador de deslocamento fechado em anel vira um <b>contador em anel</b> (gerador de sequências).</p></div>
+<div class="callout try"><div class="ct">Exercício 7.1</div><p>Registrador de deslocamento de 4 bits (borda ↓), inicialmente zerado. Desenhe Q0…Q3 para a entrada abaixo e diga o conteúdo final.</p><figure><div class="fig"><img src="figs/ex_shift_q.svg" alt="Exercício 7.1." loading="lazy"></div><figcaption><b>Figura 7.6.</b> Exercício 7.1.</figcaption></figure></div>
+<div class="callout try"><div class="ct">Exercício 7.2 (das Aulas 06–07)</div><p>(a) Quantos FFs tem um registrador de 8 bits? (b) Quantos pulsos para converter 5 bits de série para paralelo? (c) Qual tipo de registrador tem mais aplicação em sistemas computacionais?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="memorias" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 8</div><h1>Memórias</h1>
+<div class="goal">Objetivo: dominar o vocabulário (célula, palavra, endereço, capacidade), fazer contas de capacidade, entender leitura/escrita e organização matricial, e diferenciar os tipos de ROM e RAM.</div><div class="src">Base: Aula 06, Registradores (I), parte de Memórias; Aula 07 (Relembrando)</div></div>
+<h2>8.1 Vocabulário</h2>
+<p>Memórias armazenam informação codificada digitalmente: números, caracteres, instruções, endereços. São usadas em computadores e periféricos, e também para implementar funções combinacionais (tabela verdade gravada em ROM), auxiliar contadores e conversores e gerar formas de onda.</p>
+<table class="wide"><tr><th class="l">Termo</th><th class="l">Significado</th><th class="l">Exemplo</th></tr>
+<tr><td class="l"><b>Célula</b></td><td class="l">armazena 1 bit</td><td class="l">um flip-flop</td></tr>
+<tr><td class="l"><b>Palavra</b></td><td class="l">grupo de células acessadas <b>juntas</b></td><td class="l">registrador de 8 bits = palavra de 8 bits</td></tr>
+<tr><td class="l"><b>Byte</b></td><td class="l">grupo de 8 bits</td><td class="l">palavra de 2 bytes = 16 bits</td></tr>
+<tr><td class="l"><b>Posição</b></td><td class="l">lugar que guarda uma palavra</td><td class="l">cada uma tem um endereço</td></tr>
+<tr><td class="l"><b>Endereço</b></td><td class="l">número binário único que identifica a posição</td><td class="l">000 → P0, 001 → P1, …, 111 → P7</td></tr>
+<tr><td class="l"><b>Capacidade</b></td><td class="l">nº de posições × tamanho da palavra</td><td class="l">4096 × 20 = 81 920 bits</td></tr>
+<tr><td class="l"><b>Volatilidade</b></td><td class="l">volátil perde os dados sem energia; não volátil retém</td><td class="l">RAM volátil; ROM/Flash não volátil</td></tr></table>
+<h2>8.2 Contas de capacidade</h2>
+<p>O número de palavras é sempre potência de 2. Em memória, os prefixos são binários:</p>
+<table><tr><th>Prefixo</th><th>Valor</th><th>Potência</th></tr><tr><td>1K</td><td>1 024</td><td>2¹⁰</td></tr><tr><td>1M</td><td>1 048 576</td><td>2²⁰</td></tr><tr><td>1G</td><td>1 073 741 824</td><td>2³⁰</td></tr><tr><td>1T</td><td>1 099 511 627 776</td><td>2⁴⁰</td></tr></table>
+<div class="formula">Notação “P × W”: P posições (palavras) de W bits  →  capacidade = P · W bits</div>
+<div class="formula">n linhas de endereço endereçam 2ⁿ posições  ⇔  n = log₂(P)</div>
+<div class="callout ex"><div class="ct">Exemplos resolvidos (slides)</div>
+<p><b>(1) Chip 2K × 8.</b> Palavras: 2 × 1024 = <b>2048</b>. Tamanho da palavra: <b>8 bits (1 byte)</b>. Total: 2048 × 8 = <b>16 384 bits</b>. Endereço: 2048 = 2¹¹, então <b>11 linhas</b>.</p>
+<p><b>(2) Qual armazena mais: 5M × 8 ou 1M × 16?</b> 5 × 1 048 576 × 8 = <b>41 943 040 bits</b>; 1 × 1 048 576 × 16 = <b>16 777 216 bits</b>. A 5M × 8 armazena mais.</p>
+<p class="small">Observação: o slide traz “41.493.040”, um erro de digitação; o valor correto é 41 943 040.</p></div>
+<h2>8.3 Acesso e barramentos</h2>
+<ul><li><b>Acesso sequencial</b>: percorre-se a memória a partir de um ponto de referência; o tempo depende de onde está o dado (ex.: fita magnética).</li>
+<li><b>Acesso aleatório</b>: qualquer posição é acessada diretamente, com o <b>mesmo tempo</b> (é o “random” de RAM).</li></ul>
+  <figure><div class="fig"><img src="figs/mem_bus.svg" alt="Diagrama geral: endereço entra, dados entram ou saem, e o controle diz o que fazer." loading="lazy" style="max-width:580px"></div><figcaption><b>Figura 8.1.</b> Diagrama geral: endereço entra, dados entram ou saem, e o controle diz o que fazer.</figcaption></figure>
+  <div class="twocol">
+<div class="callout ex"><div class="ct">Leitura (memória 8 × 8, posição #3)</div><ol style="margin:0"><li>011 é colocado na via de endereços;</li><li>um comando <b>read</b> é processado;</li><li>uma cópia do dado (<code>11010111</code>) vai para a via de dados. O conteúdo não se altera.</li></ol></div>
+<div class="callout ex"><div class="ct">Escrita (posição #5, dado 10001101)</div><ol style="margin:0"><li>101 é colocado na via de endereços;</li><li>10001101 é colocado na via de dados;</li><li>um comando <b>write</b> é processado; o conteúdo antigo é sobrescrito.</li></ol></div>
+</div>
+<h2>8.4 ROM e organização matricial</h2>
+<p>A <b>ROM</b> (<i>Read Only Memory</i>) é <b>não volátil</b>. Os dados são gravados na fabricação ou eletricamente; o processo se chama <b>programação</b> ou “queima”. Para ler: (1) aplica-se o endereço, por exemplo A3A2A1A0 = 0111; (2) ativam-se as entradas de controle (ex.: <span class="ov">CS</span> = 0); (3) a palavra aparece em D7…D0.</p>
+<table class="tt"><tr><th>Palavra</th><th>A3A2A1A0</th><th>D7…D0</th></tr>
+<tr><td>0</td><td>0000</td><td>10101110</td></tr><tr><td>1</td><td>0001</td><td>10111010</td></tr><tr><td>…</td><td>…</td><td>…</td></tr>
+<tr class="hl"><td>7</td><td>0111</td><td>10111010</td></tr><tr><td>…</td><td>…</td><td>…</td></tr><tr><td>15</td><td>1111</td><td>10101101</td></tr></table>
+<p class="cap">Trecho da ROM 16 × 8 do slide.</p>
+<p>Internamente, os 16 registradores ficam numa <b>matriz 4 × 4</b>. Dois bits do endereço escolhem a <b>linha</b> e dois escolhem a <b>coluna</b>; só o registrador no cruzamento é habilitado.</p>
+  <figure><div class="fig"><img src="figs/rom.svg" alt="Decodificação em linha e coluna (layout da aula): A1A0 → linha, A3A2 → coluna." loading="lazy" style="max-width:600px"></div><figcaption><b>Figura 8.2.</b> Decodificação em linha e coluna (layout da aula): A1A0 → linha, A3A2 → coluna.</figcaption></figure>
+  <div class="callout ex"><div class="ct">Exemplos resolvidos (slide)</div><p><b>Qual registrador a entrada 1101 habilita?</b> A3A2 = 11 → C3; A1A0 = 01 → L1. Logo, <b>Reg_13</b> (4·3 + 1).<br/><b>Qual entrada habilita o Reg_10?</b> 10 = 4·2 + 2 → C2 (A3A2 = 10) e L2 (A1A0 = 10). Entrada <b>1010</b>.</p></div>
+<div class="callout deep"><div class="ct">Por que matriz?</div><p>Um decodificador direto de 4 bits precisaria de 16 saídas. Com linha + coluna são 4 + 4 = 8 linhas de seleção. Para 1M posições: 1 048 576 saídas contra 1024 + 1024. A economia cresce muito com o tamanho.</p></div>
+<h2>8.5 Tipos de ROM</h2>
+<table class="wide"><tr><th class="l">Tipo</th><th class="l">Como grava</th><th class="l">Regravável?</th><th class="l">Observações</th></tr>
+<tr><td class="l"><b>ROM por máscara</b></td><td class="l">na fabricação, conectando transistores por uma máscara definida pelo cliente</td><td class="l">não</td><td class="l">barata só em larga escala; flexibilidade nula</td></tr>
+<tr><td class="l"><b>PROM</b></td><td class="l">pelo usuário, uma única vez, queimando microfusíveis</td><td class="l">não (1 vez)</td><td class="l">fusível queimado = nível baixo</td></tr>
+<tr><td class="l"><b>EPROM</b></td><td class="l">pelo usuário, eletricamente</td><td class="l">sim, após apagar com <b>luz ultravioleta</b></td><td class="l">alta densidade; regravada em geral só no desenvolvimento (tem janela de quartzo)</td></tr>
+<tr><td class="l"><b>EEPROM</b></td><td class="l">eletricamente, com tensão maior que a de operação</td><td class="l">sim, <b>apagamento elétrico</b></td><td class="l">mais cara e menos densa</td></tr>
+<tr><td class="l"><b>Flash</b></td><td class="l">elétrica e rápida</td><td class="l">sim, mas apaga por <b>setores</b>, não por palavra</td><td class="l">junta vantagens da EPROM e da EEPROM; pendrives e SSDs (NAND Flash, e 3D NAND empilhada para mais capacidade)</td></tr></table>
+<h2>8.6 RAM: SRAM × DRAM</h2>
+<p>RAM é usada para armazenamento <b>temporário</b>: é <b>volátil</b> e tem leitura e escrita simples e rápidas.</p>
+<table class="wide"><tr><th class="l"></th><th class="l">SRAM (estática)</th><th class="l">DRAM (dinâmica)</th></tr>
+<tr><td class="l"><b>Célula</b></td><td class="l">flip-flop</td><td class="l">transistor + capacitor</td></tr>
+<tr><td class="l"><b>Retenção</b></td><td class="l">enquanto houver alimentação</td><td class="l">capacitor descarrega: precisa de <b>refresh</b> periódico</td></tr>
+<tr><td class="l"><b>Velocidade</b></td><td class="l">mais rápida</td><td class="l">mais lenta</td></tr>
+<tr><td class="l"><b>Custo/complexidade</b></td><td class="l">mais cara e complexa</td><td class="l">mais barata e densa</td></tr>
+<tr><td class="l"><b>Uso</b></td><td class="l">memória <b>cache</b></td><td class="l">memória <b>principal</b></td></tr></table>
+<div class="callout try"><div class="ct">Exercício 8.1</div><p>(a) Quantos bits armazena uma memória 2K × 16? Quantas linhas de endereço ela tem? (b) Uma memória tem 14 linhas de endereço e 8 de dados: qual a capacidade em bits e em bytes? (c) Na ROM matricial da Figura, que endereço habilita o Reg_6? (d) Por que a DRAM precisa de refresh e a SRAM não?</p></div>
+
+</section>
+<section class="ap-cap" data-cap="mef" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 9</div><h1>Máquinas de Estados Finitos (MEF)</h1>
+<div class="goal">Objetivo: modelar qualquer circuito sequencial como estados e transições, distinguir Moore de Mealy, montar diagramas e tabelas, minimizar estados e ir do enunciado ao circuito.</div><div class="src">Base: Aula 08, MEF</div></div>
+<h2>9.1 A ideia geral</h2>
+<p>Tudo o que vimos (latch, contador, registrador) é um caso particular de uma <b>Máquina de Estados Finitos</b>: um circuito com um número finito de <b>estados</b>, que a cada pulso de clock passa para um <b>próximo estado</b> conforme o estado atual e as entradas, e que produz <b>saídas</b>. Recordando a estrutura do Cap. 1:</p>
+<ul><li><b>Memória</b> (FFs): guarda o estado presente; recebe o próximo estado.</li>
+<li><b>Lógica combinacional</b>: calcula o próximo estado e a saída a partir do estado presente e das entradas.</li></ul>
+<p>Representa-se uma MEF por um <b>diagrama de estados</b> (um grafo: nós = estados, arcos = transições) ou por uma <b>tabela de estados</b> (tabela de transição). Os dois carregam a mesma informação.</p>
+<h2>9.2 Modelo de Moore</h2>
+<div class="formula">Saídas = f(Estado)   ·   Próximo estado = f(Estado, Entradas)</div>
+  <figure><div class="fig"><img src="figs/moore_bloco.svg" alt="Moore: a saída só “enxerga” o estado." loading="lazy"></div><figcaption><b>Figura 9.1.</b> Moore: a saída só “enxerga” o estado.</figcaption></figure>
+  <p><b>Notação no diagrama:</b> a saída fica <b>dentro do nó</b> (“Estado / Saída”, ex.: A/00); o arco leva só a <b>entrada</b> que causa a transição. Como a saída só muda quando o estado muda, ou seja, na borda do clock, Moore tem <b>resposta mais lenta</b> a variações na entrada (até um ciclo de atraso), mas a saída é estável e livre de glitches das entradas.</p>
+<div class="callout ex"><div class="ct">Exemplo (slide): contador síncrono módulo 4 como Moore</div>
+<div class="twocol"><div><figure><div class="fig"><img src="figs/sd_mod4.svg" alt="Sem entradas externas: a cada clock avança um estado." loading="lazy" style="max-width:300px"></div><figcaption><b>Figura 9.2.</b> Sem entradas externas: a cada clock avança um estado.</figcaption></figure></div>
+<div><table class="tt"><tr><th>Estado presente</th><th>Saída Z1Z2</th><th>Estado futuro</th></tr>
+<tr><td>A</td><td>00</td><td>B</td></tr><tr><td>B</td><td>01</td><td>C</td></tr><tr><td>C</td><td>10</td><td>D</td></tr><tr><td>D</td><td>11</td><td>A</td></tr></table>
+<p class="small">4 estados, 2 saídas, nenhuma entrada (só o clock).</p></div></div></div>
+<h2>9.3 Modelo de Mealy</h2>
+<div class="formula">Saídas = f(Estado, Entradas)   ·   Próximo estado = f(Estado, Entradas)</div>
+  <figure><div class="fig"><img src="figs/mealy_bloco.svg" alt="Mealy: a entrada também vai direto para a lógica de saída." loading="lazy"></div><figcaption><b>Figura 9.3.</b> Mealy: a entrada também vai direto para a lógica de saída.</figcaption></figure>
+  <p><b>Notação no diagrama:</b> o nó leva só o nome do estado; o arco leva “<b>Entrada / Saída</b>” (ex.: 1/0). A saída reage à entrada <b>no mesmo ciclo</b>, sem esperar o clock: <b>resposta mais rápida</b>, mas a saída pode ter glitches se a entrada tiver.</p>
+<div class="callout ex"><div class="ct">Exemplo (slide): entrada X, estados y1y2 (A=00, B=01, C=10, D=11), saída Z</div>
+<div class="twocol"><div><figure><div class="fig"><img src="figs/sd_mealy.svg" alt="Diagrama de Mealy do slide." loading="lazy" style="max-width:380px"></div><figcaption><b>Figura 9.4.</b> Diagrama de Mealy do slide.</figcaption></figure></div>
+<div><table class="tt"><tr><th rowspan="2">Estado</th><th colspan="2">Entrada X</th></tr><tr><th>0</th><th>1</th></tr>
+<tr><td>A</td><td>D/0</td><td>C/1</td></tr><tr><td>B</td><td>B/1</td><td>A/0</td></tr><tr><td>C</td><td>C/1</td><td>D/0</td></tr><tr><td>D</td><td>A/0</td><td>B/1</td></tr></table>
+<p class="small">Leitura: na célula (linha B, coluna 0), “B/1” significa: estando em B com X = 0, a saída é 1 e o próximo estado é B.</p></div></div></div>
+<h2>9.4 Moore × Mealy lado a lado: detector da sequência “101”</h2>
+<p>Problema: a entrada X recebe um bit por clock; a saída Z deve valer 1 quando os três últimos bits forem <b>1, 0, 1</b> (com sobreposição: em 10101, a sequência aparece duas vezes).</p>
+<div class="twocol"><div><figure><div class="fig"><img src="figs/sd_101_mealy.svg" alt="Mealy: 3 estados. S0 = nada útil, S1 = viu “1”, S2 = viu “10”. A saída 1 sai no arco S2 —1→." loading="lazy" style="max-width:410px"></div><figcaption><b>Figura 9.5.</b> Mealy: 3 estados. S0 = nada útil, S1 = viu “1”, S2 = viu “10”. A saída 1 sai no arco S2 —1→.</figcaption></figure></div></div>
+  <figure><div class="fig"><img src="figs/sd_101_moore.svg" alt="Moore: 4 estados. Precisa de um estado extra (S3 = “viu 101”) porque a saída mora no estado." loading="lazy" style="max-width:500px"></div><figcaption><b>Figura 9.6.</b> Moore: 4 estados. Precisa de um estado extra (S3 = “viu 101”) porque a saída mora no estado.</figcaption></figure>
+  <figure><div class="fig"><img src="figs/mm_wave.svg" alt="Mesma entrada nas duas máquinas: o Z de Mealy sobe assim que o terceiro bit chega; o de Moore só depois da borda seguinte (um ciclo depois), mas permanece um ciclo inteiro estável. Os números embaixo são os bits de X em cada ciclo." loading="lazy"></div><figcaption><b>Figura 9.7.</b> Mesma entrada nas duas máquinas: o Z de Mealy sobe assim que o terceiro bit chega; o de Moore só depois da borda seguinte (um ciclo depois), mas permanece um ciclo inteiro estável. Os números embaixo são os bits de X em cada ciclo.</figcaption></figure>
+  <table class="wide"><tr><th class="l"></th><th class="l">Moore</th><th class="l">Mealy</th></tr>
+<tr><td class="l">Saída depende de</td><td class="l">só do estado</td><td class="l">estado <b>e</b> entradas</td></tr>
+<tr><td class="l">Onde a saída aparece no diagrama</td><td class="l">dentro do nó (A/Z)</td><td class="l">no arco (X/Z)</td></tr>
+<tr><td class="l">Resposta à entrada</td><td class="l">mais lenta (espera a borda)</td><td class="l">mais rápida (no mesmo ciclo)</td></tr>
+<tr><td class="l">Número de estados</td><td class="l">em geral mais</td><td class="l">em geral menos</td></tr>
+<tr><td class="l">Glitches na saída</td><td class="l">não (saída síncrona)</td><td class="l">pode ter, se a entrada tiver</td></tr></table>
+<h2>9.5 Minimização de estados</h2>
+<p>Dois estados são <b>equivalentes</b> quando é impossível distingui-los olhando as saídas: para toda entrada, dão a <b>mesma saída</b> e vão para estados <b>equivalentes</b>. Um deles é redundante e pode ser removido, o que reduz custo e complexidade (menos FFs e menos lógica).</p>
+<h3>Método da inspeção (casos simples)</h3>
+<p>Procure linhas <b>idênticas</b> na tabela, elimine uma, substitua seu nome em toda a tabela e repita.</p>
+<div class="callout ex"><div class="ct">Exemplo resolvido (slide)</div>
+<div class="twocol">
+<div><table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr><td>A</td><td>B/0</td><td>C/1</td></tr><tr class="hl"><td>B</td><td>C/0</td><td>A/1</td></tr><tr><td>C</td><td>D/1</td><td>B/0</td></tr><tr class="hl"><td>D</td><td>C/0</td><td>A/1</td></tr><tr><td>E</td><td>D/0</td><td>C/1</td></tr></table><div class="cap">① B ≡ D (linhas iguais)</div></div>
+<div><table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr class="hl"><td>A</td><td>B/0</td><td>C/1</td></tr><tr><td>B</td><td>C/0</td><td>A/1</td></tr><tr><td>C</td><td>B/1</td><td>B/0</td></tr><tr class="hl"><td>E</td><td>B/0</td><td>C/1</td></tr></table><div class="cap">② troca D→B; agora A ≡ E</div></div>
+<div><table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr><td>A</td><td>B/0</td><td>C/1</td></tr><tr><td>B</td><td>C/0</td><td>A/1</td></tr><tr><td>C</td><td>B/1</td><td>B/0</td></tr></table><div class="cap">③ resultado: 5 → 3 estados</div></div>
+</div></div>
+<h3>Método da partição (sistemático, sempre funciona)</h3>
+<ol class="steps">
+<li><b>Partição pelas saídas</b>: agrupe os estados com a <b>mesma linha de saídas</b>.</li>
+<li>Para cada estado, anote <b>em que grupo</b> cai cada próximo estado.</li>
+<li>Se dois estados do mesmo grupo vão para <b>grupos diferentes</b> em alguma coluna, separe-os.</li>
+<li>Repita até nada mudar. Cada grupo final vira <b>um</b> estado.</li>
+</ol>
+<div class="callout ex avoid"><div class="ct">Exemplo resolvido (slide): 8 estados</div>
+<div class="twocol">
+<div><table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr>
+<tr><td>A</td><td>B/0</td><td>C/0</td></tr><tr><td>B</td><td>D/0</td><td>E/0</td></tr><tr><td>C</td><td>G/0</td><td>E/0</td></tr><tr><td>D</td><td>H/0</td><td>F/0</td></tr>
+<tr><td>E</td><td>G/0</td><td>A/0</td></tr><tr class="hl"><td>F</td><td>G/1</td><td>A/0</td></tr><tr><td>G</td><td>D/0</td><td>C/0</td></tr><tr><td>H</td><td>H/0</td><td>A/0</td></tr></table></div>
+<div style="flex:1.6"><p style="margin-top:0"><b>P1 (saídas):</b> só F tem saída diferente (1 com X=0) → <code>{A,B,C,D,E,G,H}=1</code>, <code>{F}=2</code>.</p>
+<p><b>P2:</b> próximos estados por grupo: D vai para F (grupo 2) com X=1; os outros só vão para o grupo 1 → separa D: <code>{A,B,C,E,G,H}=1</code>, <code>{F}=2</code>, <code>{D}=3</code>.</p>
+<p><b>P3:</b> B → (D,E) = (3,1) e G → (D,C) = (3,1); A, C, E, H → (1,1) → <code>{A,C,E,H}=1</code>, <code>{B,G}=4</code>.</p>
+<p><b>P4:</b> A → (B,C) = (4,1); C → (G,E) = (4,1); E → (G,A) = (4,1); H → (H,A) = (1,1) → separa H: <code>{A,C,E}=5</code>, <code>{H}</code>.</p>
+<p><b>P5:</b> nada muda → <b>A ≡ C ≡ E</b> e <b>B ≡ G</b>.</p></div></div>
+<table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr><td>A</td><td>B/0</td><td>A/0</td></tr><tr><td>B</td><td>D/0</td><td>A/0</td></tr><tr><td>D</td><td>H/0</td><td>F/0</td></tr><tr><td>F</td><td>B/1</td><td>A/0</td></tr><tr><td>H</td><td>H/0</td><td>A/0</td></tr></table>
+<div class="cap">Resultado: 8 → 5 estados. Ainda são 3 FFs (2³ = 8 ≥ 5), mas a lógica fica menor e sobram 3 códigos livres para usar como don’t care.</div></div>
+<div class="callout warn"><div class="ct">Cuidado na prova</div><p>Na partição, compare <b>grupos</b>, não letras: B → D e G → D estão iguais; A → C e C → E também, se C e E estiverem no mesmo grupo. E só junte estados com a <b>mesma saída</b> desde o início.</p></div>
+<h2>9.6 Do enunciado ao circuito: o roteiro completo</h2>
+<ol class="steps">
+<li><b>Entenda o problema</b>: quais são as entradas, as saídas e o que o circuito precisa lembrar.</li>
+<li><b>Escolha o modelo</b> (Moore ou Mealy) e desenhe o <b>diagrama de estados</b>.</li>
+<li>Monte a <b>tabela de estados</b> e <b>minimize</b>.</li>
+<li><b>Codifique</b> os estados em binário: com k estados, use n FFs com 2ⁿ ≥ k.</li>
+<li>Monte a <b>tabela de transição</b> em binário e, com a <b>tabela de excitação</b> do FF escolhido (Cap. 6), as colunas de entrada dos FFs.</li>
+<li>Simplifique (Karnaugh) as entradas dos FFs e as saídas e desenhe o circuito.</li>
+</ol>
+<div class="callout ex avoid"><div class="ct">Exemplo resolvido: detector “101” de Mealy com FFs D</div>
+<p>Codificação: S0 = 00, S1 = 01, S2 = 10 (11 não usado = X). Estado = y1y0.</p>
+<table class="tt"><tr><th>y1y0</th><th>X</th><th>próx. y1y0 = D1D0</th><th>Z</th></tr>
+<tr><td>00 (S0)</td><td>0</td><td>00</td><td>0</td></tr><tr><td>00 (S0)</td><td>1</td><td>01</td><td>0</td></tr>
+<tr><td>01 (S1)</td><td>0</td><td>10</td><td>0</td></tr><tr><td>01 (S1)</td><td>1</td><td>01</td><td>0</td></tr>
+<tr><td>10 (S2)</td><td>0</td><td>00</td><td>0</td></tr><tr class="hl"><td>10 (S2)</td><td>1</td><td>01</td><td>1</td></tr>
+<tr><td>11</td><td>–</td><td>XX</td><td>X</td></tr></table>
+<p>Com FF D, D = próximo estado. Lendo a tabela (e usando o 11 como X):</p>
+<ul><li><b>D0 = X</b> (toda vez que X = 1 se vai para 01; com X = 0 nunca se termina em y0 = 1)</li>
+<li><b>D1 = y0 · <span class="ov">X</span></b> (só S1 com X = 0 vai para S2)</li>
+<li><b>Z = y1 · X</b> (em S2, chegando 1)</li></ul>
+<p>Circuito: 2 FFs D, uma AND com NOT para D1 e uma AND para Z. Em Mealy, Z usa X diretamente.</p></div>
+<h2>9.7 Os dois casos de projeto da aula</h2>
+<h3>Elevador (16 andares)</h3>
+<p><b>O que lembrar:</b> o andar atual (16 andares, então 4 bits) e se está parado, subindo ou descendo. <b>Entradas:</b> andar requisitado (4 bits) e um sinal “há chamada”. <b>Saídas:</b> comandos do motor (subir / descer / parar) e o andar atual.</p>
+<ul>
+<li>Parado e sem chamada, ou chamada = andar atual: <b>continua parado</b>.</li>
+<li>Chamada &gt; atual: <b>sobe</b> 1 andar por clock até igualar; chamada &lt; atual: <b>desce</b>.</li>
+</ul>
+<p><b>Modelo adequado: Moore</b>. A saída (motor) depende de “onde estou e para onde vou”, deve ser estável durante o ciclo e não há urgência de reagir dentro do ciclo. Observe que o andar atual é, na prática, um <b>contador crescente/decrescente</b> de 4 bits, e a decisão sobe/desce/para vem de um <b>comparador</b> entre andar atual e requisitado. Em vez de desenhar 16 × 3 estados à mão, divide-se o problema em blocos: comparador + contador up/down + MEF de controle com 3 estados (PARADO, SUBINDO, DESCENDO).</p>
+<h3>Máquina de refrigerante (R$ 1,00)</h3>
+<p><b>O que lembrar:</b> quanto já foi inserido. Moedas: 10, 25, 50 e 100 centavos (uma por clock). Estados = valores acumulados possíveis até R$ 1,00 (0, 10, 20, 25, 30, 35, …, 100). <b>Entradas:</b> moeda inserida (codificada) e botão. <b>Saídas:</b> liberar lata, devolver dinheiro.</p>
+<ul>
+<li>Moeda que faz passar de R$ 1,00: <b>devolve tudo</b> e volta ao estado 0, mesmo sem apertar o botão.</li>
+<li>Botão apertado no estado 100: <b>libera a lata</b> e volta a 0. Botão em qualquer outro estado: <b>devolve as moedas</b> e volta a 0.</li>
+</ul>
+<p><b>Modelo adequado: Mealy</b>. As ações “libera” e “devolve” são respostas a um <b>evento de entrada</b> (o botão ou a moeda que estoura o valor), naquele ciclo. Em Moore seriam necessários estados extras, como “liberando” e “devolvendo”.</p>
+<div class="callout key"><div class="ct">“Quanto mais estados, melhor?” (pergunta da aula)</div><p><b>Não.</b> Cada estado a mais pode exigir mais FFs (n = ⌈log₂ k⌉) e mais lógica combinacional, aumentando custo, área, consumo e chance de erro. O objetivo é o <b>menor número de estados que ainda distingue tudo o que importa</b>; é para isso que serve a minimização. Estados extras só valem a pena quando simplificam a lógica de saída (como em Moore, para ter saídas estáveis).</p></div>
+<div class="callout try"><div class="ct">Exercício 9.1</div><p>(a) Desenhe uma MEF de Moore que detecte a sequência “11” na entrada X (Z = 1 quando os dois últimos bits forem 1). (b) Faça a versão Mealy. (c) Quantos FFs cada uma precisa?</p></div>
+<div class="callout try"><div class="ct">Exercício 9.2</div><p>Minimize pelo método da partição:</p>
+<table class="tt"><tr><th>EP</th><th>X=0</th><th>X=1</th></tr><tr><td>A</td><td>B/0</td><td>C/0</td></tr><tr><td>B</td><td>A/0</td><td>D/1</td></tr><tr><td>C</td><td>D/0</td><td>A/0</td></tr><tr><td>D</td><td>C/0</td><td>B/1</td></tr></table></div>
+
+</section>
+<section class="ap-cap" data-cap="revisao" hidden>
+
+<div class="chap-head"><div class="num">Capítulo 10</div><h1>Revisão final, armadilhas e gabarito</h1>
+<div class="goal">Use a página de resumo na véspera; use o gabarito para conferir os exercícios.</div></div>
+<h2 style="margin-top:4px">10.1 Resumo para a véspera</h2>
+<div class="cheat">
+<div class="blk"><h4>Fundamentos</h4><ul><li>Combinacional: saída = f(entradas agora).</li><li>Sequencial: saída = f(entradas, estado); tem memória e realimentação.</li><li>Astável (0 estados estáveis), monoestável (1), biestável (2) = latch/FF.</li><li>Latch: assíncrono (muda a qualquer hora). FF: síncrono (muda na borda).</li></ul></div>
+<div class="blk"><h4>Latches RS</h4>
+<table class="tt"><tr><th>NOR (ativo 1)</th><th>NAND (ativo 0)</th><th>Ação</th></tr><tr><td>S=0 R=0</td><td><span class="ov">S</span>=1 <span class="ov">R</span>=1</td><td>mantém</td></tr><tr><td>S=1 R=0</td><td><span class="ov">S</span>=0 <span class="ov">R</span>=1</td><td>Q=1</td></tr><tr><td>S=0 R=1</td><td><span class="ov">S</span>=1 <span class="ov">R</span>=0</td><td>Q=0</td></tr><tr class="bad"><td>S=1 R=1</td><td><span class="ov">S</span>=0 <span class="ov">R</span>=0</td><td>inválido</td></tr></table></div>
+<div class="blk"><h4>Flip-flops (na borda ativa)</h4>
+<table class="tt"><tr><th>Tipo</th><th>Q<sub>próx</sub></th></tr><tr><td>D</td><td>D</td></tr><tr><td>T</td><td>T ⊕ Q</td></tr><tr><td>JK</td><td>J<span class="ov">Q</span> + <span class="ov">K</span>Q</td></tr><tr><td>SR</td><td>S + <span class="ov">R</span>Q (SR≠11)</td></tr></table>
+<ul><li>JK: 00 mantém · 10 set · 01 reset · 11 comuta.</li><li>▷ = borda; ○▷ = descida. PRE/CLR assíncronos vencem o clock.</li></ul></div>
+<div class="blk"><h4>Excitação (Q → Q<sub>próx</sub>)</h4>
+<table class="tt"><tr><th></th><th>D</th><th>T</th><th>JK</th></tr><tr><td>0→0</td><td>0</td><td>0</td><td>0X</td></tr><tr><td>0→1</td><td>1</td><td>1</td><td>1X</td></tr><tr><td>1→0</td><td>0</td><td>1</td><td>X1</td></tr><tr><td>1→1</td><td>1</td><td>0</td><td>X0</td></tr></table></div>
+<div class="blk"><h4>Tempo</h4><ul><li>f = 1/T; duty = t<sub>alto</sub>/T.</li><li>t<sub>r</sub>, t<sub>f</sub>: 10%→90%. t<sub>w</sub>: 50%↔50%.</li><li>t<sub>S</sub> antes da borda, t<sub>H</sub> depois: entrada parada.</li><li>t<sub>PLH</sub> (0→1), t<sub>PHL</sub> (1→0).</li></ul></div>
+<div class="blk"><h4>Contadores</h4><ul><li>n FFs → até 2ⁿ estados; MOD-N precisa de 2ⁿ ≥ N.</li><li>Assíncrono: CLK só no 1º; Q<sub>i</sub> → CLK<sub>i+1</sub> (borda ↓ = crescente).</li><li>MOD-N: NAND dos bits 1 de N → <span class="ov">CLR</span>.</li><li>f<sub>MSB</sub> = f<sub>CLK</sub>/MOD. Decrescente = ler <span class="ov">Q</span>.</li><li>Síncrono: CLK comum; T<sub>i</sub> = Q<sub>0</sub>…Q<sub>i−1</sub>.</li><li>Ripple: atraso N·t<sub>PD</sub>; síncrono: 1·t<sub>PD</sub>.</li></ul></div>
+<div class="blk"><h4>Registradores</h4><ul><li>n bits = n FFs D.</li><li>Paralelo: 1 pulso, n fios. Série: n pulsos, 1 fio.</li><li>LOAD: D = LOAD·Dnovo + <span class="ov">LOAD</span>·Q.</li><li>Shift: Q<sub>i</sub> → D<sub>i+1</sub>; o 1º bit a entrar termina no último FF.</li><li>P→S: carrega via <span class="ov">PRE</span> = NAND(EN, P), depois desloca.</li></ul></div>
+<div class="blk"><h4>Memórias</h4><ul><li>Capacidade = posições × bits/palavra.</li><li>n linhas de endereço → 2ⁿ posições. 1K = 2¹⁰.</li><li>ROM: não volátil. Máscara → PROM (fusível, 1×) → EPROM (UV) → EEPROM (elétrica) → Flash (setores).</li><li>SRAM: FF, rápida, cache. DRAM: capacitor, refresh, principal.</li></ul></div>
+<div class="blk"><h4>MEF</h4><ul><li>Moore: Z = f(estado); nó “A/Z”; mais lento, mais estados.</li><li>Mealy: Z = f(estado, X); arco “X/Z”; mais rápido, menos estados.</li><li>Equivalentes: mesma saída e próximos equivalentes, para toda entrada.</li><li>Partição: separa por saída e refina por grupos dos próximos estados.</li></ul></div>
+</div>
+<h2>10.2 Armadilhas clássicas</h2>
+<ol>
+<li>Confundir a ordem das colunas S/R nas tabelas dos latches (positivo: R primeiro; negativo: S primeiro, nos slides).</li>
+<li>Esquecer que entradas com barra (<span class="ov">S</span>, <span class="ov">CLR</span>, <span class="ov">PRE</span>) são <b>ativas em 0</b>.</li>
+<li>Atualizar Q fora da borda, ou na borda errada (bolinha = descida).</li>
+<li>Usar os valores de J, K, D <b>depois</b> da borda em vez de <b>antes</b>.</li>
+<li>Em MOD-N, colocar na NAND o número n (último) em vez de n + 1 (o primeiro proibido).</li>
+<li>Ler o contador com o LSB à esquerda: Q0 é o <b>LSB</b>.</li>
+<li>Em capacidade, usar 1K = 1000: em memória, 1K = <b>1024</b>.</li>
+<li>Achar que “Mealy” e “Moore” são só desenhos diferentes: em Mealy a saída pode mudar no meio do ciclo quando X muda.</li>
+</ol>
+<h2>10.3 Gabarito</h2>
+<p><b>1.1</b> (a) combinacional; (b) sequencial (precisa lembrar a contagem); (c) combinacional; (d) sequencial (precisa lembrar os dígitos já digitados, como as lâmpadas).</p>
+<p><b>2.1</b></p>
+  <figure><div class="fig"><img src="figs/ex_nor_a.svg" alt="Gabarito 2.1. Nos intervalos de S = R = 0, Q mantém o valor anterior; quando S = 1 ou R = 1 isoladamente, Q segue o comando." loading="lazy"></div><figcaption><b>Figura 10.1.</b> Gabarito 2.1. Nos intervalos de S = R = 0, Q mantém o valor anterior; quando S = 1 ou R = 1 isoladamente, Q segue o comando.</figcaption></figure>
+  <p><b>2.2</b> (a) Porque a saída muda assim que as entradas mudam, sem esperar clock. (b) NOR com S = R = 1 dá Q = <span class="ov">Q</span> = 0; NAND com <span class="ov">S</span> = <span class="ov">R</span> = 0 dá Q = <span class="ov">Q</span> = 1; nos dois, as saídas deixam de ser complementares e, se os comandos forem retirados juntos, o estado final é imprevisível. (c) Porque, com as entradas em repouso, a realimentação sustenta o último valor indefinidamente.</p>
+<p><b>3.1</b> (a) T = 1/30 MHz ≈ <b>33,3 ns</b>. (b) 12/40 = <b>30%</b>. (c) <b>Sim</b>: D mudou 10 ns antes da borda, mas precisava estar estável há pelo menos t<sub>S</sub> = 20 ns. O valor capturado não é garantido.</p>
+<p><b>4.1</b></p>
+  <figure><div class="fig"><img src="figs/ex_jk_a.svg" alt="Gabarito 4.1. Em cada ↓ aplica-se a tabela do JK com os valores imediatamente anteriores. O pulso de CLR chega com Q = 1 e zera Q na hora, sem esperar borda. Na borda seguinte, J = K = 1 faz Q comutar a partir de 0 e ir para 1." loading="lazy"></div><figcaption><b>Figura 10.2.</b> Gabarito 4.1. Em cada ↓ aplica-se a tabela do JK com os valores imediatamente anteriores. O pulso de <span class="ov">CLR</span> chega com Q = 1 e zera Q na hora, sem esperar borda. Na borda seguinte, J = K = 1 faz Q comutar a partir de 0 e ir para 1.</figcaption></figure>
+  <p><b>4.2</b> (a) 8/2 = <b>4 MHz</b>. (b) T: J = K = T. D: J = D e K = <span class="ov">D</span>. (c) Por causa do estado inválido S = R = 1; o JK resolve isso.</p>
+<p><b>5.1</b></p>
+<ol>
+<li><b>MOD-3</b>: 2 FFs; 3 = 11 → NAND(Q1, Q0) → <span class="ov">CLR</span>. Crescente: 0, 1, 2. Lendo <span class="ov">Q</span> (como no slide) obtém-se 3, 2, 1, uma decrescente de 3 estados. Para 2, 1, 0 exatamente: monte o contador decrescente (Cap. 5.5, Aprofundando) e, quando ele passar de 0 para 3 (11), use a NAND(Q1, Q0) para carregar 10 de forma assíncrona: <span class="ov">PRE</span> no FF1 e <span class="ov">CLR</span> no FF0.</li>
+<li><b>MOD-12</b>: 4 FFs; 12 = 1100 → NAND(Q3, Q2). Lendo <span class="ov">Q</span>: 15…4. Para 11…0: contador decrescente que, ao chegar em 15 (1111), carrega 1011 (PRE em Q3, Q1, Q0; CLR em Q2).</li>
+<li>50 MHz → 1 Hz exige dividir por 50 000 000. Como 2²⁵ = 33 554 432 &lt; 50 000 000 ≤ 2²⁶ = 67 108 864, são <b>26 FFs</b>, num contador MOD-50 000 000 (NAND com os bits 1 de 50 000 000 = 10111110101111000010000000₂ → <span class="ov">CLR</span>). Só com potências de 2 não se chega a 1 Hz exato (2²⁶ daria ≈ 0,745 Hz).</li>
+<li>Cada década divide por 10: 7 décadas → 50 MHz/10⁷ = 5 Hz; falta um <b>MOD-5</b> (3 FFs). Total 7 × 4 + 3 = <b>31 FFs</b>, com o projeto mais simples e modular. (Com 8 décadas: 0,5 Hz.)</li>
+</ol>
+<p><b>6.1</b> (a) T0 = 1, T1 = Q0, T2 = Q0Q1, T3 = Q0Q1Q2, T4 = Q0Q1Q2Q3. (b) Sequência 000 → 010 → 100 → 110 → 000: Q0 fica sempre em 0 → T0 = 0; Q1 comuta sempre → T1 = 1; Q2 comuta quando Q1 = 1 → T2 = Q1. (c) No assíncrono o atraso seria 16 × t<sub>PD</sub>; no síncrono, um único t<sub>PD</sub> mais a lógica: muito mais rápido e sem estados intermediários falsos.</p>
+<p><b>7.1</b></p>
+  <figure><div class="fig"><img src="figs/ex_shift_a.svg" alt="Gabarito 7.1. Entram 1, 0, 1, 1 (nessa ordem). Conteúdo final: Q3Q2Q1Q0 = 1011. O primeiro bit a entrar está em Q3." loading="lazy"></div><figcaption><b>Figura 10.3.</b> Gabarito 7.1. Entram 1, 0, 1, 1 (nessa ordem). Conteúdo final: Q3Q2Q1Q0 = 1011. O primeiro bit a entrar está em Q3.</figcaption></figure>
+  <p><b>7.2</b> (a) 8 FFs. (b) 5 pulsos. (c) O de carga paralela, base dos registradores internos de processadores e de barramentos; os de deslocamento aparecem na comunicação serial.</p>
+<p><b>8.1</b> (a) 2048 × 16 = <b>32 768 bits</b>; 2048 = 2¹¹ → <b>11 linhas</b>. (b) 2¹⁴ = 16 384 posições × 8 = <b>131 072 bits = 16 384 bytes = 16 KB</b>. (c) 6 = 4·1 + 2 → C1 (A3A2 = 01) e L2 (A1A0 = 10) → <b>0110</b>. (d) A DRAM guarda o bit como carga num capacitor, que vaza com o tempo; a SRAM usa um flip-flop, que se sustenta por realimentação enquanto houver alimentação.</p>
+<p><b>9.1</b> (a) Moore: S0/0 (último bit 0 ou início), S1/0 (viu um 1), S2/1 (viu 11). X = 1: S0→S1, S1→S2, S2→S2. X = 0: todos → S0. (b) Mealy: S0 (último 0), S1 (último 1). S0: 0/0→S0, 1/0→S1; S1: 0/0→S0, 1/1→S1. (c) Moore: 3 estados → 2 FFs; Mealy: 2 estados → 1 FF.</p>
+<p><b>9.2</b> P1 pelas saídas: {A, C} (saídas 0,0) e {B, D} (saídas 0,1). P2: A → (B, C) = (grupo BD, grupo AC); C → (D, A) = (BD, AC): iguais. B → (A, D) = (AC, BD); D → (C, B) = (AC, BD): iguais. Nada muda: <b>A ≡ C</b> e <b>B ≡ D</b>. Tabela mínima: A: 0 → B/0, 1 → A/0; B: 0 → A/0, 1 → B/1 (2 estados, 1 FF).</p>
+<div class="callout key" style="margin-top:14px"><div class="ct">Última dica</div><p>Refaça à mão, sem olhar: (1) formas de onda de um latch NOR e de um JK com CLR; (2) um contador assíncrono MOD-N qualquer; (3) as equações T de um síncrono; (4) uma conta de capacidade; (5) um diagrama Moore e um Mealy para a mesma sequência; (6) uma minimização por partição. Esses seis itens cobrem quase tudo que costuma cair.</p></div>
+
+</section>
+  </article></div>
+  <div class="divider" id="divider" role="separator" aria-orientation="vertical" aria-label="Arraste para redimensionar" tabindex="0"></div>
+  <div class="pane pane-pr" id="pr"><div class="pr-inner">
+<section class="pr-cap" data-cap="fundamentos" hidden="" id="v-fundamentos">
+<div class="lab" data-ref="1.3"><div class="lab-h"><h2><span class="tag">Lab</span>As lâmpadas da Aula 01</h2></div><div class="lab-b"><p>Acenda as lâmpadas em qualquer ordem. O alarme só toca se as três últimas forem 1 → 2 → 3: o circuito precisa lembrar o passado.</p><div class="row" id="lampDemo"></div></div></div>
+</section>
+<section class="pr-cap" data-cap="latches" hidden="" id="v-latches">
+<div class="lab" data-ref="2.2">
+<div class="lab-h"><h2><span class="tag">Lab</span>Latch RS ao vivo</h2>
+<div class="row"><label class="ctl" for="lt-kind">Tipo</label><select id="lt-kind"><option value="nor">Positivo (NOR)</option><option value="nand">Negativo (NAND)</option></select></div></div>
+<div class="lab-b">
+<div class="cols">
+<div class="diagram" id="lt-circ"></div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="row" id="lt-inputs"></div>
+<div class="row" id="lt-leds"></div>
+<div class="status" id="lt-status"></div>
+<div class="row"><button class="btn small" id="lt-race">Soltar as duas ordens juntas</button><button class="btn small" id="lt-clear">Limpar osciloscópio</button></div>
+</div>
+</div>
+<div class="scope" id="lt-scope"></div>
+<p class="hint">Fios laranja estão em 1; cinza, em 0. Cada clique grava uma coluna no osciloscópio. Experimente: dê um SET, solte, e veja que Q continua em 1.</p>
+</div>
+</div>
+</section>
+<section class="pr-cap" data-cap="tempo" hidden="" id="v-tempo">
+<div class="lab" data-ref="3.2"><div class="lab-h"><h2><span class="tag">Lab</span>Gerador de clock</h2></div>
+<div class="lab-b">
+<div class="row"><label class="ctl" for="ck-f">Frequência</label><input id="ck-f" max="100" min="1" type="range" value="20"/><span class="mono" id="ck-fv"></span>
+<label class="ctl" for="ck-d">Duty cycle</label><input id="ck-d" max="90" min="10" step="5" type="range" value="50"/><span class="mono" id="ck-dv"></span></div>
+<div class="diagram" id="ck-svg"></div>
+<div class="row" id="ck-read"></div>
+</div></div>
+<div class="lab" data-ref="3.4"><div class="lab-h"><h2><span class="tag">Lab</span>Setup e hold: o dado chega a tempo?</h2>
+<div class="row"><label class="ctl" for="sh-chip">Chip</label><select id="sh-chip"></select></div></div>
+<div class="lab-b">
+<div class="row"><label class="ctl" for="sh-t">D muda em</label><input id="sh-t" max="40" min="-60" type="range" value="-30"/><span class="mono" id="sh-tv"></span></div>
+<div class="diagram" id="sh-svg"></div>
+<div class="status" id="sh-status"></div>
+<div class="tscroll"><table id="sh-table"></table></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="flipflops" hidden="" id="v-flipflops">
+<div class="lab" data-ref="4.3"><div class="lab-h"><h2><span class="tag">Lab</span>Flip-flop na bancada</h2>
+<div class="row"><label class="ctl" for="ff-type">Tipo</label><select id="ff-type"><option>JK</option><option>D</option><option>T</option><option>SR</option></select>
+<label class="ctl" for="ff-edge">Borda</label><select id="ff-edge"><option value="rise">subida ↑</option><option value="fall">descida ↓</option></select></div></div>
+<div class="lab-b">
+<div class="cols">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="row" id="ff-inputs"></div>
+<div class="row"><button class="btn" id="ff-clk-lvl">CLK = 0 (clique para subir)</button><button class="btn primary" id="ff-pulse">Pulso completo</button><label class="ctl"><input id="ff-auto" type="checkbox"/> clock automático</label></div>
+<div class="row" id="ff-async"></div>
+<div class="row" id="ff-leds"></div>
+<div class="status" id="ff-status"></div>
+</div>
+<div class="tscroll" id="ff-table"></div>
+</div>
+<div class="scope" id="ff-scope"></div>
+<div class="row"><label class="ctl"><input checked="" id="ff-showlatch" type="checkbox"/> mostrar também um latch D sensível a nível (mesmo D e CLK)</label><button class="btn small" id="ff-clear">Limpar osciloscópio</button></div>
+<p class="hint">Teste a diferença entre nível e borda: escolha o tipo D, deixe CLK em 1 e mude D várias vezes. O latch acompanha; o flip-flop não.</p>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="assincronos" hidden="" id="v-assincronos">
+<div class="lab" data-ref="5.2"><div class="lab-h"><h2><span class="tag">Lab</span>Contador ripple</h2>
+<div class="row"><label class="ctl" for="ac-n">Bits</label><select id="ac-n"><option>2</option><option>3</option><option selected="">4</option><option>5</option></select>
+<label class="ctl" for="ac-mod">Módulo</label><input id="ac-mod" max="32" min="2" style="width:72px" type="number" value="16"/>
+<label class="ctl" for="ac-read">Ler</label><select id="ac-read"><option value="q">Q (crescente)</option><option value="qn">Q̄ (decrescente)</option></select></div></div>
+<div class="lab-b">
+<div class="diagram" id="ac-chain"></div>
+<div class="row"><div><div class="hint">Valor lido</div><div class="big" id="ac-val"></div></div><div class="status" id="ac-status" style="flex:1;min-width:220px"></div></div>
+<div class="row"><button class="btn primary" id="ac-pulse">Pulso de clock</button><label class="ctl"><input id="ac-auto" type="checkbox"/> automático</label><label class="ctl"><input checked="" id="ac-slow" type="checkbox"/> mostrar o efeito dominó (atraso)</label><button class="btn small" id="ac-reset">Zerar (CLR)</button><button class="btn small" id="ac-clear">Limpar osciloscópio</button></div>
+<div class="scope" id="ac-scope"></div>
+<div class="tscroll" id="ac-freq"></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="sincronos" hidden="" id="v-sincronos">
+<div class="lab" data-ref="6.2"><div class="lab-h"><h2><span class="tag">Lab</span>Contador síncrono binário</h2>
+<div class="row"><label class="ctl" for="sc-n">Bits</label><select id="sc-n"><option>2</option><option selected="">3</option><option>4</option></select><label class="ctl"><input checked="" id="sc-en" type="checkbox"/> EN (habilita)</label></div></div>
+<div class="lab-b">
+<div class="diagram" id="sc-chain"></div>
+<div class="row"><div><div class="hint">Valor</div><div class="big" id="sc-val"></div></div><div class="status" id="sc-status" style="flex:1;min-width:220px"></div></div>
+<div class="row"><button class="btn primary" id="sc-pulse">Borda de clock ↑</button><label class="ctl"><input id="sc-auto" type="checkbox"/> automático</label><button class="btn small" id="sc-reset">Zerar</button></div>
+<div class="scope" id="sc-scope"></div>
+</div></div>
+<div class="lab" data-ref="6.4"><div class="lab-h"><h2><span class="tag">Lab</span>Projetista de contadores</h2>
+<div class="row"><label class="ctl" for="pd-ff">Flip-flop</label><select id="pd-ff"><option>T</option><option>D</option><option>JK</option></select></div></div>
+<div class="lab-b">
+<div class="row"><label class="ctl" for="pd-seq">Sequência</label><input id="pd-seq" style="flex:1;min-width:200px" type="text" value="0,1,2,3,4"/><button class="btn primary" id="pd-go">Projetar</button></div>
+<p class="hint">Digite a sequência em decimal, separada por vírgulas (ex.: 0,2,4,6 ou 0,1,3,7,6,4). Estados que não aparecem viram don't care. O projetista monta a tabela com a excitação, simplifica cada entrada e roda o circuito.</p>
+<div class="status" hidden="" id="pd-err"></div>
+<div class="cols"><div class="tscroll" id="pd-table"></div><div id="pd-eqs" style="display:flex;flex-direction:column;gap:8px"></div></div>
+<div class="row"><button class="btn" id="pd-step">Borda de clock ↑</button><span class="mono" id="pd-run"></span></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="registradores" hidden="" id="v-registradores">
+<div class="lab" data-ref="7.4"><div class="lab-h"><h2><span class="tag">Lab</span>Registrador de 4 bits</h2><span class="hint">FFs D, borda de descida</span></div>
+<div class="lab-b">
+<div class="diagram" id="rg-chain"></div>
+<div class="cols">
+<div style="display:flex;flex-direction:column;gap:10px"><h3>Entrada série</h3><div class="row" id="rg-din"></div><div class="row"><button class="btn primary" id="rg-pulse">Pulso de clock ↓</button><button class="btn small" id="rg-clr">CLR</button></div></div>
+<div style="display:flex;flex-direction:column;gap:10px"><h3>Carga paralela (via PRE)</h3><div class="row" id="rg-par"></div><div class="row"><button class="btn" id="rg-load">Enable: carregar P</button></div></div>
+</div>
+<div class="status" id="rg-status"></div>
+<div class="scope" id="rg-scope"></div>
+<div class="tscroll" id="rg-log"></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="memorias" hidden="" id="v-memorias">
+<div class="lab" data-ref="8.4"><div class="lab-h"><h2><span class="tag">Lab</span>ROM 16 × 8 da aula</h2></div>
+<div class="lab-b">
+<div class="row" id="rom-addr"></div>
+<div class="diagram" id="rom-svg"></div>
+<div class="status" id="rom-status"></div>
+</div></div>
+<div class="lab" data-ref="8.3"><div class="lab-h"><h2><span class="tag">Lab</span>RAM 8 × 8: leitura e escrita</h2></div>
+<div class="lab-b">
+<div class="cols">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div><div class="hint">Via de endereços</div><div class="row" id="ram-addr"></div></div>
+<div><div class="hint">Via de dados (para escrita)</div><div class="row" id="ram-data"></div></div>
+<div class="row"><button class="btn" id="ram-read">Ler (read)</button><button class="btn primary" id="ram-write">Escrever (write)</button></div>
+<div class="status" id="ram-status"></div>
+</div>
+<div class="tscroll" id="ram-table"></div>
+</div>
+</div></div>
+<div class="lab" data-ref="8.2"><div class="lab-h"><h2><span class="tag">Lab</span>Calculadora de capacidade</h2></div>
+<div class="lab-b">
+<div class="row"><label class="ctl" for="cap-p">Posições</label><input id="cap-p" min="1" style="width:90px" type="number" value="2"/><select id="cap-u"><option value="1">×1</option><option selected="" value="1024">K</option><option value="1048576">M</option><option value="1073741824">G</option></select><span>×</span><label class="ctl" for="cap-w">bits por palavra</label><input id="cap-w" min="1" style="width:80px" type="number" value="16"/></div>
+<div class="status" id="cap-out"></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="mef" hidden="" id="v-mef">
+<div class="lab" data-ref="9.4"><div class="lab-h"><h2><span class="tag">Lab</span>Detector de “101”: Moore × Mealy lado a lado</h2></div>
+<div class="lab-b">
+<div class="row"><div id="mm-x"></div><button class="btn primary" id="mm-clk">Borda de clock ↑</button><label class="ctl" for="mm-seq">Sequência</label><input id="mm-seq" style="width:130px" type="text" value="10101101"/><button class="btn" id="mm-play">Tocar sequência</button><button class="btn small" id="mm-reset">Reiniciar</button></div>
+<div class="cols" style="grid-template-columns:repeat(auto-fit,minmax(380px,1fr))"><div><h3>Mealy (3 estados)</h3><div class="diagram" id="mm-mealy"></div></div><div><h3>Moore (4 estados)</h3><div class="diagram" id="mm-moore"></div></div></div>
+<div class="status" id="mm-status"></div>
+<div class="scope" id="mm-scope"></div>
+<p class="hint">Mude X entre bordas e observe: Z de Mealy reage na hora; Z de Moore só depois da borda.</p>
+</div></div>
+<div class="lab" data-ref="9.5"><div class="lab-h"><h2><span class="tag">Lab</span>Minimização pelo método da partição</h2>
+<div class="row"><label class="ctl" for="pm-preset">Tabela</label><select id="pm-preset"><option value="slide">Slide: 8 estados</option><option value="insp">Slide: inspeção (5 estados)</option><option value="ex">Exercício: 4 estados</option></select></div></div>
+<div class="lab-b">
+<div class="cols"><div class="tscroll" id="pm-table"></div><div style="display:flex;flex-direction:column;gap:10px"><div id="pm-steps" style="display:flex;flex-direction:column;gap:8px"></div><div class="row"><button class="btn primary" id="pm-next">Próximo passo</button><button class="btn small" id="pm-restart">Recomeçar</button></div></div></div>
+</div></div>
+</section>
+<section class="pr-cap" data-cap="revisao" hidden="" id="v-revisao">
+<div class="lab" data-ref="2.4"><div class="lab-h"><h2><span class="tag">Exercício</span>Complete a forma de onda de Q</h2>
+<div class="row"><select aria-label="Circuito" id="wv-kind"><option value="nor">Latch RS NOR</option><option value="nand">Latch RS NAND</option><option value="jk">JK, borda ↑</option><option value="jkf">JK, borda ↓ com CLR</option><option value="d">D, borda ↑</option><option value="t">T, borda ↓</option></select><button class="btn" id="wv-new">Novo</button></div></div>
+<div class="lab-b">
+<p class="hint">Clique na linha de Q no ponto onde ela deve mudar: a partir dali o valor inverte. Q começa em 0. Depois clique em Corrigir.</p>
+<div class="scope" id="wv-scope"></div>
+<div class="row"><button class="btn primary" id="wv-check">Corrigir</button><button class="btn small" id="wv-show">Mostrar resposta</button><button class="btn small" id="wv-zero">Apagar Q</button></div>
+<div class="status" id="wv-status">Desenhe Q e clique em Corrigir.</div>
+</div></div>
+<div class="cols">
+<div class="lab" data-ref="5.4"><div class="lab-h"><h2><span class="tag">Contas</span>Qual NAND vai no CLR?</h2><button class="btn small" id="mn-new">Outro</button></div>
+<div class="lab-b"><p id="mn-q"></p><div class="row" id="mn-bits"></div><div class="row"><button class="btn primary" id="mn-check">Conferir</button></div><div class="status" id="mn-status">Marque os Q que entram na NAND.</div></div></div>
+<div class="lab" data-ref="8.2"><div class="lab-h"><h2><span class="tag">Contas</span>Capacidade de memória</h2><button class="btn small" id="cq-new">Outra</button></div>
+<div class="lab-b"><p id="cq-q"></p><div class="row"><label class="ctl" for="cq-bits">Bits totais</label><input id="cq-bits" style="width:140px" type="number"/><label class="ctl" for="cq-lines">Linhas de endereço</label><input id="cq-lines" style="width:70px" type="number"/></div><div class="row"><button class="btn primary" id="cq-check">Conferir</button></div><div class="status" id="cq-status">Responda e confira.</div></div></div>
+</div>
+
+</section>
+  </div></div>
+</main>
+<script src="../../assets/engine.js"></script>
+<script src="curso.js"></script>
+<script src="labs.js"></script>
+<script>Estudos.iniciarMateria(CURSO);</script>
+</body>
+</html>
